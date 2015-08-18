@@ -15,10 +15,12 @@
  */
 package io.gravitee.plugin;
 
+import java.util.Collection;
+
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
 public interface PluginRegistry {
 
-    void init();
+    Collection<PluginContext> plugins();
 }

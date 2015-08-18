@@ -30,10 +30,7 @@ public class PluginConfiguration {
 
     @Bean
     public PluginRegistry pluginRegistry() {
-        PluginRegistry registry = new PluginRegistryImpl();
-        registry.init();
-
-        return registry;
+        return new PluginRegistryImpl();
     }
 
     @Bean

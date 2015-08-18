@@ -15,23 +15,23 @@
  */
 package io.gravitee.plugin.impl;
 
-import io.gravitee.plugin.*;
+import io.gravitee.plugin.PluginContext;
+import io.gravitee.plugin.PluginManifest;
+import io.gravitee.plugin.PluginManifestValidator;
+import io.gravitee.plugin.PluginRegistry;
 import io.gravitee.plugin.utils.FileUtils;
 import io.gravitee.plugin.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -50,8 +50,7 @@ public class PluginRegistryImpl implements PluginRegistry {
 
     private boolean initialized = false;
 
-    @Autowired
-    private PluginLoader pluginLoader;
+    private Map<String, PluginContext> plugins = new HashMap<>();
 
     /**
      * Empty constructor is used to use a workspace directory defined from @Value annotation
@@ -64,7 +63,7 @@ public class PluginRegistryImpl implements PluginRegistry {
         this.workspacePath = workspacePath;
     }
 
-    @Override
+    @PostConstruct
     public void init() {
         if (! initialized) {
             LOGGER.info("Initializing plugin registry.");
@@ -120,7 +119,8 @@ public class PluginRegistryImpl implements PluginRegistry {
         PluginManifest manifest = readPluginManifest(pluginDirPath);
         if (manifest != null) {
             URL [] dependencies = extractPluginDependencies(pluginDirPath);
-            pluginLoader.load(new PluginContext() {
+
+            plugins.put(manifest.id(), new PluginContext() {
                 @Override
                 public String id() {
                     return manifest.id();
@@ -290,6 +290,11 @@ public class PluginRegistryImpl implements PluginRegistry {
         }
 
         return files;
+    }
+
+    @Override
+    public Collection<PluginContext> plugins() {
+        return plugins.values();
     }
 
     class PluginManifestVisitor extends SimpleFileVisitor<Path> {
