@@ -15,10 +15,10 @@
  */
 package io.gravitee.plugin.spring;
 
-import io.gravitee.plugin.ClassLoaderFactory;
-import io.gravitee.plugin.PluginRegistry;
-import io.gravitee.plugin.impl.ClassLoaderFactoryImpl;
-import io.gravitee.plugin.impl.PluginRegistryImpl;
+import io.gravitee.plugin.core.api.ClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginRegistry;
+import io.gravitee.plugin.core.internal.ClassLoaderFactoryImpl;
+import io.gravitee.plugin.core.internal.PluginRegistryImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

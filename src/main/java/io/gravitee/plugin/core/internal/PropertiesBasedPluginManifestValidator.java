@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.impl;
+package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.PluginManifestValidator;
+import io.gravitee.plugin.core.api.PluginManifestValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +35,8 @@ public class PropertiesBasedPluginManifestValidator implements PluginManifestVal
             PluginManifestProperties.MANIFEST_DESCRIPTION_PROPERTY,
             PluginManifestProperties.MANIFEST_CLASS_PROPERTY,
             PluginManifestProperties.MANIFEST_NAME_PROPERTY,
-            PluginManifestProperties.MANIFEST_VERSION_PROPERTY
+            PluginManifestProperties.MANIFEST_VERSION_PROPERTY,
+            PluginManifestProperties.MANIFEST_TYPE_PROPERTY
     };
 
     public PropertiesBasedPluginManifestValidator(Properties properties) {

@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.impl;
+package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.PluginContext;
-import io.gravitee.plugin.PluginManifest;
-import io.gravitee.plugin.PluginManifestValidator;
-import io.gravitee.plugin.PluginRegistry;
-import io.gravitee.plugin.utils.FileUtils;
-import io.gravitee.plugin.utils.GlobMatchingFileVisitor;
+import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.utils.FileUtils;
+import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.ClassUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -32,6 +31,7 @@ import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -48,9 +48,12 @@ public class PluginRegistryImpl implements PluginRegistry {
     @Value("${plugins.registry.path}")
     private String workspacePath;
 
-    private boolean initialized = false;
+    private boolean init = false;
 
-    private Map<String, PluginContext> plugins = new HashMap<>();
+    private Map<String, Plugin> plugins = new HashMap<>();
+
+    @Autowired
+    private ClassLoaderFactory classLoaderFactory;
 
     /**
      * Empty constructor is used to use a workspace directory defined from @Value annotation
@@ -65,7 +68,7 @@ public class PluginRegistryImpl implements PluginRegistry {
 
     @PostConstruct
     public void init() {
-        if (! initialized) {
+        if (!init) {
             LOGGER.info("Initializing plugin registry.");
             this.init0();
             LOGGER.info("Initializing plugin registry. DONE");
@@ -74,7 +77,7 @@ public class PluginRegistryImpl implements PluginRegistry {
         }
     }
 
-    private void init0() {
+    public void init0() {
         if (workspacePath == null || workspacePath.isEmpty()) {
             LOGGER.error("Plugin registry path is not specified.");
             throw new RuntimeException("Plugin registry path is not specified.");
@@ -94,10 +97,10 @@ public class PluginRegistryImpl implements PluginRegistry {
 
         LOGGER.info("\t{} plugin directories have been found.", subdirectories.size());
         for(File pluginDir: subdirectories) {
-            loadPluginDirectory(pluginDir.getAbsolutePath());
+            loadPlugin(pluginDir.getAbsolutePath());
         }
 
-        initialized = true;
+        init = true;
     }
 
     /**
@@ -112,7 +115,7 @@ public class PluginRegistryImpl implements PluginRegistry {
      *
      * @param pluginDir The directory containing the plugin definition
      */
-    private void loadPluginDirectory(String pluginDir) {
+    private void loadPlugin(String pluginDir) {
         Path pluginDirPath = FileSystems.getDefault().getPath(pluginDir);
         LOGGER.info("Trying to load plugin from {}", pluginDirPath);
 
@@ -120,10 +123,23 @@ public class PluginRegistryImpl implements PluginRegistry {
         if (manifest != null) {
             URL [] dependencies = extractPluginDependencies(pluginDirPath);
 
-            plugins.put(manifest.id(), new PluginContext() {
+            classLoaderFactory.createPluginClassLoader(manifest.id(), dependencies);
+            Class<?> pluginClass = createPlugin(manifest);
+
+            plugins.put(manifest.id(), new Plugin() {
                 @Override
                 public String id() {
                     return manifest.id();
+                }
+
+                @Override
+                public Class<?> clazz() {
+                    return pluginClass;
+                }
+
+                @Override
+                public PluginType type() {
+                    return PluginType.from(manifest.type());
                 }
 
                 @Override
@@ -143,6 +159,33 @@ public class PluginRegistryImpl implements PluginRegistry {
             });
         }
     }
+
+    private Class<?> createPlugin(PluginManifest pluginManifest) {
+        try {
+            return ClassUtils.forName(pluginManifest.plugin(),
+                            classLoaderFactory.getPluginClassLoader(pluginManifest.id()));
+        } catch (ClassNotFoundException cnfe) {
+            LOGGER.error("Unable to create plugin class with name {}", pluginManifest.plugin());
+            throw new IllegalArgumentException("Unable to create plugin class with name " + pluginManifest.plugin(), cnfe);
+        }
+    }
+/*
+    private boolean registerPlugin(Plugin plugin) {
+
+        for (PluginHandler pluginHandler : pluginHandlers) {
+            LOGGER.debug("Trying to handle plugin {} with {}", plugin.id(), pluginHandler.getClass().getName());
+            if (pluginHandler.canHandle(plugin)) {
+                pluginHandler.handle(plugin);
+                LOGGER.info("Plugin {} handled by {}", plugin.id(), pluginHandler.getClass().getName());
+                return true;
+            }
+        }
+
+        LOGGER.warn("No Plugin handler found for {} [{}]", plugin.id(), plugin.clazz().getName());
+
+        return false;
+    }
+*/
 
     /**
      * Extract plugin dependencies by reading all jars from plugin directory root path.
@@ -246,6 +289,7 @@ public class PluginRegistryImpl implements PluginRegistry {
         final String clazz = properties.getProperty(PluginManifestProperties.MANIFEST_CLASS_PROPERTY);
         final String name = properties.getProperty(PluginManifestProperties.MANIFEST_NAME_PROPERTY);
         final String version = properties.getProperty(PluginManifestProperties.MANIFEST_VERSION_PROPERTY);
+        final String type = properties.getProperty(PluginManifestProperties.MANIFEST_TYPE_PROPERTY);
 
         return new PluginManifest() {
             @Override
@@ -272,6 +316,11 @@ public class PluginRegistryImpl implements PluginRegistry {
             public String plugin() {
                 return clazz;
             }
+
+            @Override
+            public String type() {
+                return type;
+            }
         };
     }
 
@@ -293,8 +342,20 @@ public class PluginRegistryImpl implements PluginRegistry {
     }
 
     @Override
-    public Collection<PluginContext> plugins() {
+    public Collection<Plugin> plugins() {
         return plugins.values();
+    }
+
+    @Override
+    public Collection<Plugin> plugins(PluginType type) {
+        return plugins.values()
+                .stream()
+                .filter(pluginContext -> pluginContext.type() == type)
+                .collect(Collectors.toSet());
+    }
+
+    public void setClassLoaderFactory(ClassLoaderFactory classLoaderFactory) {
+        this.classLoaderFactory = classLoaderFactory;
     }
 
     class PluginManifestVisitor extends SimpleFileVisitor<Path> {

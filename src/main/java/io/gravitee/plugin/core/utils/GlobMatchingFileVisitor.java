@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.utils;
+package io.gravitee.plugin.core.utils;
 
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;

@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin;
-
-import java.net.URL;
+package io.gravitee.plugin.core.api;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface ClassLoaderFactory {
+public enum PluginType {
 
-    ClassLoader createPluginClassLoader(String pluginId, URL[] jars);
+    POLICY, REPORTER;
 
-    ClassLoader getPluginClassLoader(String pluginId);
 
-    void removePluginClassLoader(String pluginId);
+    public static PluginType from(String sType) {
+        for(PluginType pluginType : values()) {
+            if (pluginType.name().equalsIgnoreCase(sType)) {
+                return pluginType;
+            }
+        }
+
+        throw new IllegalArgumentException("Invalid PolicyType: " + sType);
+    }
 }

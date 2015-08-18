@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin;
+package io.gravitee.plugin.core.internal;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface Plugin {
+public interface PluginManifestProperties {
 
-    String id();
-
-    Class<?> clazz();
+    String MANIFEST_ID_PROPERTY = "id";
+    String MANIFEST_NAME_PROPERTY = "name";
+    String MANIFEST_VERSION_PROPERTY = "version";
+    String MANIFEST_DESCRIPTION_PROPERTY = "description";
+    String MANIFEST_CLASS_PROPERTY = "class";
+    String MANIFEST_TYPE_PROPERTY = "type";
 }

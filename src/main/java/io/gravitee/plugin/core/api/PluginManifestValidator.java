@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin;
-
-import java.util.Collection;
+package io.gravitee.plugin.core.api;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PluginManager {
+public interface PluginManifestValidator {
 
-    Collection<Plugin> getPlugins();
+    boolean validate();
 }
