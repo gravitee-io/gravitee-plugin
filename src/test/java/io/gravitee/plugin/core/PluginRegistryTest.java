@@ -15,10 +15,11 @@
  */
 package io.gravitee.plugin.core;
 
-import io.gravitee.plugin.core.api.ClassLoaderFactory;
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.internal.ClassLoaderFactoryImpl;
-import io.gravitee.plugin.core.internal.PluginRegistryImpl;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.plugin.api.ClassLoaderFactory;
+import io.gravitee.plugin.api.Plugin;
+import io.gravitee.plugin.internal.ClassLoaderFactoryImpl;
+import io.gravitee.plugin.internal.PluginRegistryImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ import org.mockito.Mockito;
 import java.net.URL;
 
 import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -68,7 +70,7 @@ public class PluginRegistryTest {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = Mockito.spy(new PluginRegistryImpl(dir.getPath()));
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
-
+        pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
         verify(pluginRegistry, atMost(1)).init();
 
@@ -90,6 +92,7 @@ public class PluginRegistryTest {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
+        pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
 
         Assert.assertEquals(1, pluginRegistry.plugins().size());
@@ -100,6 +103,7 @@ public class PluginRegistryTest {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
+        pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
 
         Assert.assertEquals(1, pluginRegistry.plugins().size());

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.internal;
+package io.gravitee.plugin.internal;
 
-import io.gravitee.plugin.core.api.ClassLoaderFactory;
+import io.gravitee.plugin.api.ClassLoaderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

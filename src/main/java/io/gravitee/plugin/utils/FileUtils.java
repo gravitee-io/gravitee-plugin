@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.utils;
+package io.gravitee.plugin.utils;
 
 import java.io.IOException;
 import java.net.URI;

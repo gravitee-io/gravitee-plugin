@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.internal;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public enum PluginType {
+public interface PluginManifestProperties {
 
-    POLICY, REPORTER;
-
-
-    public static PluginType from(String sType) {
-        for(PluginType pluginType : values()) {
-            if (pluginType.name().equalsIgnoreCase(sType)) {
-                return pluginType;
-            }
-        }
-
-        throw new IllegalArgumentException("Invalid PolicyType: " + sType);
-    }
+    String MANIFEST_ID_PROPERTY = "id";
+    String MANIFEST_NAME_PROPERTY = "name";
+    String MANIFEST_VERSION_PROPERTY = "version";
+    String MANIFEST_DESCRIPTION_PROPERTY = "description";
+    String MANIFEST_CLASS_PROPERTY = "class";
+    String MANIFEST_TYPE_PROPERTY = "type";
 }

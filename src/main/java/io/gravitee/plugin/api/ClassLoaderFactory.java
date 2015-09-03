@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.spring;
+package io.gravitee.plugin.api;
 
-import io.gravitee.plugin.api.ClassLoaderFactory;
-import io.gravitee.plugin.api.PluginRegistry;
-import io.gravitee.plugin.internal.ClassLoaderFactoryImpl;
-import io.gravitee.plugin.internal.PluginRegistryImpl;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import java.net.URL;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-@Configuration
-public class PluginConfiguration {
+public interface ClassLoaderFactory {
 
-    @Bean
-    public PluginRegistry pluginRegistry() {
-        return new PluginRegistryImpl();
-    }
+    ClassLoader createPluginClassLoader(String pluginId, URL[] jars);
 
-    @Bean
-    public ClassLoaderFactory classLoaderFactory() {
-        return new ClassLoaderFactoryImpl();
-    }
+    ClassLoader getPluginClassLoader(String pluginId);
+
+    void removePluginClassLoader(String pluginId);
 }

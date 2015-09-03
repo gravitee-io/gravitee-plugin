@@ -13,22 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.api;
+
+import java.net.URL;
+import java.nio.file.Path;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PluginManifest {
+public interface Plugin {
 
+    /**
+     * Plugin ID.
+     */
     String id();
 
-    String name();
+    /**
+     * Plugin class.
+     */
+    Class<?> clazz();
 
-    String description();
+    /**
+     * Plugin type
+     */
+    PluginType type();
 
-    String version();
+    /**
+     * Plugin installation path.
+     */
+    Path path();
 
-    String plugin();
+    /**
+     * Plugin Manifest.
+     */
+    PluginManifest manifest();
 
-    String type();
+    /**
+     * Plugin dependencies.
+     */
+    URL[] dependencies();
 }

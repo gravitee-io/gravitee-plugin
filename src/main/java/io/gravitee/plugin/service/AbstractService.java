@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.service;
+package io.gravitee.plugin.service;
 
 import io.gravitee.common.component.AbstractLifecycleComponent;
 import org.slf4j.Logger;

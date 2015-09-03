@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.internal;
+package io.gravitee.plugin.api;
+
+import io.gravitee.common.service.Service;
+
+import java.util.Collection;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PluginManifestProperties {
+public interface PluginRegistry extends Service {
 
-    String MANIFEST_ID_PROPERTY = "id";
-    String MANIFEST_NAME_PROPERTY = "name";
-    String MANIFEST_VERSION_PROPERTY = "version";
-    String MANIFEST_DESCRIPTION_PROPERTY = "description";
-    String MANIFEST_CLASS_PROPERTY = "class";
-    String MANIFEST_TYPE_PROPERTY = "type";
+    Collection<Plugin> plugins();
+
+    Collection<Plugin> plugins(PluginType type);
 }

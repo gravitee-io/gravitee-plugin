@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.internal;
+package io.gravitee.plugin.internal;
 
-import io.gravitee.plugin.core.api.*;
-import io.gravitee.plugin.core.service.AbstractService;
-import io.gravitee.plugin.core.utils.FileUtils;
-import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.plugin.api.*;
+import io.gravitee.plugin.service.AbstractService;
+import io.gravitee.plugin.utils.FileUtils;
+import io.gravitee.plugin.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,9 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     @Autowired
     private ClassLoaderFactory classLoaderFactory;
+
+    @Autowired
+    private EventManager eventManager;
 
     /**
      * Empty constructor is used to use a workspace directory defined from @Value annotation
@@ -172,6 +176,8 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                     return dependencies;
                 }
             });
+
+            eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
         }
     }
 
@@ -371,6 +377,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     public void setClassLoaderFactory(ClassLoaderFactory classLoaderFactory) {
         this.classLoaderFactory = classLoaderFactory;
+    }
+
+    public void setEventManager(EventManager eventManager) {
+        this.eventManager = eventManager;
     }
 
     class PluginManifestVisitor extends SimpleFileVisitor<Path> {

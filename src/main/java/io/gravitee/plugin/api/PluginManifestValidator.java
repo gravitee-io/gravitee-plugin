@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
-
-import java.net.URL;
+package io.gravitee.plugin.api;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface ClassLoaderFactory {
+public interface PluginManifestValidator {
 
-    ClassLoader createPluginClassLoader(String pluginId, URL[] jars);
-
-    ClassLoader getPluginClassLoader(String pluginId);
-
-    void removePluginClassLoader(String pluginId);
+    boolean validate();
 }

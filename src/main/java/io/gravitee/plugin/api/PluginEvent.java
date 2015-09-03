@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.api;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PluginManifestValidator {
+public enum PluginEvent {
 
-    boolean validate();
+    DEPLOYED, UNDEPLOYED;
 }

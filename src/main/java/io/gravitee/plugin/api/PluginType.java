@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
-
-import io.gravitee.common.service.Service;
-
-import java.util.Collection;
+package io.gravitee.plugin.api;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PluginRegistry extends Service {
+public enum PluginType {
 
-    Collection<Plugin> plugins();
+    POLICY, REPORTER;
 
-    Collection<Plugin> plugins(PluginType type);
+
+    public static PluginType from(String sType) {
+        for(PluginType pluginType : values()) {
+            if (pluginType.name().equalsIgnoreCase(sType)) {
+                return pluginType;
+            }
+        }
+
+        throw new IllegalArgumentException("Invalid PolicyType: " + sType);
+    }
 }
