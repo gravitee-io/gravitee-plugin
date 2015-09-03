@@ -16,6 +16,7 @@
 package io.gravitee.plugin.core.internal;
 
 import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.service.AbstractService;
 import io.gravitee.plugin.core.utils.FileUtils;
 import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
@@ -24,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.ClassUtils;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public class PluginRegistryImpl implements PluginRegistry {
+public class PluginRegistryImpl extends AbstractService implements PluginRegistry {
 
     private final Logger LOGGER = LoggerFactory.getLogger(PluginRegistryImpl.class);
 
@@ -66,6 +66,20 @@ public class PluginRegistryImpl implements PluginRegistry {
         this.workspacePath = workspacePath;
     }
 
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        if (!init) {
+            LOGGER.info("Initializing plugin registry.");
+            this.init();
+            LOGGER.info("Initializing plugin registry. DONE");
+        } else {
+            LOGGER.warn("Plugin registry has already been initialized.");
+        }
+    }
+
+    /*
     @PostConstruct
     public void init() {
         if (!init) {
@@ -76,8 +90,9 @@ public class PluginRegistryImpl implements PluginRegistry {
             LOGGER.warn("Plugin registry has already been initialized.");
         }
     }
+    */
 
-    public void init0() {
+    public void init() {
         if (workspacePath == null || workspacePath.isEmpty()) {
             LOGGER.error("Plugin registry path is not specified.");
             throw new RuntimeException("Plugin registry path is not specified.");
@@ -214,7 +229,7 @@ public class PluginRegistryImpl implements PluginRegistry {
         try {
             Iterator iterator = FileUtils.newDirectoryStream(pluginPath, JAR_GLOB).iterator();
             if (! iterator.hasNext()) {
-                LOGGER.debug("Unable to found a jar in the root directory: {}", pluginPath);
+                LOGGER.debug("Unable to find a jar in the root directory: {}", pluginPath);
                 return null;
             }
 
@@ -223,7 +238,7 @@ public class PluginRegistryImpl implements PluginRegistry {
 
             Properties pluginManifestProperties = loadPluginManifest(pluginJarPath.toString());
             if (pluginManifestProperties == null) {
-                LOGGER.error("No plugin.properties can be found from {}", pluginJarPath);
+                LOGGER.error("No plugin.properties found from {}", pluginJarPath);
                 return null;
             }
 

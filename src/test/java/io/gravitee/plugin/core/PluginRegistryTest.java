@@ -42,65 +42,65 @@ public class PluginRegistryTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void initWithInvalidWorkspace() throws Exception {
+    public void startWithInvalidWorkspace() throws Exception {
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl();
-        pluginRegistry.init();
+        pluginRegistry.start();
     }
 
     @Test(expected = RuntimeException.class)
-    public void initWithInexistantWorkspace() throws Exception {
+    public void startWithInexistantWorkspace() throws Exception {
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(
                 "/io/gravitee/plugin/invalid/");
-        pluginRegistry.init();
+        pluginRegistry.start();
     }
 
     @Test
-    public void initWithEmptyWorkspace() throws Exception {
+    public void startWithEmptyWorkspace() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/empty-workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
-        pluginRegistry.init();
+        pluginRegistry.start();
 
         Assert.assertTrue(pluginRegistry.plugins().isEmpty());
     }
 
     @Test
-    public void initTwiceWorkspace() throws Exception {
+    public void startTwiceWorkspace() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = Mockito.spy(new PluginRegistryImpl(dir.getPath()));
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
 
-        pluginRegistry.init();
-        verify(pluginRegistry, atMost(1)).init0();
+        pluginRegistry.start();
+        verify(pluginRegistry, atMost(1)).init();
 
-        pluginRegistry.init();
-        verify(pluginRegistry, atMost(1)).init0();
+        pluginRegistry.start();
+        verify(pluginRegistry, atMost(1)).init();
     }
 
     @Test
-    public void initWithWorkspace_noJar() throws Exception {
+    public void startWithWorkspace_noJar() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/invalid-workspace-nojar/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
-        pluginRegistry.init();
+        pluginRegistry.start();
 
         Assert.assertTrue(pluginRegistry.plugins().isEmpty());
     }
 
     @Test
-    public void initWithValidWorkspace_onePolicyDefinition() throws Exception {
+    public void startWithValidWorkspace_onePolicyDefstartion() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
-        pluginRegistry.init();
+        pluginRegistry.start();
 
         Assert.assertEquals(1, pluginRegistry.plugins().size());
     }
 
     @Test
-    public void initWithValidWorkspace_checkPluginDescriptor() throws Exception {
+    public void startWithValidWorkspace_checkPluginDescriptor() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
-        pluginRegistry.init();
+        pluginRegistry.start();
 
         Assert.assertEquals(1, pluginRegistry.plugins().size());
 

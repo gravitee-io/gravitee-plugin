@@ -34,6 +34,13 @@
     <name>Gravitee IO - API Management - Plugin Core Framework</name>
 
     <dependencies>
+        <!-- Gravitee dependencies -->
+        <dependency>
+            <groupId>io.gravitee.common</groupId>
+            <artifactId>gravitee-common</artifactId>
+            <version>${gravitee-common.version}</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -93,6 +100,7 @@
     </dependencies>
 
     <properties>
+        <gravitee-common.version>1.0.0-SNAPSHOT</gravitee-common.version>
         <junit.version>4.12</junit.version>
         <logback.version>1.1.3</logback.version>
         <slf4j.version>1.7.12</slf4j.version>

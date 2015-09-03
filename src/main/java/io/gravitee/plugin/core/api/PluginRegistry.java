@@ -15,12 +15,14 @@
  */
 package io.gravitee.plugin.core.api;
 
+import io.gravitee.common.service.Service;
+
 import java.util.Collection;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PluginRegistry {
+public interface PluginRegistry extends Service {
 
     Collection<Plugin> plugins();
 
