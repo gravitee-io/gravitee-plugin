@@ -44,7 +44,7 @@ public class ClassLoaderFactoryImpl implements ClassLoaderFactory {
                 pluginClassLoaderCache.put(pluginId, cl);
             }
 
-            LOGGER.debug("Created plugin ClassLoader for {} with class path {}",
+            LOGGER.debug("Created plugin ClassLoader for {} with classpath {}",
                     pluginId, urls);
 
             return cl;

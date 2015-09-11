@@ -44,6 +44,9 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     private final static String JAR_EXTENSION = ".jar";
     private final static String JAR_GLOB = '*' + JAR_EXTENSION;
 
+    private final static String ZIP_EXTENSION = ".zip";
+    private final static String ZIP_GLOB = '*' + ZIP_EXTENSION;
+
     private final static String PLUGIN_MANIFEST_FILE = "plugin.properties";
 
     @Value("${plugins.registry.path}")
@@ -83,19 +86,6 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         }
     }
 
-    /*
-    @PostConstruct
-    public void init() {
-        if (!init) {
-            LOGGER.info("Initializing plugin registry.");
-            this.init0();
-            LOGGER.info("Initializing plugin registry. DONE");
-        } else {
-            LOGGER.warn("Plugin registry has already been initialized.");
-        }
-    }
-    */
-
     public void init() {
         if (workspacePath == null || workspacePath.isEmpty()) {
             LOGGER.error("Plugin registry path is not specified.");
@@ -111,80 +101,108 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                     + workspaceDir.getAbsolutePath());
         }
 
-        LOGGER.info("Loading plugins from {}", workspaceDir.getAbsoluteFile());
-        List<File> subdirectories = getChildren(workspaceDir.getAbsolutePath());
+        loadPlugins(workspaceDir.getAbsolutePath());
+    }
 
-        LOGGER.info("\t{} plugin directories have been found.", subdirectories.size());
-        for(File pluginDir: subdirectories) {
-            loadPlugin(pluginDir.getAbsolutePath());
+    private void loadPlugins(String registryDir) {
+        Path registryPath = FileSystems.getDefault().getPath(registryDir);
+        LOGGER.info("Loading plugins from {}",registryDir);
+
+        try {
+            DirectoryStream<Path> stream = FileUtils.newDirectoryStream(registryPath, ZIP_GLOB);
+            Iterator<Path> archiveIte = stream.iterator();
+
+            if (archiveIte.hasNext()) {
+                archiveIte.forEachRemaining(this::loadPlugin);
+            } else {
+               LOGGER.warn("No plugin has been found in {}", registryDir);
+            }
+
+            init = true;
+        } catch (IOException ioe) {
+            LOGGER.error("An unexpected error occurs", ioe);
         }
-
-        init = true;
     }
 
     /**
-     * Load a plugin from a directory.
+     * Load a plugin from a zip archive.
      *
-     * Plugin structure in the workspace is as follow:
+     * Plugin archive structure must be as follow:
      *  my-plugin-dir/
      *      my-plugin.jar
      *      lib/
      *          dependency01.jar
      *          dependency02.jar
      *
-     * @param pluginDir The directory containing the plugin definition
+     * @param pluginArchivePath The directory containing the plugin definition
      */
-    private void loadPlugin(String pluginDir) {
-        Path pluginDirPath = FileSystems.getDefault().getPath(pluginDir);
-        LOGGER.info("Trying to load plugin from {}", pluginDirPath);
+    private void loadPlugin(Path pluginArchivePath) {
+        LOGGER.info("Loading plugin from {}", pluginArchivePath);
 
-        PluginManifest manifest = readPluginManifest(pluginDirPath);
-        if (manifest != null) {
-            URL [] dependencies = extractPluginDependencies(pluginDirPath);
+        try {
+            // 1_ Extract plugin into a temporary working folder
+            Path workDir = FileSystems.getDefault().getPath(workspacePath, ".work");
+            FileUtils.delete(workDir);
 
-            classLoaderFactory.createPluginClassLoader(manifest.id(), dependencies);
-            Class<?> pluginClass = createPlugin(manifest);
+            FileUtils.unzip(pluginArchivePath.toString(), workDir);
 
-            plugins.put(manifest.id(), new Plugin() {
-                @Override
-                public String id() {
-                    return manifest.id();
+            // 2_ Load plugin from the working folder
+            PluginManifest manifest = readPluginManifest(workDir);
+            if (manifest != null) {
+                URL[] dependencies = extractPluginDependencies(workDir);
+
+                ClassLoader pluginClassLoader = classLoaderFactory.createPluginClassLoader(manifest.id(), dependencies);
+                if (pluginClassLoader != null) {
+                    Class<?> pluginClass = createPlugin(manifest);
+
+                    plugins.put(manifest.id(), new Plugin() {
+                        @Override
+                        public String id() {
+                            return manifest.id();
+                        }
+
+                        @Override
+                        public Class<?> clazz() {
+                            return pluginClass;
+                        }
+
+                        @Override
+                        public PluginType type() {
+                            return PluginType.from(manifest.type());
+                        }
+
+                        @Override
+                        public Path path() {
+                            return workDir;
+                        }
+
+                        @Override
+                        public PluginManifest manifest() {
+                            return manifest;
+                        }
+
+                        @Override
+                        public URL[] dependencies() {
+                            return dependencies;
+                        }
+                    });
+
+                    eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
                 }
-
-                @Override
-                public Class<?> clazz() {
-                    return pluginClass;
-                }
-
-                @Override
-                public PluginType type() {
-                    return PluginType.from(manifest.type());
-                }
-
-                @Override
-                public Path path() {
-                    return pluginDirPath;
-                }
-
-                @Override
-                public PluginManifest manifest() {
-                    return manifest;
-                }
-
-                @Override
-                public URL[] dependencies() {
-                    return dependencies;
-                }
-            });
-
-            eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
+            }
+        } catch (IOException ioe) {
+            LOGGER.error("An unexpected error occurs while loading plugin archive {}", pluginArchivePath, ioe);
         }
     }
 
     private Class<?> createPlugin(PluginManifest pluginManifest) {
         try {
-            return ClassUtils.forName(pluginManifest.plugin(),
+            Class<?> pluginClass = ClassUtils.forName(pluginManifest.plugin(),
                             classLoaderFactory.getPluginClassLoader(pluginManifest.id()));
+
+            LOGGER.debug("Plugin {} has been correctly created", pluginManifest.name());
+
+            return pluginClass;
         } catch (ClassNotFoundException cnfe) {
             LOGGER.error("Unable to create plugin class with name {}", pluginManifest.plugin());
             throw new IllegalArgumentException("Unable to create plugin class with name " + pluginManifest.plugin(), cnfe);
@@ -345,7 +363,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         };
     }
 
-    private List<File> getChildren(String directory) {
+    private List<File> getPluginsArchive(String directory) {
         DirectoryStream.Filter<Path> filter = file -> (Files.isDirectory(file));
 
         List<File> files = new ArrayList<>();
