@@ -16,8 +16,8 @@
 package io.gravitee.plugin.internal;
 
 import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.api.*;
-import io.gravitee.plugin.service.AbstractService;
 import io.gravitee.plugin.utils.FileUtils;
 import io.gravitee.plugin.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
