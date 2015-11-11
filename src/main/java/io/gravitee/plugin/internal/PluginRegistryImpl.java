@@ -49,7 +49,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private final static String PLUGIN_MANIFEST_FILE = "plugin.properties";
 
-    @Value("${plugins.registry.path}")
+    @Value("${plugins.path:${gravitee.home}/plugins}")
     private String workspacePath;
 
     private boolean init = false;
@@ -208,23 +208,6 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             throw new IllegalArgumentException("Unable to create plugin class with name " + pluginManifest.plugin(), cnfe);
         }
     }
-/*
-    private boolean registerPlugin(Plugin plugin) {
-
-        for (PluginHandler pluginHandler : pluginHandlers) {
-            LOGGER.debug("Trying to handle plugin {} with {}", plugin.id(), pluginHandler.getClass().getName());
-            if (pluginHandler.canHandle(plugin)) {
-                pluginHandler.handle(plugin);
-                LOGGER.info("Plugin {} handled by {}", plugin.id(), pluginHandler.getClass().getName());
-                return true;
-            }
-        }
-
-        LOGGER.warn("No Plugin handler found for {} [{}]", plugin.id(), plugin.clazz().getName());
-
-        return false;
-    }
-*/
 
     /**
      * Extract plugin dependencies by reading all jars from plugin directory root path.

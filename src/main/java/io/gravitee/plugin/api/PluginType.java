@@ -22,7 +22,6 @@ public enum PluginType {
 
     POLICY, REPORTER;
 
-
     public static PluginType from(String sType) {
         for(PluginType pluginType : values()) {
             if (pluginType.name().equalsIgnoreCase(sType)) {
