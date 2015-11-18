@@ -26,10 +26,9 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.net.URL;
+import java.net.URLDecoder;
 
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -59,7 +58,7 @@ public class PluginRegistryTest {
     @Test
     public void startWithEmptyWorkspace() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/empty-workspace/");
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
         pluginRegistry.start();
 
         Assert.assertTrue(pluginRegistry.plugins().isEmpty());
@@ -68,7 +67,7 @@ public class PluginRegistryTest {
     @Test
     public void startTwiceWorkspace() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
-        PluginRegistryImpl pluginRegistry = Mockito.spy(new PluginRegistryImpl(dir.getPath()));
+        PluginRegistryImpl pluginRegistry = Mockito.spy(new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8")));
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
         pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
@@ -81,7 +80,7 @@ public class PluginRegistryTest {
     @Test
     public void startWithWorkspace_noJar() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/invalid-workspace-nojar/");
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
         pluginRegistry.start();
 
         Assert.assertTrue(pluginRegistry.plugins().isEmpty());
@@ -90,7 +89,7 @@ public class PluginRegistryTest {
     @Test
     public void startWithValidWorkspace_onePolicyDefstartion() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
         pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
@@ -101,7 +100,7 @@ public class PluginRegistryTest {
     @Test
     public void startWithValidWorkspace_checkPluginDescriptor() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(dir.getPath());
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
         pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
