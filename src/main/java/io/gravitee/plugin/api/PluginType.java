@@ -20,7 +20,7 @@ package io.gravitee.plugin.api;
  */
 public enum PluginType {
 
-    POLICY, REPORTER;
+    POLICY, REPORTER, SERVICE;
 
     public static PluginType from(String sType) {
         for(PluginType pluginType : values()) {
