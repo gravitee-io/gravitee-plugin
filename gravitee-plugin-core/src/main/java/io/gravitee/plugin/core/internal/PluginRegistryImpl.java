@@ -143,7 +143,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             // 1_ Extract plugin into a temporary working folder
             String sPluginFile = pluginArchivePath.toFile().getName();
             sPluginFile = sPluginFile.substring(0, sPluginFile.lastIndexOf(".zip"));
-            Path workDir = FileSystems.getDefault().getPath(workspacePath, sPluginFile, ".work");
+            Path workDir = FileSystems.getDefault().getPath(workspacePath, ".work", sPluginFile);
             FileUtils.delete(workDir);
 
             FileUtils.unzip(pluginArchivePath.toString(), workDir);
