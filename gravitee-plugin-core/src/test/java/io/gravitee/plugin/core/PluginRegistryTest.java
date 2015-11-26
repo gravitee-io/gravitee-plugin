@@ -87,7 +87,7 @@ public class PluginRegistryTest {
     }
 
     @Test
-    public void startWithValidWorkspace_onePolicyDefstartion() throws Exception {
+    public void startWithValidWorkspace_onePolicyDefinition() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
         pluginRegistry.setClassLoaderFactory(classLoaderFactory);
