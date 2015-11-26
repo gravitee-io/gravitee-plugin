@@ -157,39 +157,41 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                 if (pluginClassLoader != null) {
                     Class<?> pluginClass = createPlugin(manifest);
 
-                    plugins.put(manifest.id(), new Plugin() {
-                        @Override
-                        public String id() {
-                            return manifest.id();
-                        }
+                    if (pluginClass != null) {
+                        plugins.put(manifest.id(), new Plugin() {
+                            @Override
+                            public String id() {
+                                return manifest.id();
+                            }
 
-                        @Override
-                        public Class<?> clazz() {
-                            return pluginClass;
-                        }
+                            @Override
+                            public Class<?> clazz() {
+                                return pluginClass;
+                            }
 
-                        @Override
-                        public PluginType type() {
-                            return PluginType.from(manifest.type());
-                        }
+                            @Override
+                            public PluginType type() {
+                                return PluginType.from(manifest.type());
+                            }
 
-                        @Override
-                        public Path path() {
-                            return workDir;
-                        }
+                            @Override
+                            public Path path() {
+                                return workDir;
+                            }
 
-                        @Override
-                        public PluginManifest manifest() {
-                            return manifest;
-                        }
+                            @Override
+                            public PluginManifest manifest() {
+                                return manifest;
+                            }
 
-                        @Override
-                        public URL[] dependencies() {
-                            return dependencies;
-                        }
-                    });
+                            @Override
+                            public URL[] dependencies() {
+                                return dependencies;
+                            }
+                        });
 
-                    eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
+                        eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
+                    }
                 }
             }
         } catch (IOException ioe) {
@@ -206,8 +208,8 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
             return pluginClass;
         } catch (ClassNotFoundException cnfe) {
-            LOGGER.error("Unable to create plugin class with name {}", pluginManifest.plugin());
-            throw new IllegalArgumentException("Unable to create plugin class with name " + pluginManifest.plugin(), cnfe);
+            LOGGER.error("Unable to create plugin class with name {}", pluginManifest.plugin(), cnfe);
+            return null;
         }
     }
 
