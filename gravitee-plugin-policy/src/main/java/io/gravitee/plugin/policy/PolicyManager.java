@@ -15,6 +15,7 @@
  */
 package io.gravitee.plugin.policy;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -24,5 +25,7 @@ public interface PolicyManager {
 
     Collection<PolicyDefinition> getPolicyDefinitions();
 
-    PolicyDefinition getPolicyDefinition(String id);
+    PolicyDefinition getPolicyDefinition(String policy);
+
+    String getPolicyConfiguration(String policy) throws IOException;
 }

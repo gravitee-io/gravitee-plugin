@@ -29,8 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +45,8 @@ import java.util.Map;
 public class PolicyManagerImpl implements PolicyManager, PluginHandler {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(PolicyManagerImpl.class);
+
+    private final static String SCHEMAS_DIRECTORY = "schemas";
 
     @Autowired
     private PluginContextFactory pluginContextFactory;
@@ -121,8 +127,26 @@ public class PolicyManagerImpl implements PolicyManager, PluginHandler {
     }
 
     @Override
-    public PolicyDefinition getPolicyDefinition(String id) {
-        return definitions.get(id);
+    public PolicyDefinition getPolicyDefinition(String policy) {
+        return definitions.get(policy);
+    }
+
+    @Override
+    public String getPolicyConfiguration(String policy) throws IOException {
+        Path policyWorkspace = getPolicyDefinition(policy).plugin().path();
+
+        File[] schemas = policyWorkspace.toFile().listFiles(
+                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+
+        if (schemas.length == 1) {
+            File schemaDir = schemas[0];
+
+            if (schemaDir.listFiles().length > 0) {
+                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+            }
+        }
+
+        return null;
     }
 
     public void setPolicyMethodResolver(PolicyMethodResolver policyMethodResolver) {
