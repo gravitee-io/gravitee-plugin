@@ -16,6 +16,7 @@
 package io.gravitee.plugin.policy;
 
 import io.gravitee.gateway.api.policy.PolicyConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 import java.lang.reflect.Method;
 
@@ -33,4 +34,6 @@ public interface PolicyDefinition {
     Method onRequestMethod();
 
     Method onResponseMethod();
+
+    Plugin plugin();
 }

@@ -99,6 +99,11 @@ public class PolicyManagerImpl implements PolicyManager, PluginHandler {
                     public Method onResponseMethod() {
                         return onResponseMethod;
                     }
+
+                    @Override
+                    public Plugin plugin() {
+                        return plugin;
+                    }
                 };
 
                 definitions.putIfAbsent(plugin.id(), definition);
