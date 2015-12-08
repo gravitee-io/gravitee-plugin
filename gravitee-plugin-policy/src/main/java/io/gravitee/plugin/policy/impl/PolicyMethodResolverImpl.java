@@ -15,9 +15,9 @@
  */
 package io.gravitee.plugin.policy.impl;
 
-import io.gravitee.gateway.api.policy.annotations.OnRequest;
-import io.gravitee.gateway.api.policy.annotations.OnResponse;
 import io.gravitee.plugin.policy.PolicyMethodResolver;
+import io.gravitee.policy.api.annotations.OnRequest;
+import io.gravitee.policy.api.annotations.OnResponse;
 import org.reflections.ReflectionUtils;
 
 import java.lang.annotation.Annotation;

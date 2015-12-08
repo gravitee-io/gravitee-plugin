@@ -36,6 +36,7 @@
     <properties>
         <gravitee-common.version>0.2.0</gravitee-common.version>
         <gravitee-gateway-api.version>0.4.0-SNAPSHOT</gravitee-gateway-api.version>
+        <gravitee-policy-api.version>0.4.0-SNAPSHOT</gravitee-policy-api.version>
 
         <reflections.version>0.9.10</reflections.version>
     </properties>

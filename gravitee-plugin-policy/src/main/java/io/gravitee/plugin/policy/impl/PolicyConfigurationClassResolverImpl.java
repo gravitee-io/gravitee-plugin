@@ -15,8 +15,8 @@
  */
 package io.gravitee.plugin.policy.impl;
 
-import io.gravitee.gateway.api.policy.PolicyConfiguration;
 import io.gravitee.plugin.policy.PolicyConfigurationClassResolver;
+import io.gravitee.policy.api.PolicyConfiguration;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;

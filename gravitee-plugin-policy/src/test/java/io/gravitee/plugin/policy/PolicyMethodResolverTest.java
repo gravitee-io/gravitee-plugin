@@ -17,10 +17,10 @@ package io.gravitee.plugin.policy;
 
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
-import io.gravitee.gateway.api.policy.PolicyChain;
-import io.gravitee.gateway.api.policy.annotations.OnRequest;
-import io.gravitee.gateway.api.policy.annotations.OnResponse;
 import io.gravitee.plugin.policy.impl.PolicyMethodResolverImpl;
+import io.gravitee.policy.api.PolicyChain;
+import io.gravitee.policy.api.annotations.OnRequest;
+import io.gravitee.policy.api.annotations.OnResponse;
 import org.junit.Assert;
 import org.junit.Test;
 

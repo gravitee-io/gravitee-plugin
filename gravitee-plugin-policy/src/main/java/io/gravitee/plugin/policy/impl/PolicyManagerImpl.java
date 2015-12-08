@@ -15,9 +15,6 @@
  */
 package io.gravitee.plugin.policy.impl;
 
-import io.gravitee.gateway.api.policy.PolicyConfiguration;
-import io.gravitee.gateway.api.policy.annotations.OnRequest;
-import io.gravitee.gateway.api.policy.annotations.OnResponse;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.api.PluginHandler;
@@ -25,6 +22,9 @@ import io.gravitee.plugin.policy.PolicyConfigurationClassResolver;
 import io.gravitee.plugin.policy.PolicyDefinition;
 import io.gravitee.plugin.policy.PolicyManager;
 import io.gravitee.plugin.policy.PolicyMethodResolver;
+import io.gravitee.policy.api.PolicyConfiguration;
+import io.gravitee.policy.api.annotations.OnRequest;
+import io.gravitee.policy.api.annotations.OnResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -15,8 +15,8 @@
  */
 package io.gravitee.plugin.policy;
 
-import io.gravitee.gateway.api.policy.PolicyConfiguration;
 import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.policy.api.PolicyConfiguration;
 
 import java.lang.reflect.Method;
 
