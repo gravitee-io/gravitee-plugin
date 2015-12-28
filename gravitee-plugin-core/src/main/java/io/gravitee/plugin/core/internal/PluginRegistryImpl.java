@@ -114,6 +114,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
             if (archiveIte.hasNext()) {
                 archiveIte.forEachRemaining(this::loadPlugin);
+                printPlugins();
             } else {
                LOGGER.warn("No plugin has been found in {}", registryDir);
             }
@@ -122,6 +123,21 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         } catch (IOException ioe) {
             LOGGER.error("An unexpected error occurs", ioe);
         }
+    }
+
+    private void printPlugins() {
+        printPluginByType(PluginType.POLICY);
+        printPluginByType(PluginType.REPORTER);
+        printPluginByType(PluginType.SERVICE);
+    }
+
+    private void printPluginByType(PluginType pluginType) {
+        LOGGER.info("List of available {}: ", pluginType.name().toLowerCase());
+        plugins.values()
+                .stream()
+                .filter(plugin -> pluginType == plugin.type())
+                .forEach(plugin -> LOGGER.info("\t> {} [{}] has been installed",
+                        plugin.id(), plugin.manifest().version()));
     }
 
     /**
