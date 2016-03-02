@@ -20,5 +20,5 @@ package io.gravitee.plugin.core.api;
  */
 public enum PluginEvent {
 
-    DEPLOYED, UNDEPLOYED;
+    DEPLOYED, UNDEPLOYED, ENDED;
 }
