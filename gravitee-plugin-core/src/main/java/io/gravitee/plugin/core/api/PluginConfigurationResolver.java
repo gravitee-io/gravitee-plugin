@@ -15,16 +15,13 @@
  */
 package io.gravitee.plugin.core.api;
 
-import org.springframework.context.ApplicationContext;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
+ * @author GraviteeSource Team
  */
-public interface PluginContextFactory {
+public interface PluginConfigurationResolver {
 
-    ApplicationContext create(PluginConfigurationResolver configurationResolver, Plugin plugin);
-
-    ApplicationContext create(Plugin plugin);
-
-    void remove(Plugin plugin);
+    Set<Class<?>> resolve(Plugin plugin);
 }

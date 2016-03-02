@@ -16,12 +16,10 @@
 package io.gravitee.plugin.core.spring;
 
 import io.gravitee.plugin.core.api.ClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.api.PluginRegistry;
-import io.gravitee.plugin.core.internal.ClassLoaderFactoryImpl;
-import io.gravitee.plugin.core.internal.PluginContextFactoryImpl;
-import io.gravitee.plugin.core.internal.PluginEventListener;
-import io.gravitee.plugin.core.internal.PluginRegistryImpl;
+import io.gravitee.plugin.core.internal.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -49,5 +47,10 @@ public class PluginConfiguration {
     @Bean
     public PluginEventListener pluginEventListener() {
         return new PluginEventListener();
+    }
+
+    @Bean
+    public PluginConfigurationResolver pluginConfigurationResolver() {
+        return new ReflectionBasedPluginConfigurationResolver();
     }
 }

@@ -16,24 +16,19 @@
 package io.gravitee.plugin.core.internal;
 
 import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.api.PluginType;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
 
@@ -52,19 +47,14 @@ public class PluginContextFactoryImpl implements PluginContextFactory, Applicati
 
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private PluginConfigurationResolver defaultPluginConfigurationResolver;
+
     @Override
-    public ApplicationContext create(Plugin plugin) {
+    public ApplicationContext create(PluginConfigurationResolver configurationResolver, Plugin plugin) {
         LOGGER.debug("Create Spring context for plugin: {}", plugin.id());
 
-        Reflections reflections = new Reflections(new ConfigurationBuilder()
-                .addClassLoader(plugin.clazz().getClassLoader())
-                .setUrls(ClasspathHelper.forClass(plugin.clazz(), plugin.clazz().getClassLoader()))
-                .setScanners(new SubTypesScanner(false), new TypeAnnotationsScanner())
-                .filterInputsBy(new FilterBuilder().includePackage(plugin.clazz().getPackage().getName())));
-
-        LOGGER.debug("Looking for @Configuration annotated class in package {}", plugin.clazz().getPackage().getName());
-        Set<Class<?>> configurations =
-                reflections.getTypesAnnotatedWith(Configuration.class);
+        Set<Class<?>> configurations = configurationResolver.resolve(plugin);
 
         AnnotationConfigApplicationContext pluginContext = new AnnotationConfigApplicationContext();
         pluginContext.setClassLoader(plugin.clazz().getClassLoader());
@@ -111,8 +101,8 @@ public class PluginContextFactoryImpl implements PluginContextFactory, Applicati
     }
 
     @Override
-    public ApplicationContext get(Plugin plugin) {
-        return contexts.get(plugin);
+    public ApplicationContext create(Plugin plugin) {
+        return create(defaultPluginConfigurationResolver, plugin);
     }
 
     @Override

@@ -115,6 +115,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             if (archiveIte.hasNext()) {
                 archiveIte.forEachRemaining(this::loadPlugin);
                 printPlugins();
+                eventManager.publishEvent(PluginEvent.ENDED, null);
             } else {
                LOGGER.warn("No plugin has been found in {}", registryDir);
             }
@@ -126,6 +127,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     private void printPlugins() {
+        printPluginByType(PluginType.REPOSITORY);
         printPluginByType(PluginType.POLICY);
         printPluginByType(PluginType.REPORTER);
         printPluginByType(PluginType.SERVICE);
