@@ -39,7 +39,7 @@ public class ReflectionBasedPluginConfigurationResolver implements PluginConfigu
 
     @Override
     public Set<Class<?>> resolve(Plugin plugin) {
-        LOGGER.info("Looking for configurations for plugin {} in package {}", plugin.clazz().getName(),
+        LOGGER.debug("Looking for configurations for plugin {} in package {}", plugin.clazz().getName(),
                 plugin.clazz().getPackage().getName());
 
         Reflections reflections = new Reflections(new ConfigurationBuilder()

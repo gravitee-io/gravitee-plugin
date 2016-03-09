@@ -23,6 +23,8 @@ import java.util.Collection;
  */
 public interface PolicyManager {
 
+    void registerPolicyDefinition(PolicyDefinition policyDefinition);
+
     Collection<PolicyDefinition> getPolicyDefinitions();
 
     PolicyDefinition getPolicyDefinition(String policy);

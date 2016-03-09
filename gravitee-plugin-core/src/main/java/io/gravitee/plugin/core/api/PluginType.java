@@ -29,6 +29,6 @@ public enum PluginType {
             }
         }
 
-        throw new IllegalArgumentException("Invalid PolicyType: " + sType);
+        throw new IllegalArgumentException("Invalid plugin type: " + sType);
     }
 }

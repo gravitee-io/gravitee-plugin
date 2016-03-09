@@ -15,24 +15,11 @@
  */
 package io.gravitee.plugin.policy.impl;
 
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
-import io.gravitee.plugin.policy.PolicyConfigurationClassResolver;
 import io.gravitee.plugin.policy.PolicyDefinition;
 import io.gravitee.plugin.policy.PolicyManager;
-import io.gravitee.plugin.policy.PolicyMethodResolver;
-import io.gravitee.policy.api.PolicyConfiguration;
-import io.gravitee.policy.api.annotations.OnRequest;
-import io.gravitee.policy.api.annotations.OnResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -42,83 +29,15 @@ import java.util.Map;
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public class PolicyManagerImpl implements PolicyManager, PluginHandler {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(PolicyManagerImpl.class);
+public class PolicyManagerImpl implements PolicyManager {
 
     private final static String SCHEMAS_DIRECTORY = "schemas";
-
-    @Autowired
-    private PluginContextFactory pluginContextFactory;
-
-    @Autowired
-    private PolicyMethodResolver policyMethodResolver;
-
-    @Autowired
-    private PolicyConfigurationClassResolver policyConfigurationClassResolver;
 
     private final Map<String, PolicyDefinition> definitions = new HashMap<>();
 
     @Override
-    public boolean canHandle(Plugin plugin) {
-        return ! (policyMethodResolver.resolvePolicyMethods(plugin.clazz()).isEmpty());
-    }
-
-    @Override
-    public void handle(Plugin plugin) {
-        try {
-            final Class<?> policyClass = plugin.clazz();
-            pluginContextFactory.create(plugin);
-
-            Map<Class<? extends Annotation>, Method> methods = policyMethodResolver.resolvePolicyMethods(plugin.clazz());
-
-            final Method onRequestMethod = methods.get(OnRequest.class);
-            final Method onResponseMethod = methods.get(OnResponse.class);
-
-            if (onRequestMethod == null && onResponseMethod == null) {
-                LOGGER.error("No method annotated with @OnRequest or @OnResponse found, skip policy registration for {}", policyClass.getName());
-            } else {
-                final Class<? extends PolicyConfiguration> policyConfiguration = policyConfigurationClassResolver.resolvePolicyConfigurationClass(plugin.clazz());
-
-                PolicyDefinition definition = new PolicyDefinition() {
-                    @Override
-                    public String id() {
-                        return plugin.id();
-                    }
-
-                    @Override
-                    public Class<?> policy() {
-                        return policyClass;
-                    }
-
-                    @Override
-                    public Class<? extends PolicyConfiguration> configuration() {
-                        return policyConfiguration;
-                    }
-
-                    @Override
-                    public Method onRequestMethod() {
-                        return onRequestMethod;
-                    }
-
-                    @Override
-                    public Method onResponseMethod() {
-                        return onResponseMethod;
-                    }
-
-                    @Override
-                    public Plugin plugin() {
-                        return plugin;
-                    }
-                };
-
-                definitions.putIfAbsent(plugin.id(), definition);
-            }
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create reporter instance", iae);
-
-            pluginContextFactory.remove(plugin);
-        }
+    public void registerPolicyDefinition(PolicyDefinition policyDefinition) {
+        definitions.putIfAbsent(policyDefinition.id(), policyDefinition);
     }
 
     @Override
@@ -147,13 +66,5 @@ public class PolicyManagerImpl implements PolicyManager, PluginHandler {
         }
 
         return null;
-    }
-
-    public void setPolicyMethodResolver(PolicyMethodResolver policyMethodResolver) {
-        this.policyMethodResolver = policyMethodResolver;
-    }
-
-    public void setPluginContextFactory(PluginContextFactory pluginContextFactory) {
-        this.pluginContextFactory = pluginContextFactory;
     }
 }

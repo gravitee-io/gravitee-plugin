@@ -53,4 +53,9 @@ public class PluginConfiguration {
     public PluginConfigurationResolver pluginConfigurationResolver() {
         return new ReflectionBasedPluginConfigurationResolver();
     }
+
+    @Bean
+    public static PluginHandlerBeanFactoryPostProcessor pluginHandlerBeanFactoryPostProcessor() {
+        return new PluginHandlerBeanFactoryPostProcessor();
+    }
 }

@@ -80,7 +80,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         if (!init) {
             LOGGER.info("Initializing plugin registry.");
             this.init();
-            LOGGER.info("Initializing plugin registry. DONE");
+            LOGGER.info("Plugins have been loaded and installed.");
         } else {
             LOGGER.warn("Plugin registry has already been initialized.");
         }

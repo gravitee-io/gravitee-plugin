@@ -37,7 +37,7 @@ public class PolicyConfigurationClassResolverImpl implements PolicyConfiguration
 
     @Override
     public Class<? extends PolicyConfiguration> resolvePolicyConfigurationClass(Class<?> policyClass) {
-        LOGGER.info("Looking for a policy configuration class for plugin {} in package {}", policyClass.getName(), policyClass.getPackage().getName());
+        LOGGER.debug("Looking for a policy configuration class for plugin {} in package {}", policyClass.getName(), policyClass.getPackage().getName());
 
         Reflections reflections = new Reflections(new ConfigurationBuilder()
                 .addClassLoader(policyClass.getClassLoader())

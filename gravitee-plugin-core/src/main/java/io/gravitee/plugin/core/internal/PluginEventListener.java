@@ -69,6 +69,7 @@ public class PluginEventListener extends AbstractService implements EventListene
     }
 
     private void deployPlugins(PluginType pluginType) {
+        LOGGER.info("Installing {} plugins...", pluginType.name());
         plugins.stream()
                 .filter(plugin -> pluginType == plugin.type())
                 .forEach(plugin ->

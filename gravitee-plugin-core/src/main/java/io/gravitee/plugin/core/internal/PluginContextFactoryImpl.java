@@ -70,7 +70,7 @@ public class PluginContextFactoryImpl implements PluginContextFactory, Applicati
         pluginContext.setParent(applicationContext);
 
         if (configurations.isEmpty()) {
-            LOGGER.info("\tNo @Configuration annotated class found for plugin {}", plugin.id());
+            LOGGER.debug("\tNo @Configuration annotated class found for plugin {}", plugin.id());
         } else {
             LOGGER.debug("\t{} Spring @Configuration annotated class found for plugin {}", configurations.size(), plugin.id());
             configurations.forEach(pluginContext::register);
