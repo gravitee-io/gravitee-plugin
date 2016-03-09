@@ -33,6 +33,16 @@ public class PolicyPluginConfiguration {
 
     @Bean(name = "reporterPluginHandler")
     public PluginHandler policyPluginHandler() {
+        return policyManagerImpl();
+    }
+
+    @Bean
+    public PolicyManager policyManager() {
+        return policyManagerImpl();
+    }
+
+    @Bean
+    public PolicyManagerImpl policyManagerImpl() {
         return new PolicyManagerImpl();
     }
 
