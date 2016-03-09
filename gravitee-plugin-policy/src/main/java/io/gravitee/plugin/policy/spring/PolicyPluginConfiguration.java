@@ -31,13 +31,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class PolicyPluginConfiguration {
 
-    @Bean(name = "policyPluginHandler")
+    @Bean(name = "reporterPluginHandler")
     public PluginHandler policyPluginHandler() {
-        return policyManager();
-    }
-
-    @Bean
-    public PolicyManagerImpl policyManager() {
         return new PolicyManagerImpl();
     }
 
