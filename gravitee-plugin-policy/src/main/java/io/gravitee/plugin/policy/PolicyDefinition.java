@@ -33,7 +33,11 @@ public interface PolicyDefinition {
 
     Method onRequestMethod();
 
+    Method onRequestContentMethod();
+
     Method onResponseMethod();
+
+    Method onResponseContentMethod();
 
     Plugin plugin();
 }

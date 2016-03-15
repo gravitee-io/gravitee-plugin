@@ -24,7 +24,9 @@ import io.gravitee.plugin.policy.PolicyManager;
 import io.gravitee.plugin.policy.PolicyMethodResolver;
 import io.gravitee.policy.api.PolicyConfiguration;
 import io.gravitee.policy.api.annotations.OnRequest;
+import io.gravitee.policy.api.annotations.OnRequestContent;
 import io.gravitee.policy.api.annotations.OnResponse;
+import io.gravitee.policy.api.annotations.OnResponseContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +70,9 @@ public class PolicyPluginHandler implements PluginHandler {
             Map<Class<? extends Annotation>, Method> methods = policyMethodResolver.resolvePolicyMethods(plugin.clazz());
 
             final Method onRequestMethod = methods.get(OnRequest.class);
+            final Method onRequestContentMethod = methods.get(OnRequestContent.class);
             final Method onResponseMethod = methods.get(OnResponse.class);
+            final Method onResponseContentMethod = methods.get(OnResponseContent.class);
 
             if (onRequestMethod == null && onResponseMethod == null) {
                 LOGGER.error("No method annotated with @OnRequest or @OnResponse found, skip policy registration for {}", policyClass.getName());
@@ -97,8 +101,18 @@ public class PolicyPluginHandler implements PluginHandler {
                     }
 
                     @Override
+                    public Method onRequestContentMethod() {
+                        return onRequestContentMethod;
+                    }
+
+                    @Override
                     public Method onResponseMethod() {
                         return onResponseMethod;
+                    }
+
+                    @Override
+                    public Method onResponseContentMethod() {
+                        return onResponseContentMethod;
                     }
 
                     @Override

@@ -17,7 +17,9 @@ package io.gravitee.plugin.policy.impl;
 
 import io.gravitee.plugin.policy.PolicyMethodResolver;
 import io.gravitee.policy.api.annotations.OnRequest;
+import io.gravitee.policy.api.annotations.OnRequestContent;
 import io.gravitee.policy.api.annotations.OnResponse;
+import io.gravitee.policy.api.annotations.OnResponseContent;
 import org.reflections.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
@@ -35,15 +37,15 @@ import static org.reflections.ReflectionUtils.withModifier;
  */
 public class PolicyMethodResolverImpl implements PolicyMethodResolver {
 
-    private final static Class<? extends Annotation> [] resolvableAnnotations = new Class[]{
-            OnRequest.class, OnResponse.class
+    private final static Class<? extends Annotation> [] RESOLVABLE_ANNOTATIONS = new Class[]{
+            OnRequest.class, OnResponse.class, OnRequestContent.class, OnResponseContent.class
     };
 
     @Override
     public Map<Class<? extends Annotation>, Method> resolvePolicyMethods(Class<?> policyClass) {
         Map<Class<? extends Annotation>, Method> methods = new HashMap<>();
 
-        for(Class<? extends Annotation> annot : resolvableAnnotations) {
+        for(Class<? extends Annotation> annot : RESOLVABLE_ANNOTATIONS) {
             Set<Method> resolved = ReflectionUtils.getMethods(
                     policyClass,
                     withModifier(Modifier.PUBLIC),
