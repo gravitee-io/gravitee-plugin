@@ -74,8 +74,10 @@ public class PolicyPluginHandler implements PluginHandler {
             final Method onResponseMethod = methods.get(OnResponse.class);
             final Method onResponseContentMethod = methods.get(OnResponseContent.class);
 
-            if (onRequestMethod == null && onResponseMethod == null) {
-                LOGGER.error("No method annotated with @OnRequest or @OnResponse found, skip policy registration for {}", policyClass.getName());
+            if (onRequestMethod == null && onResponseMethod == null && onResponseContentMethod == null &&
+                    onRequestContentMethod == null) {
+                LOGGER.error("No method annotated with @OnRequest / @OnResponse / @OnRequestContent / @OnResponseContent" +
+                        " found, skip policy registration for {}", policyClass.getName());
             } else {
                 final Class<? extends PolicyConfiguration> policyConfiguration = policyConfigurationClassResolver.resolvePolicyConfigurationClass(plugin.clazz());
 
