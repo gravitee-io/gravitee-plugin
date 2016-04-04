@@ -15,6 +15,7 @@
  */
 package io.gravitee.plugin.core.internal;
 
+import io.gravitee.plugin.core.api.ClassLoaderFactory;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import org.reflections.Reflections;
@@ -25,6 +26,7 @@ import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Set;
@@ -37,17 +39,26 @@ public class ReflectionBasedPluginConfigurationResolver implements PluginConfigu
 
     private final Logger LOGGER = LoggerFactory.getLogger(ReflectionBasedPluginConfigurationResolver.class);
 
+    @Autowired
+    private ClassLoaderFactory classLoaderFactory;
+
     @Override
     public Set<Class<?>> resolve(Plugin plugin) {
-        LOGGER.debug("Looking for configurations for plugin {} in package {}", plugin.clazz().getName(),
-                plugin.clazz().getPackage().getName());
+        try {
+            Class<?> pluginClass = classLoaderFactory.getOrCreatePluginClassLoader(plugin).loadClass(plugin.clazz());
+            LOGGER.debug("Looking for configurations for plugin {} in package {}", pluginClass.getName(),
+                    pluginClass.getPackage().getName());
 
-        Reflections reflections = new Reflections(new ConfigurationBuilder()
-                .addClassLoader(plugin.clazz().getClassLoader())
-                .setUrls(ClasspathHelper.forClass(plugin.clazz(), plugin.clazz().getClassLoader()))
-                .setScanners(new SubTypesScanner(false), new TypeAnnotationsScanner())
-                .filterInputsBy(new FilterBuilder().includePackage(plugin.clazz().getPackage().getName())));
+            Reflections reflections = new Reflections(new ConfigurationBuilder()
+                    .addClassLoader(pluginClass.getClassLoader())
+                    .setUrls(ClasspathHelper.forClass(pluginClass, pluginClass.getClassLoader()))
+                    .setScanners(new SubTypesScanner(false), new TypeAnnotationsScanner())
+                    .filterInputsBy(new FilterBuilder().includePackage(pluginClass.getPackage().getName())));
 
-        return reflections.getTypesAnnotatedWith(Configuration.class);
+            return reflections.getTypesAnnotatedWith(Configuration.class);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

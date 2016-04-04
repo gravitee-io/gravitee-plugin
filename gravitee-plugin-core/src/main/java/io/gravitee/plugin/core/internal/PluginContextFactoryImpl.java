@@ -15,10 +15,7 @@
  */
 package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginConfigurationResolver;
-import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.api.PluginType;
+import io.gravitee.plugin.core.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -50,14 +47,18 @@ public class PluginContextFactoryImpl implements PluginContextFactory, Applicati
     @Autowired
     private PluginConfigurationResolver defaultPluginConfigurationResolver;
 
+    @Autowired
+    private ClassLoaderFactory classLoaderFactory;
+
     @Override
     public ApplicationContext create(PluginConfigurationResolver configurationResolver, Plugin plugin) {
         LOGGER.debug("Create Spring context for plugin: {}", plugin.id());
 
+        ClassLoader pluginClassloader = classLoaderFactory.getOrCreatePluginClassLoader(plugin);
         Set<Class<?>> configurations = configurationResolver.resolve(plugin);
 
         AnnotationConfigApplicationContext pluginContext = new AnnotationConfigApplicationContext();
-        pluginContext.setClassLoader(plugin.clazz().getClassLoader());
+        pluginContext.setClassLoader(pluginClassloader);
         pluginContext.setEnvironment((ConfigurableEnvironment) applicationContext.getEnvironment());
 
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
@@ -79,15 +80,15 @@ public class PluginContextFactoryImpl implements PluginContextFactory, Applicati
         // Only reporters and services can be inject by Spring
         if (plugin.type() != PluginType.POLICY) {
             BeanDefinition beanDefinition =
-                    BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz().getName()).getBeanDefinition();
+                    BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition();
 
-            LOGGER.debug("\tRegistering a new bean definition for class: {}", plugin.clazz().getName());
-            pluginContext.registerBeanDefinition(plugin.clazz().getName(), beanDefinition);
+            LOGGER.debug("\tRegistering a new bean definition for class: {}", plugin.clazz());
+            pluginContext.registerBeanDefinition(plugin.clazz(), beanDefinition);
         }
 
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
-            Thread.currentThread().setContextClassLoader(plugin.clazz().getClassLoader());
+            Thread.currentThread().setContextClassLoader(pluginClassloader);
             pluginContext.refresh();
         } catch (Exception ex) {
             LOGGER.error("Unable to refresh plugin Spring context", ex);

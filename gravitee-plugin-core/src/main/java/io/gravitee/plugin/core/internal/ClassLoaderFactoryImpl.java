@@ -16,10 +16,10 @@
 package io.gravitee.plugin.core.internal;
 
 import io.gravitee.plugin.core.api.ClassLoaderFactory;
+import io.gravitee.plugin.core.api.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,21 +31,21 @@ public class ClassLoaderFactoryImpl implements ClassLoaderFactory {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(ClassLoaderFactoryImpl.class);
 
-    private final Map<String, ClassLoader> pluginClassLoaderCache = new HashMap<>();
+    private final Map<String, URLClassLoader> pluginClassLoaderCache = new HashMap<>();
 
     @Override
-    public ClassLoader createPluginClassLoader(String pluginId, URL[] urls) {
-        ClassLoader cl;
+    public URLClassLoader getOrCreatePluginClassLoader(Plugin plugin, ClassLoader parent) {
+        URLClassLoader cl;
 
         try {
-            cl = pluginClassLoaderCache.get(pluginId);
+            cl = pluginClassLoaderCache.get(plugin.id());
             if (null == cl)  {
-                cl = new URLClassLoader(urls, ClassLoaderFactoryImpl.class.getClassLoader());
-                pluginClassLoaderCache.put(pluginId, cl);
+                cl = new URLClassLoader(plugin.dependencies(), parent);
+                pluginClassLoaderCache.put(plugin.id(), cl);
             }
 
             LOGGER.debug("Created plugin ClassLoader for {} with classpath {}",
-                    pluginId, urls);
+                    plugin.id(), plugin.dependencies());
 
             return cl;
         }
@@ -53,17 +53,5 @@ public class ClassLoaderFactoryImpl implements ClassLoaderFactory {
             LOGGER.error("Unexpected error while creating plugin classloader", t);
             return null;
         }
-    }
-
-    @Override
-    public ClassLoader getPluginClassLoader(String pluginId) {
-        return pluginClassLoaderCache.get(pluginId);
-    }
-
-    @Override
-    public void removePluginClassLoader(String pluginId) {
-        pluginClassLoaderCache.remove(pluginId);
-        LOGGER.debug("ClassLoader for plugin {} has been removed from cache",
-                pluginId);
     }
 }

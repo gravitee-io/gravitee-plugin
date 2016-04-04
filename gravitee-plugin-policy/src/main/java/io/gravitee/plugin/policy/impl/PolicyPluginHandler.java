@@ -16,8 +16,8 @@
 package io.gravitee.plugin.policy.impl;
 
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.api.PluginHandler;
+import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.policy.PolicyConfigurationClassResolver;
 import io.gravitee.plugin.policy.PolicyDefinition;
 import io.gravitee.plugin.policy.PolicyManager;
@@ -30,9 +30,12 @@ import io.gravitee.policy.api.annotations.OnResponseContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ClassUtils;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.URLClassLoader;
 import java.util.Map;
 
 /**
@@ -42,9 +45,6 @@ import java.util.Map;
 public class PolicyPluginHandler implements PluginHandler {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(PolicyPluginHandler.class);
-
-    @Autowired
-    private PluginContextFactory pluginContextFactory;
 
     @Autowired
     private PolicyMethodResolver policyMethodResolver;
@@ -57,29 +57,31 @@ public class PolicyPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return ! (policyMethodResolver.resolvePolicyMethods(plugin.clazz()).isEmpty());
+        return plugin.type() == PluginType.POLICY;
     }
 
     @Override
     public void handle(Plugin plugin) {
+        URLClassLoader policyClassLoader = null;
         try {
-            final Class<?> policyClass = plugin.clazz();
-            LOGGER.info("Register a new policy: {} [{}]", plugin.id(), policyClass.getName());
-            pluginContextFactory.create(plugin);
+            policyClassLoader = new URLClassLoader(plugin.dependencies(),
+                    this.getClass().getClassLoader());
 
-            Map<Class<? extends Annotation>, Method> methods = policyMethodResolver.resolvePolicyMethods(plugin.clazz());
+            Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), policyClassLoader);
+            LOGGER.info("Register a new policy: {} [{}]", plugin.id(), pluginClass.getName());
+
+            Map<Class<? extends Annotation>, Method> methods = policyMethodResolver.resolvePolicyMethods(pluginClass);
 
             final Method onRequestMethod = methods.get(OnRequest.class);
             final Method onRequestContentMethod = methods.get(OnRequestContent.class);
             final Method onResponseMethod = methods.get(OnResponse.class);
             final Method onResponseContentMethod = methods.get(OnResponseContent.class);
 
-            if (onRequestMethod == null && onResponseMethod == null && onResponseContentMethod == null &&
-                    onRequestContentMethod == null) {
+            if (methods.isEmpty()) {
                 LOGGER.error("No method annotated with @OnRequest / @OnResponse / @OnRequestContent / @OnResponseContent" +
-                        " found, skip policy registration for {}", policyClass.getName());
+                        " found, skip policy plugin registration for {}", pluginClass.getName());
             } else {
-                final Class<? extends PolicyConfiguration> policyConfiguration = policyConfigurationClassResolver.resolvePolicyConfigurationClass(plugin.clazz());
+                final Class<? extends PolicyConfiguration> policyConfiguration = policyConfigurationClassResolver.resolvePolicyConfigurationClass(pluginClass);
 
                 PolicyDefinition definition = new PolicyDefinition() {
                     @Override
@@ -89,7 +91,7 @@ public class PolicyPluginHandler implements PluginHandler {
 
                     @Override
                     public Class<?> policy() {
-                        return policyClass;
+                        return pluginClass;
                     }
 
                     @Override
@@ -127,16 +129,17 @@ public class PolicyPluginHandler implements PluginHandler {
             }
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create reporter instance", iae);
-
-            pluginContextFactory.remove(plugin);
+        } finally {
+            if (policyClassLoader != null) {
+                try {
+                    policyClassLoader.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 
     public void setPolicyMethodResolver(PolicyMethodResolver policyMethodResolver) {
         this.policyMethodResolver = policyMethodResolver;
-    }
-
-    public void setPluginContextFactory(PluginContextFactory pluginContextFactory) {
-        this.pluginContextFactory = pluginContextFactory;
     }
 }

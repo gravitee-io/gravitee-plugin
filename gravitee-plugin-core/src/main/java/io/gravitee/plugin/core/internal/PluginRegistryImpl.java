@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.ClassUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,9 +54,6 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     private boolean init = false;
 
     private Map<String, Plugin> plugins = new HashMap<>();
-
-    @Autowired
-    private ClassLoaderFactory classLoaderFactory;
 
     @Autowired
     private EventManager eventManager;
@@ -117,7 +113,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                 printPlugins();
                 eventManager.publishEvent(PluginEvent.ENDED, null);
             } else {
-               LOGGER.warn("No plugin has been found in {}", registryDir);
+                LOGGER.warn("No plugin has been found in {}", registryDir);
             }
 
             init = true;
@@ -171,63 +167,42 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             if (manifest != null) {
                 URL[] dependencies = extractPluginDependencies(workDir);
 
-                ClassLoader pluginClassLoader = classLoaderFactory.createPluginClassLoader(manifest.id(), dependencies);
-                if (pluginClassLoader != null) {
-                    Class<?> pluginClass = createPlugin(manifest);
-
-                    if (pluginClass != null) {
-                        plugins.put(manifest.id(), new Plugin() {
-                            @Override
-                            public String id() {
-                                return manifest.id();
-                            }
-
-                            @Override
-                            public Class<?> clazz() {
-                                return pluginClass;
-                            }
-
-                            @Override
-                            public PluginType type() {
-                                return PluginType.from(manifest.type());
-                            }
-
-                            @Override
-                            public Path path() {
-                                return workDir;
-                            }
-
-                            @Override
-                            public PluginManifest manifest() {
-                                return manifest;
-                            }
-
-                            @Override
-                            public URL[] dependencies() {
-                                return dependencies;
-                            }
-                        });
-
-                        eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
+                plugins.put(manifest.id(), new Plugin() {
+                    @Override
+                    public String id() {
+                        return manifest.id();
                     }
-                }
+
+                    @Override
+                    public String clazz() {
+                        return manifest.plugin();
+                    }
+
+                    @Override
+                    public PluginType type() {
+                        return PluginType.from(manifest.type());
+                    }
+
+                    @Override
+                    public Path path() {
+                        return workDir;
+                    }
+
+                    @Override
+                    public PluginManifest manifest() {
+                        return manifest;
+                    }
+
+                    @Override
+                    public URL[] dependencies() {
+                        return dependencies;
+                    }
+                });
+
+                eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
             }
         } catch (IOException ioe) {
             LOGGER.error("An unexpected error occurs while loading plugin archive {}", pluginArchivePath, ioe);
-        }
-    }
-
-    private Class<?> createPlugin(PluginManifest pluginManifest) {
-        try {
-            Class<?> pluginClass = ClassUtils.forName(pluginManifest.plugin(),
-                            classLoaderFactory.getPluginClassLoader(pluginManifest.id()));
-
-            LOGGER.debug("Plugin {} has been correctly created", pluginManifest.name());
-
-            return pluginClass;
-        } catch (ClassNotFoundException cnfe) {
-            LOGGER.error("Unable to create plugin class with name {}", pluginManifest.plugin(), cnfe);
-            return null;
         }
     }
 
@@ -396,10 +371,6 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                 .stream()
                 .filter(pluginContext -> pluginContext.type() == type)
                 .collect(Collectors.toSet());
-    }
-
-    public void setClassLoaderFactory(ClassLoaderFactory classLoaderFactory) {
-        this.classLoaderFactory = classLoaderFactory;
     }
 
     public void setEventManager(EventManager eventManager) {

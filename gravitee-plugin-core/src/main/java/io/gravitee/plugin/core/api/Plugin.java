@@ -31,7 +31,7 @@ public interface Plugin {
     /**
      * Plugin class.
      */
-    Class<?> clazz();
+    String clazz();
 
     /**
      * Plugin type

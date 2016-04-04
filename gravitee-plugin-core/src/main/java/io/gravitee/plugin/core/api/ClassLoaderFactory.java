@@ -15,16 +15,14 @@
  */
 package io.gravitee.plugin.core.api;
 
-import java.net.URL;
-
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
 public interface ClassLoaderFactory {
 
-    ClassLoader createPluginClassLoader(String pluginId, URL[] jars);
+    default ClassLoader getOrCreatePluginClassLoader(Plugin plugin) {
+      return getOrCreatePluginClassLoader(plugin, ClassLoaderFactory.class.getClassLoader());
+    }
 
-    ClassLoader getPluginClassLoader(String pluginId);
-
-    void removePluginClassLoader(String pluginId);
+    ClassLoader getOrCreatePluginClassLoader(Plugin plugin, ClassLoader parent);
 }
