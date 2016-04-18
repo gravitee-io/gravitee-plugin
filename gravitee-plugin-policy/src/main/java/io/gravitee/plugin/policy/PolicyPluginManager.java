@@ -21,13 +21,13 @@ import java.util.Collection;
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PolicyManager {
+public interface PolicyPluginManager {
 
-    void registerPolicyDefinition(PolicyDefinition policyDefinition);
+    void register(Policy policy);
 
-    Collection<PolicyDefinition> getPolicyDefinitions();
+    Collection<Policy> findAll();
 
-    PolicyDefinition getPolicyDefinition(String policy);
+    Policy get(String policy);
 
     String getPolicyConfiguration(String policy) throws IOException;
 }

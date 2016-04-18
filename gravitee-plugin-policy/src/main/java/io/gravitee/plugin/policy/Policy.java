@@ -16,28 +16,18 @@
 package io.gravitee.plugin.policy;
 
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.policy.api.PolicyConfiguration;
-
-import java.lang.reflect.Method;
+import io.gravitee.plugin.core.api.PluginType;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david at gravitee.io)
+ * @author GraviteeSource Team
  */
-public interface PolicyDefinition {
-
-    String id();
+public interface Policy extends Plugin {
 
     Class<?> policy();
 
-    Class<? extends PolicyConfiguration> configuration();
-
-    Method onRequestMethod();
-
-    Method onRequestContentMethod();
-
-    Method onResponseMethod();
-
-    Method onResponseContentMethod();
-
-    Plugin plugin();
+    @Override
+    default PluginType type() {
+        return PluginType.POLICY;
+    }
 }

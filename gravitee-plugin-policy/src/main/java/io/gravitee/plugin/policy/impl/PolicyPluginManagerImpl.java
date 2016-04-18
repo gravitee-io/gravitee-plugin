@@ -15,8 +15,8 @@
  */
 package io.gravitee.plugin.policy.impl;
 
-import io.gravitee.plugin.policy.PolicyDefinition;
-import io.gravitee.plugin.policy.PolicyManager;
+import io.gravitee.plugin.policy.Policy;
+import io.gravitee.plugin.policy.PolicyPluginManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,30 +29,30 @@ import java.util.Map;
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public class PolicyManagerImpl implements PolicyManager {
+public class PolicyPluginManagerImpl implements PolicyPluginManager {
 
     private final static String SCHEMAS_DIRECTORY = "schemas";
 
-    private final Map<String, PolicyDefinition> definitions = new HashMap<>();
+    private final Map<String, Policy> definitions = new HashMap<>();
 
     @Override
-    public void registerPolicyDefinition(PolicyDefinition policyDefinition) {
-        definitions.putIfAbsent(policyDefinition.id(), policyDefinition);
+    public void register(Policy policy) {
+        definitions.putIfAbsent(policy.id(), policy);
     }
 
     @Override
-    public Collection<PolicyDefinition> getPolicyDefinitions() {
+    public Collection<Policy> findAll() {
         return definitions.values();
     }
 
     @Override
-    public PolicyDefinition getPolicyDefinition(String policy) {
+    public Policy get(String policy) {
         return definitions.get(policy);
     }
 
     @Override
     public String getPolicyConfiguration(String policy) throws IOException {
-        Path policyWorkspace = getPolicyDefinition(policy).plugin().path();
+        Path policyWorkspace = get(policy).path();
 
         File[] schemas = policyWorkspace.toFile().listFiles(
                 pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));

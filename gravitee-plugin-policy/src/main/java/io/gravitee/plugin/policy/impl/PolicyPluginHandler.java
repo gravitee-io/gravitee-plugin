@@ -18,25 +18,17 @@ package io.gravitee.plugin.policy.impl;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
+import io.gravitee.plugin.policy.Policy;
 import io.gravitee.plugin.policy.PolicyConfigurationClassResolver;
-import io.gravitee.plugin.policy.PolicyDefinition;
-import io.gravitee.plugin.policy.PolicyManager;
+import io.gravitee.plugin.policy.PolicyPluginManager;
 import io.gravitee.plugin.policy.PolicyMethodResolver;
-import io.gravitee.policy.api.PolicyConfiguration;
-import io.gravitee.policy.api.annotations.OnRequest;
-import io.gravitee.policy.api.annotations.OnRequestContent;
-import io.gravitee.policy.api.annotations.OnResponse;
-import io.gravitee.policy.api.annotations.OnResponseContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ClassUtils;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.net.URLClassLoader;
-import java.util.Map;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -53,7 +45,7 @@ public class PolicyPluginHandler implements PluginHandler {
     private PolicyConfigurationClassResolver policyConfigurationClassResolver;
 
     @Autowired
-    private PolicyManager policyManager;
+    private PolicyPluginManager policyPluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -70,6 +62,7 @@ public class PolicyPluginHandler implements PluginHandler {
             Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), policyClassLoader);
             LOGGER.info("Register a new policy: {} [{}]", plugin.id(), pluginClass.getName());
 
+            /*
             Map<Class<? extends Annotation>, Method> methods = policyMethodResolver.resolvePolicyMethods(pluginClass);
 
             final Method onRequestMethod = methods.get(OnRequest.class);
@@ -81,52 +74,14 @@ public class PolicyPluginHandler implements PluginHandler {
                 LOGGER.error("No method annotated with @OnRequest / @OnResponse / @OnRequestContent / @OnResponseContent" +
                         " found, skip policy plugin registration for {}", pluginClass.getName());
             } else {
-                final Class<? extends PolicyConfiguration> policyConfiguration = policyConfigurationClassResolver.resolvePolicyConfigurationClass(pluginClass);
 
-                PolicyDefinition definition = new PolicyDefinition() {
-                    @Override
-                    public String id() {
-                        return plugin.id();
-                    }
 
-                    @Override
-                    public Class<?> policy() {
-                        return pluginClass;
-                    }
+            */
+            //    final Class<? extends PolicyConfiguration> policyConfiguration = policyConfigurationClassResolver.resolvePolicyConfigurationClass(pluginClass);
 
-                    @Override
-                    public Class<? extends PolicyConfiguration> configuration() {
-                        return policyConfiguration;
-                    }
+                Policy policy = new PolicyImpl(plugin, pluginClass);
 
-                    @Override
-                    public Method onRequestMethod() {
-                        return onRequestMethod;
-                    }
-
-                    @Override
-                    public Method onRequestContentMethod() {
-                        return onRequestContentMethod;
-                    }
-
-                    @Override
-                    public Method onResponseMethod() {
-                        return onResponseMethod;
-                    }
-
-                    @Override
-                    public Method onResponseContentMethod() {
-                        return onResponseContentMethod;
-                    }
-
-                    @Override
-                    public Plugin plugin() {
-                        return plugin;
-                    }
-                };
-
-                policyManager.registerPolicyDefinition(definition);
-            }
+                policyPluginManager.register(policy);
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create reporter instance", iae);
         } finally {
