@@ -15,16 +15,28 @@
  */
 package io.gravitee.plugin.core.api;
 
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
+
+import java.util.Set;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david at gravitee.io)
+ * @author GraviteeSource Team
  */
-public interface PluginContextFactory {
+public interface PluginContextConfigurer {
 
-    ApplicationContext create(PluginContextConfigurer pluginContextConfigurer);
+    Plugin plugin();
 
-    ApplicationContext create(Plugin plugin);
+    ClassLoader classLoader();
 
-    void remove(Plugin plugin);
+    Environment environment();
+
+    ConfigurableApplicationContext applicationContext();
+
+    Set<Class<?>> configurations();
+
+    void registerBeans();
+
+    void registerBeanFactoryPostProcessor();
 }

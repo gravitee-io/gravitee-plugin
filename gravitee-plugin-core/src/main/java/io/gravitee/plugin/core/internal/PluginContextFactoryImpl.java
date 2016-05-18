@@ -15,107 +15,74 @@
  */
 package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginContextConfigurer;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david at gravitee.io)
+ * @author GraviteeSource Team
  */
 public class PluginContextFactoryImpl implements PluginContextFactory, ApplicationContextAware {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(PluginContextFactoryImpl.class);
 
-    private final Map<Plugin, ApplicationContext> contexts = new HashMap<>();
+    private final Map<Plugin, ConfigurableApplicationContext> pluginContexts = new HashMap<>();
 
-    private ApplicationContext applicationContext;
-
-    @Autowired
-    private PluginConfigurationResolver defaultPluginConfigurationResolver;
-
-    @Autowired
-    private ClassLoaderFactory classLoaderFactory;
+    private ApplicationContext containerContext;
 
     @Override
-    public ApplicationContext create(PluginConfigurationResolver configurationResolver, Plugin plugin) {
-        LOGGER.debug("Create Spring context for plugin: {}", plugin.id());
+    public ApplicationContext create(PluginContextConfigurer pluginContextConfigurer) {
+        // Autowire configurer bean
+        containerContext.getAutowireCapableBeanFactory().autowireBean(pluginContextConfigurer);
 
-        ClassLoader pluginClassloader = classLoaderFactory.getOrCreatePluginClassLoader(plugin);
-        Set<Class<?>> configurations = configurationResolver.resolve(plugin);
+        Plugin plugin = pluginContextConfigurer.plugin();
+        LOGGER.debug("Create context for plugin: {}", plugin.id());
 
-        AnnotationConfigApplicationContext pluginContext = new AnnotationConfigApplicationContext();
-        pluginContext.setClassLoader(pluginClassloader);
-        pluginContext.setEnvironment((ConfigurableEnvironment) applicationContext.getEnvironment());
+        ConfigurableApplicationContext pluginContext = pluginContextConfigurer.applicationContext();
+        pluginContextConfigurer.registerBeanFactoryPostProcessor();
+        pluginContextConfigurer.registerBeans();
 
-        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
-        configurer.setIgnoreUnresolvablePlaceholders(true);
-        configurer.setEnvironment(applicationContext.getEnvironment());
-        pluginContext.addBeanFactoryPostProcessor(configurer);
-
-        // Copy bean from parent context to plugin context
-//        EventManager eventManager = applicationContext.getBean(EventManager.class);
-        pluginContext.setParent(applicationContext);
-
-        if (configurations.isEmpty()) {
-            LOGGER.debug("\tNo @Configuration annotated class found for plugin {}", plugin.id());
-        } else {
-            LOGGER.debug("\t{} Spring @Configuration annotated class found for plugin {}", configurations.size(), plugin.id());
-            configurations.forEach(pluginContext::register);
-        }
-
-        // Only reporters and services can be inject by Spring
-        if (plugin.type() != PluginType.POLICY) {
-            BeanDefinition beanDefinition =
-                    BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition();
-
-            LOGGER.debug("\tRegistering a new bean definition for class: {}", plugin.clazz());
-            pluginContext.registerBeanDefinition(plugin.clazz(), beanDefinition);
-        }
-
-        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+        ClassLoader pluginClassLoader = pluginContextConfigurer.classLoader();
+        ClassLoader containerClassLoader = Thread.currentThread().getContextClassLoader();
         try {
-            Thread.currentThread().setContextClassLoader(pluginClassloader);
+            Thread.currentThread().setContextClassLoader(pluginClassLoader);
             pluginContext.refresh();
         } catch (Exception ex) {
-            LOGGER.error("Unable to refresh plugin Spring context", ex);
+            LOGGER.error("Unable to refresh plugin context", ex);
         } finally {
-            Thread.currentThread().setContextClassLoader(tccl);
+            Thread.currentThread().setContextClassLoader(containerClassLoader);
         }
 
-        contexts.putIfAbsent(plugin, pluginContext);
+        pluginContexts.putIfAbsent(plugin, pluginContext);
 
         return pluginContext;
     }
 
     @Override
     public ApplicationContext create(Plugin plugin) {
-        return create(defaultPluginConfigurationResolver, plugin);
+        return create(new AnnotationBasedPluginContextConfigurer(plugin));
     }
 
     @Override
     public void remove(Plugin plugin) {
-        ApplicationContext ctx =  contexts.remove(plugin);
+        ConfigurableApplicationContext ctx = pluginContexts.remove(plugin);
         if (ctx != null) {
-            ((ConfigurableApplicationContext)ctx).close();
+            ctx.close();
         }
     }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+        this.containerContext = applicationContext;
     }
 }

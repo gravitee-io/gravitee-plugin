@@ -63,6 +63,7 @@ public class PluginEventListener extends AbstractService implements EventListene
     private void deployPlugins() {
         // Plugins loading should be re-ordered to manage inter-dependencies
         deployPlugins(PluginType.REPOSITORY);
+        deployPlugins(PluginType.IDENTITY_PROVIDER);
         deployPlugins(PluginType.POLICY);
         deployPlugins(PluginType.SERVICE);
         deployPlugins(PluginType.REPORTER);

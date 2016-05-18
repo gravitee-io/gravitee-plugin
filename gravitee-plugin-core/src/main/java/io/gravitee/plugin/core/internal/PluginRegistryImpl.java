@@ -124,6 +124,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private void printPlugins() {
         printPluginByType(PluginType.REPOSITORY);
+        printPluginByType(PluginType.IDENTITY_PROVIDER);
         printPluginByType(PluginType.POLICY);
         printPluginByType(PluginType.REPORTER);
         printPluginByType(PluginType.SERVICE);
