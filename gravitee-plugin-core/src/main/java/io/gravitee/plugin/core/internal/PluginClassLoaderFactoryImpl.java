@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy.impl;
+package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.policy.Policy;
-import io.gravitee.plugin.policy.PolicyClassLoaderFactory;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginClassLoader;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,21 +27,23 @@ import java.net.URLClassLoader;
  * @author David BRASSELY (david at gravitee.io)
  * @author GraviteeSource Team
  */
-public class PolicyClassLoaderFactoryImpl implements PolicyClassLoaderFactory {
+public class PluginClassLoaderFactoryImpl<T extends Plugin> implements PluginClassLoaderFactory<T> {
 
-    protected final Logger LOGGER = LoggerFactory.getLogger(PolicyClassLoaderFactoryImpl.class);
+    protected final Logger LOGGER = LoggerFactory.getLogger(PluginClassLoaderFactoryImpl.class);
 
     @Override
-    public ClassLoader create(Policy policy, ClassLoader parent) {
-        try {
-            URLClassLoader cl = new URLClassLoader(policy.dependencies(), parent);
+    public PluginClassLoader getOrCreateClassLoader(T plugin, ClassLoader parent) {
+        PluginClassLoader cl;
 
-            LOGGER.debug("Created policy classloader for {} with classpath {}",
-                    policy.id(), policy.dependencies());
+        try {
+            cl = new PluginClassLoader(URLClassLoader.newInstance(plugin.dependencies(), parent));
+
+            LOGGER.debug("Created plugin classLoader for {} with classpath {}",
+                    plugin.id(), plugin.dependencies());
 
             return cl;
         } catch (Throwable t) {
-            LOGGER.error("Unexpected error while creating policy classloader", t);
+            LOGGER.error("Unexpected error while creating plugin classloader", t);
             return null;
         }
     }

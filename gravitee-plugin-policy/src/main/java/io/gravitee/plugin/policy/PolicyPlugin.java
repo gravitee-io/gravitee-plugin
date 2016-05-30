@@ -15,16 +15,26 @@
  */
 package io.gravitee.plugin.policy;
 
-import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.ConfigurablePlugin;
 import io.gravitee.plugin.core.api.PluginType;
+import io.gravitee.policy.api.PolicyConfiguration;
+import io.gravitee.policy.api.PolicyContext;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
  * @author GraviteeSource Team
  */
-public interface Policy extends Plugin {
+public interface PolicyPlugin<C extends PolicyConfiguration> extends ConfigurablePlugin<C> {
 
     Class<?> policy();
+
+    Class<? extends PolicyContext> context();
+
+    Map<Class<? extends Annotation>, Method> methods();
 
     @Override
     default PluginType type() {

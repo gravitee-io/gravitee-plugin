@@ -42,7 +42,7 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
     private PluginConfigurationResolver pluginConfigurationResolver;
 
     @Autowired
-    private ClassLoaderFactory classLoaderFactory;
+    private PluginClassLoaderFactory pluginClassLoaderFactory;
 
     @Autowired
     private ApplicationContext containerContext;
@@ -62,7 +62,7 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
 
     @Override
     public ClassLoader classLoader() {
-        return classLoaderFactory.getOrCreatePluginClassLoader(plugin);
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin);
     }
 
     @Override

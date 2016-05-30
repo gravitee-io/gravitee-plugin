@@ -16,11 +16,12 @@
 package io.gravitee.plugin.core.api;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david at gravitee.io)
+ * @author GraviteeSource Team
  */
 public enum PluginType {
 
-    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER;
+    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE;
 
     public static PluginType from(String sType) {
         for(PluginType pluginType : values()) {

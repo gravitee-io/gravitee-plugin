@@ -15,7 +15,7 @@
  */
 package io.gravitee.plugin.core.spring;
 
-import io.gravitee.plugin.core.api.ClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.api.PluginRegistry;
@@ -34,9 +34,9 @@ public class PluginConfiguration {
         return new PluginRegistryImpl();
     }
 
-    @Bean
-    public ClassLoaderFactory classLoaderFactory() {
-        return new ClassLoaderFactoryImpl();
+    @Bean(name = "pluginClassLoaderFactory")
+    public PluginClassLoaderFactory classLoaderFactory() {
+        return new CachedPluginClassLoaderFactory();
     }
 
     @Bean

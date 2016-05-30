@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy;
+package io.gravitee.plugin.resource;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Map;
+import io.gravitee.plugin.core.api.PluginClassLoader;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-public interface PolicyMethodResolver {
+public interface ResourceClassLoaderFactory extends PluginClassLoaderFactory<ResourcePlugin> {
 
-    Map<Class<? extends Annotation>, Method> resolvePolicyMethods(Class<?> policyClass);
+    @Override
+    default PluginClassLoader getOrCreateClassLoader(ResourcePlugin resourcePlugin) {
+        return getOrCreateClassLoader(resourcePlugin, resourcePlugin.getClass().getClassLoader());
+    }
 }

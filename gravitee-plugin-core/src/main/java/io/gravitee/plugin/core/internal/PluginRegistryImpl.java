@@ -123,11 +123,9 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     private void printPlugins() {
-        printPluginByType(PluginType.REPOSITORY);
-        printPluginByType(PluginType.IDENTITY_PROVIDER);
-        printPluginByType(PluginType.POLICY);
-        printPluginByType(PluginType.REPORTER);
-        printPluginByType(PluginType.SERVICE);
+        for (PluginType pluginType : PluginType.values()) {
+            printPluginByType(pluginType);
+        }
     }
 
     private void printPluginByType(PluginType pluginType) {
@@ -135,7 +133,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         plugins.values()
                 .stream()
                 .filter(plugin -> pluginType == plugin.type())
-                .forEach(plugin -> LOGGER.info("\t> {} [{}] has been installed",
+                .forEach(plugin -> LOGGER.info("\t> {} [{}] has been loaded",
                         plugin.id(), plugin.manifest().version()));
     }
 
