@@ -37,12 +37,14 @@
         <gravitee-common.version>0.9.0</gravitee-common.version>
         <gravitee-gateway-api.version>0.10.0</gravitee-gateway-api.version>
         <gravitee-policy-api.version>0.8.0</gravitee-policy-api.version>
+        <gravitee-resource-api.version>0.1.0-SNAPSHOT</gravitee-resource-api.version>
         <reflections.version>0.9.10</reflections.version>
     </properties>
 
     <modules>
         <module>gravitee-plugin-core</module>
         <module>gravitee-plugin-policy</module>
+        <module>gravitee-plugin-resource</module>
     </modules>
 
     <dependencyManagement>
@@ -57,6 +59,12 @@
                 <groupId>io.gravitee.policy</groupId>
                 <artifactId>gravitee-policy-api</artifactId>
                 <version>${gravitee-policy-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.resource</groupId>
+                <artifactId>gravitee-resource-api</artifactId>
+                <version>${gravitee-resource-api.version}</version>
             </dependency>
 
             <dependency>

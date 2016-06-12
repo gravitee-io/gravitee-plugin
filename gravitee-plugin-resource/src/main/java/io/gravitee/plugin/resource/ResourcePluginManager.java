@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy;
+package io.gravitee.plugin.resource;
 
-import io.gravitee.plugin.core.api.PluginClassLoader;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import java.io.IOException;
+import java.util.Collection;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
  * @author GraviteeSource Team
  */
-public interface PolicyClassLoaderFactory extends PluginClassLoaderFactory<PolicyPlugin> {
+public interface ResourcePluginManager {
 
-    @Override
-    default PluginClassLoader getOrCreateClassLoader(PolicyPlugin policyPlugin) {
-        return getOrCreateClassLoader(policyPlugin, policyPlugin.getClass().getClassLoader());
-    }
+    void register(ResourcePlugin resourcePlugin);
+
+    Collection<ResourcePlugin> findAll();
+
+    ResourcePlugin get(String resource);
+
+    String getConfiguration(String resource) throws IOException;
 }

@@ -16,13 +16,9 @@
 package io.gravitee.plugin.policy.spring;
 
 import io.gravitee.plugin.policy.PolicyClassLoaderFactory;
-import io.gravitee.plugin.policy.PolicyConfigurationClassResolver;
 import io.gravitee.plugin.policy.PolicyPluginManager;
-import io.gravitee.plugin.policy.PolicyMethodResolver;
-import io.gravitee.plugin.policy.impl.PolicyClassLoaderFactoryImpl;
-import io.gravitee.plugin.policy.impl.PolicyConfigurationClassResolverImpl;
-import io.gravitee.plugin.policy.impl.PolicyPluginManagerImpl;
-import io.gravitee.plugin.policy.impl.PolicyMethodResolverImpl;
+import io.gravitee.plugin.policy.internal.PolicyClassLoaderFactoryImpl;
+import io.gravitee.plugin.policy.internal.PolicyPluginManagerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,16 +31,6 @@ public class PolicyPluginConfiguration {
     @Bean
     public PolicyPluginManager policyManager() {
         return new PolicyPluginManagerImpl();
-    }
-
-    @Bean
-    public PolicyMethodResolver policyMethodResolver() {
-        return new PolicyMethodResolverImpl();
-    }
-
-    @Bean
-    public PolicyConfigurationClassResolver policyConfigurationClassResolver() {
-        return new PolicyConfigurationClassResolverImpl();
     }
 
     @Bean

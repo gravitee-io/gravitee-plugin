@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy;
-
-import io.gravitee.plugin.core.api.PluginClassLoader;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+package io.gravitee.plugin.core.api;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
  * @author GraviteeSource Team
  */
-public interface PolicyClassLoaderFactory extends PluginClassLoaderFactory<PolicyPlugin> {
+public interface PluginClassLoaderFactory<T extends Plugin> {
 
-    @Override
-    default PluginClassLoader getOrCreateClassLoader(PolicyPlugin policyPlugin) {
-        return getOrCreateClassLoader(policyPlugin, policyPlugin.getClass().getClassLoader());
+    PluginClassLoader getOrCreateClassLoader(T plugin, ClassLoader parent);
+
+    default PluginClassLoader getOrCreateClassLoader(T plugin) {
+      return getOrCreateClassLoader(plugin, PluginClassLoaderFactory.class.getClassLoader());
     }
 }

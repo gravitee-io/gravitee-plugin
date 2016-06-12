@@ -23,11 +23,11 @@ import java.util.Collection;
  */
 public interface PolicyPluginManager {
 
-    void register(Policy policy);
+    void register(PolicyPlugin policyPlugin);
 
-    Collection<Policy> findAll();
+    Collection<PolicyPlugin> findAll();
 
-    Policy get(String policy);
+    PolicyPlugin get(String policy);
 
     String getPolicyConfiguration(String policy) throws IOException;
 }

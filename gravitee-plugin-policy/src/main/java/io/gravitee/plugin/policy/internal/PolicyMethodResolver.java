@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy.impl;
+package io.gravitee.plugin.policy.internal;
 
-import io.gravitee.plugin.policy.PolicyMethodResolver;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnRequestContent;
 import io.gravitee.policy.api.annotations.OnResponse;
@@ -34,15 +33,15 @@ import static org.reflections.ReflectionUtils.withModifier;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
+ * @author GraviteeSource Team
  */
-public class PolicyMethodResolverImpl implements PolicyMethodResolver {
+public class PolicyMethodResolver {
 
-    private final static Class<? extends Annotation> [] RESOLVABLE_ANNOTATIONS = new Class[]{
+    private final static Class<? extends Annotation> [] RESOLVABLE_ANNOTATIONS = new Class[] {
             OnRequest.class, OnResponse.class, OnRequestContent.class, OnResponseContent.class
     };
 
-    @Override
-    public Map<Class<? extends Annotation>, Method> resolvePolicyMethods(Class<?> policyClass) {
+    public Map<Class<? extends Annotation>, Method> resolve(Class<?> policyClass) {
         Map<Class<? extends Annotation>, Method> methods = new HashMap<>();
 
         for(Class<? extends Annotation> annot : RESOLVABLE_ANNOTATIONS) {
@@ -51,7 +50,6 @@ public class PolicyMethodResolverImpl implements PolicyMethodResolver {
                     withModifier(Modifier.PUBLIC),
                     withAnnotation(annot));
 
-            // TODO: We have to check that the method is using PolicyChain as parameter.
             if (! resolved.isEmpty()) {
                 methods.put(annot, resolved.iterator().next());
             }

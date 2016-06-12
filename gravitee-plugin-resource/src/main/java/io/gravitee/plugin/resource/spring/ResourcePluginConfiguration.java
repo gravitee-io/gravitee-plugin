@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy;
+package io.gravitee.plugin.resource.spring;
 
-import io.gravitee.plugin.core.api.PluginClassLoader;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import io.gravitee.plugin.resource.ResourceClassLoaderFactory;
+import io.gravitee.plugin.resource.ResourcePluginManager;
+import io.gravitee.plugin.resource.internal.ResourceClassLoaderFactoryImpl;
+import io.gravitee.plugin.resource.internal.ResourcePluginManagerImpl;
+import org.springframework.context.annotation.Bean;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
  * @author GraviteeSource Team
  */
-public interface PolicyClassLoaderFactory extends PluginClassLoaderFactory<PolicyPlugin> {
+public class ResourcePluginConfiguration {
 
-    @Override
-    default PluginClassLoader getOrCreateClassLoader(PolicyPlugin policyPlugin) {
-        return getOrCreateClassLoader(policyPlugin, policyPlugin.getClass().getClassLoader());
+    @Bean
+    public ResourcePluginManager resourcePluginManager() {
+        return new ResourcePluginManagerImpl();
+    }
+
+    @Bean
+    public ResourceClassLoaderFactory resourceClassLoaderFactory() {
+        return new ResourceClassLoaderFactoryImpl();
     }
 }

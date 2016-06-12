@@ -15,32 +15,32 @@
  */
 package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.core.api.ClassLoaderFactory;
 import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david at gravitee.io)
+ * @author GraviteeSource Team
  */
-public class ClassLoaderFactoryImpl implements ClassLoaderFactory {
+public class CachedPluginClassLoaderFactory<T extends Plugin> extends PluginClassLoaderFactoryImpl<T> {
 
-    protected final Logger LOGGER = LoggerFactory.getLogger(ClassLoaderFactoryImpl.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(CachedPluginClassLoaderFactory.class);
 
-    private final Map<String, URLClassLoader> pluginClassLoaderCache = new HashMap<>();
+    private final Map<String, PluginClassLoader> pluginClassLoaderCache = new HashMap<>();
 
     @Override
-    public URLClassLoader getOrCreatePluginClassLoader(Plugin plugin, ClassLoader parent) {
-        URLClassLoader cl;
+    public PluginClassLoader getOrCreateClassLoader(T plugin, ClassLoader parent) {
+        PluginClassLoader cl;
 
         try {
             cl = pluginClassLoaderCache.get(plugin.id());
             if (null == cl)  {
-                cl = new URLClassLoader(plugin.dependencies(), parent);
+                cl = super.getOrCreateClassLoader(plugin, parent);
                 pluginClassLoaderCache.put(plugin.id(), cl);
             }
 

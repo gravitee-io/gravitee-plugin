@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy.impl;
+package io.gravitee.plugin.policy.internal;
 
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginHandler;
@@ -53,9 +53,14 @@ public class PolicyPluginHandler implements PluginHandler {
             Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), policyClassLoader);
 
             LOGGER.info("Register a new policy: {} [{}]", plugin.id(), pluginClass.getName());
-            policyPluginManager.register(new PolicyImpl(plugin, pluginClass));
+            PolicyPluginImpl policy = new PolicyPluginImpl(plugin, pluginClass);
+            policy.setConfiguration(new PolicyConfigurationClassFinder().lookupFirst(pluginClass, policyClassLoader));
+            policy.setContext(new PolicyContextClassFinder().lookupFirst(pluginClass, policyClassLoader));
+        //    policy.setMethods(new PolicyMethodResolver().resolve(pluginClass));
+
+            policyPluginManager.register(policy);
         } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create reporter instance", iae);
+            LOGGER.error("Unexpected error while creating policy instance", iae);
         } finally {
             if (policyClassLoader != null) {
                 try {

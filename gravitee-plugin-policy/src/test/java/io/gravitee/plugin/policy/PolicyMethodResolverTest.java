@@ -17,7 +17,7 @@ package io.gravitee.plugin.policy;
 
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
-import io.gravitee.plugin.policy.impl.PolicyMethodResolverImpl;
+import io.gravitee.plugin.policy.internal.PolicyMethodResolver;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnResponse;
@@ -31,23 +31,23 @@ import java.util.Map;
  */
 public class PolicyMethodResolverTest {
 
-    private final PolicyMethodResolver policyMethodResolver = new PolicyMethodResolverImpl();
+    private final PolicyMethodResolver policyMethodResolver = new PolicyMethodResolver();
 
     @Test
     public void resolvePolicyMethods_empty() {
-        Map methods = policyMethodResolver.resolvePolicyMethods(DummyPolicy01.class);
+        Map methods = policyMethodResolver.resolve(DummyPolicy01.class);
         Assert.assertTrue(methods.isEmpty());
     }
 
     @Test
     public void resolvePolicyMethods_onlyTwoMethods() {
-        Map methods = policyMethodResolver.resolvePolicyMethods(DummyPolicy02.class);
+        Map methods = policyMethodResolver.resolve(DummyPolicy02.class);
         Assert.assertEquals(2, methods.size());
     }
 
     @Test
     public void resolvePolicyMethods_moreThanTwoMethods() {
-        Map methods = policyMethodResolver.resolvePolicyMethods(DummyPolicy03.class);
+        Map methods = policyMethodResolver.resolve(DummyPolicy03.class);
         Assert.assertEquals(2, methods.size());
     }
 

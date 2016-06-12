@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy.impl;
+package io.gravitee.plugin.policy.internal;
 
-import io.gravitee.plugin.policy.Policy;
+import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.plugin.policy.PolicyPluginManager;
 
 import java.io.File;
@@ -33,20 +33,20 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
 
     private final static String SCHEMAS_DIRECTORY = "schemas";
 
-    private final Map<String, Policy> definitions = new HashMap<>();
+    private final Map<String, PolicyPlugin> definitions = new HashMap<>();
 
     @Override
-    public void register(Policy policy) {
-        definitions.putIfAbsent(policy.id(), policy);
+    public void register(PolicyPlugin policyPlugin) {
+        definitions.putIfAbsent(policyPlugin.id(), policyPlugin);
     }
 
     @Override
-    public Collection<Policy> findAll() {
+    public Collection<PolicyPlugin> findAll() {
         return definitions.values();
     }
 
     @Override
-    public Policy get(String policy) {
+    public PolicyPlugin get(String policy) {
         return definitions.get(policy);
     }
 

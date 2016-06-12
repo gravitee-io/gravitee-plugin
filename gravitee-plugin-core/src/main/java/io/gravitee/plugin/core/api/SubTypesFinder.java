@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy;
+package io.gravitee.plugin.core.api;
 
-import io.gravitee.policy.api.PolicyConfiguration;
+import java.util.Collection;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david at gravitee.io)
+ * @author GraviteeSource Team
  */
-public interface PolicyConfigurationClassResolver {
+public interface SubTypesFinder<T> {
 
-    Class<? extends PolicyConfiguration> resolvePolicyConfigurationClass(Class<?> policyClass);
+    Collection<Class<? extends T>> lookup(Class<?> clazz, ClassLoader classLoader);
+
+    default Collection<Class<? extends T>> lookup(Class<?> clazz) {
+        return lookup(clazz, clazz.getClassLoader());
+    }
 }

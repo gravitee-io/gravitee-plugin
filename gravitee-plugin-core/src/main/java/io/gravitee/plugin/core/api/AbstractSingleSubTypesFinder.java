@@ -15,14 +15,20 @@
  */
 package io.gravitee.plugin.core.api;
 
-/**
- * @author David BRASSELY (brasseld at gmail.com)
- */
-public interface ClassLoaderFactory {
+import java.util.Collection;
 
-    default ClassLoader getOrCreatePluginClassLoader(Plugin plugin) {
-      return getOrCreatePluginClassLoader(plugin, ClassLoaderFactory.class.getClassLoader());
+/**
+ * @author David BRASSELY (david at gravitee.io)
+ * @author GraviteeSource Team
+ */
+public abstract class AbstractSingleSubTypesFinder<T> extends AbstractSubTypesFinder<T> {
+
+    protected AbstractSingleSubTypesFinder(Class<T> subType) {
+        super(subType);
     }
 
-    ClassLoader getOrCreatePluginClassLoader(Plugin plugin, ClassLoader parent);
+    public Class<? extends T> lookupFirst(Class clazz, ClassLoader classLoader) {
+        Collection<Class<? extends T>> classes = lookup(clazz, classLoader);
+        return classes.isEmpty() ? null : classes.iterator().next();
+    }
 }

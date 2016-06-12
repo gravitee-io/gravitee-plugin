@@ -15,7 +15,7 @@
  */
 package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.core.api.ClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import org.reflections.Reflections;
@@ -40,12 +40,12 @@ public class ReflectionBasedPluginConfigurationResolver implements PluginConfigu
     private final Logger LOGGER = LoggerFactory.getLogger(ReflectionBasedPluginConfigurationResolver.class);
 
     @Autowired
-    private ClassLoaderFactory classLoaderFactory;
+    private PluginClassLoaderFactory pluginClassLoaderFactory;
 
     @Override
     public Set<Class<?>> resolve(Plugin plugin) {
         try {
-            Class<?> pluginClass = classLoaderFactory.getOrCreatePluginClassLoader(plugin).loadClass(plugin.clazz());
+            Class<?> pluginClass = pluginClassLoaderFactory.getOrCreateClassLoader(plugin).loadClass(plugin.clazz());
             LOGGER.debug("Looking for configurations for plugin {} in package {}", pluginClass.getName(),
                     pluginClass.getPackage().getName());
 
