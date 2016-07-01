@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.fetcher;
+
+import java.io.IOException;
+import java.util.Collection;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum PluginType {
+public interface FetcherPluginManager {
 
-    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE, FETCHER;
+    void register(FetcherPlugin fetcherPlugin);
 
-    public static PluginType from(String sType) {
-        for(PluginType pluginType : values()) {
-            if (pluginType.name().equalsIgnoreCase(sType)) {
-                return pluginType;
-            }
-        }
+    Collection<FetcherPlugin> findAll();
 
-        throw new IllegalArgumentException("Invalid plugin type: " + sType);
-    }
+    FetcherPlugin get(String resource);
+
+    String getConfiguration(String resource) throws IOException;
 }

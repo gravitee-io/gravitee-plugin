@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.fetcher.spring;
+
+import io.gravitee.plugin.fetcher.FetcherClassLoaderFactory;
+import io.gravitee.plugin.fetcher.FetcherPluginManager;
+import io.gravitee.plugin.fetcher.internal.FetcherClassLoaderFactoryImpl;
+import io.gravitee.plugin.fetcher.internal.FetcherPluginManagerImpl;
+import org.springframework.context.annotation.Bean;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum PluginType {
+public class FetcherPluginConfiguration {
 
-    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE, FETCHER;
+    @Bean
+    public FetcherPluginManager fetcherPluginManager() {
+        return new FetcherPluginManagerImpl();
+    }
 
-    public static PluginType from(String sType) {
-        for(PluginType pluginType : values()) {
-            if (pluginType.name().equalsIgnoreCase(sType)) {
-                return pluginType;
-            }
-        }
-
-        throw new IllegalArgumentException("Invalid plugin type: " + sType);
+    @Bean
+    public FetcherClassLoaderFactory fetcherClassLoaderFactory() {
+        return new FetcherClassLoaderFactoryImpl();
     }
 }
