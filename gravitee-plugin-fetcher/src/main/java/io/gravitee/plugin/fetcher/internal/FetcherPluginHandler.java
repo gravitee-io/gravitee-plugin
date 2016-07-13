@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ClassUtils;
 
-import java.io.IOException;
 import java.net.URLClassLoader;
 
 /**
@@ -45,9 +44,8 @@ public class FetcherPluginHandler implements PluginHandler {
 
     @Override
     public void handle(Plugin plugin) {
-        URLClassLoader fetcherClassLoader = null;
         try {
-            fetcherClassLoader = new URLClassLoader(plugin.dependencies(),
+            URLClassLoader fetcherClassLoader = new URLClassLoader(plugin.dependencies(),
                     this.getClass().getClassLoader());
 
             Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), fetcherClassLoader);
@@ -58,13 +56,6 @@ public class FetcherPluginHandler implements PluginHandler {
             fetcherPluginManager.register(fetcher);
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while creating fetcher instance", iae);
-        } finally {
-            if (fetcherClassLoader != null) {
-                try {
-                    fetcherClassLoader.close();
-                } catch (IOException e) {
-                }
-            }
         }
     }
 }
