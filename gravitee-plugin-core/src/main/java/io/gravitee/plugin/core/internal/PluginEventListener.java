@@ -26,17 +26,22 @@ import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 public class PluginEventListener extends AbstractService implements EventListener<PluginEvent, Plugin> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(PluginEventListener.class);
+
+    @Value("${plugins.failOnDuplicate:true}")
+    private boolean failOnDuplicate;
 
     @Autowired
     private Collection<PluginHandler> pluginHandlers;
@@ -44,19 +49,37 @@ public class PluginEventListener extends AbstractService implements EventListene
     @Autowired
     private EventManager eventManager;
 
-    private final List<Plugin> plugins = new ArrayList<>();
+    private final Map<PluginKey, Plugin> plugins = new HashMap<>();
 
     @Override
     public void onEvent(Event<PluginEvent, Plugin> event) {
         switch (event.type()) {
             case DEPLOYED:
                 LOGGER.debug("Receive an event for plugin {} [{}]", event.content().id(), event.type());
-                plugins.add(event.content());
+                addPlugin(event.content());
                 break;
             case ENDED:
                 LOGGER.info("All plugins have been loaded. Installing...");
                 deployPlugins();
                 break;
+        }
+    }
+
+    private void addPlugin(Plugin plugin) {
+        PluginKey pluginKey = new PluginKey(plugin.id(), plugin.type());
+
+        if (plugins.containsKey(pluginKey)) {
+            Plugin installed = plugins.get(pluginKey);
+            if (failOnDuplicate) {
+                throw new IllegalStateException(
+                        String.format("Plugin '%s' [%s] is already loaded [%s]", plugin.id(),
+                                plugin.manifest().version(), installed.manifest().version()));
+            } else {
+                LOGGER.warn("Plugin '{}' [{}] is already loaded [{}]", plugin.id(),
+                        plugin.manifest().version(), installed.manifest().version());
+            }
+        } else {
+            plugins.put(pluginKey, plugin);
         }
     }
 
@@ -73,7 +96,7 @@ public class PluginEventListener extends AbstractService implements EventListene
 
     private void deployPlugins(PluginType pluginType) {
         LOGGER.info("Installing {} plugins...", pluginType.name());
-        plugins.stream()
+        plugins.values().stream()
                 .filter(plugin -> pluginType == plugin.type())
                 .forEach(plugin ->
                         pluginHandlers.stream()
@@ -89,5 +112,37 @@ public class PluginEventListener extends AbstractService implements EventListene
         super.doStart();
 
         eventManager.subscribeForEvents(this, PluginEvent.class);
+    }
+
+    public void setFailOnDuplicate(boolean failOnDuplicate) {
+        this.failOnDuplicate = failOnDuplicate;
+    }
+
+    private static class PluginKey {
+        private final String id;
+        private final PluginType type;
+
+        public PluginKey(final String id, final PluginType type) {
+            this.id = id;
+            this.type = type;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            PluginKey pluginKey = (PluginKey) o;
+
+            if (!id.equals(pluginKey.id)) return false;
+            return type == pluginKey.type;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id.hashCode();
+            result = 31 * result + type.hashCode();
+            return result;
+        }
     }
 }

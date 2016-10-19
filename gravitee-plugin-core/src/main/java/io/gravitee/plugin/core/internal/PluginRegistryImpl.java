@@ -34,7 +34,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 public class PluginRegistryImpl extends AbstractService implements PluginRegistry {
 
@@ -53,7 +54,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private boolean init = false;
 
-    private Map<String, Plugin> plugins = new HashMap<>();
+    private List<Plugin> plugins = new ArrayList<>();
 
     @Autowired
     private EventManager eventManager;
@@ -82,7 +83,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         }
     }
 
-    public void init() {
+    public void init() throws Exception {
         if (workspacePath == null || workspacePath.isEmpty()) {
             LOGGER.error("Plugin registry path is not specified.");
             throw new RuntimeException("Plugin registry path is not specified.");
@@ -100,7 +101,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         loadPlugins(workspaceDir.getAbsolutePath());
     }
 
-    private void loadPlugins(String registryDir) {
+    private void loadPlugins(String registryDir) throws Exception {
         Path registryPath = FileSystems.getDefault().getPath(registryDir);
         LOGGER.info("Loading plugins from {}",registryDir);
 
@@ -109,7 +110,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             Iterator<Path> archiveIte = stream.iterator();
 
             if (archiveIte.hasNext()) {
-                archiveIte.forEachRemaining(this::loadPlugin);
+                while (archiveIte.hasNext()) {
+                    loadPlugin(archiveIte.next());
+                }
+
                 printPlugins();
                 eventManager.publishEvent(PluginEvent.ENDED, null);
             } else {
@@ -119,6 +123,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             init = true;
         } catch (IOException ioe) {
             LOGGER.error("An unexpected error occurs", ioe);
+            throw ioe;
         }
     }
 
@@ -130,8 +135,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private void printPluginByType(PluginType pluginType) {
         LOGGER.info("List of available {}: ", pluginType.name().toLowerCase());
-        plugins.values()
-                .stream()
+        plugins.stream()
                 .filter(plugin -> pluginType == plugin.type())
                 .forEach(plugin -> LOGGER.info("\t> {} [{}] has been loaded",
                         plugin.id(), plugin.manifest().version()));
@@ -166,39 +170,12 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             if (manifest != null) {
                 URL[] dependencies = extractPluginDependencies(workDir);
 
-                plugins.put(manifest.id(), new Plugin() {
-                    @Override
-                    public String id() {
-                        return manifest.id();
-                    }
+                PluginImpl plugin = new PluginImpl(manifest);
+                plugin.setPath(workDir);
+                plugin.setDependencies(dependencies);
 
-                    @Override
-                    public String clazz() {
-                        return manifest.plugin();
-                    }
-
-                    @Override
-                    public PluginType type() {
-                        return PluginType.from(manifest.type());
-                    }
-
-                    @Override
-                    public Path path() {
-                        return workDir;
-                    }
-
-                    @Override
-                    public PluginManifest manifest() {
-                        return manifest;
-                    }
-
-                    @Override
-                    public URL[] dependencies() {
-                        return dependencies;
-                    }
-                });
-
-                eventManager.publishEvent(PluginEvent.DEPLOYED, plugins.get(manifest.id()));
+                eventManager.publishEvent(PluginEvent.DEPLOYED, plugin);
+                plugins.add(plugin);
             }
         } catch (IOException ioe) {
             LOGGER.error("An unexpected error occurs while loading plugin archive {}", pluginArchivePath, ioe);
@@ -361,13 +338,12 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     @Override
     public Collection<Plugin> plugins() {
-        return plugins.values();
+        return plugins;
     }
 
     @Override
     public Collection<Plugin> plugins(PluginType type) {
-        return plugins.values()
-                .stream()
+        return plugins.stream()
                 .filter(pluginContext -> pluginContext.type() == type)
                 .collect(Collectors.toSet());
     }
