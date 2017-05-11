@@ -24,10 +24,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @Configuration
 public class PluginConfiguration {
+
+    @Bean
+    public PluginRegistryConfiguration pluginRegistryConfiguration() {
+        return new PluginRegistryConfiguration();
+    }
 
     @Bean
     public PluginRegistry pluginRegistry() {

@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,8 +48,8 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private final static String PLUGIN_MANIFEST_FILE = "plugin.properties";
 
-    @Value("${plugins.path:${gravitee.home}/plugins}")
-    private String workspacePath;
+    @Autowired
+    private PluginRegistryConfiguration configuration;
 
     private boolean init = false;
 
@@ -58,6 +57,8 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     @Autowired
     private EventManager eventManager;
+
+    private String [] workspacesPath;
 
     /**
      * Empty constructor is used to use a workspace directory defined from @Value annotation
@@ -67,7 +68,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     public PluginRegistryImpl(String workspacePath) {
-        this.workspacePath = workspacePath;
+        this.workspacesPath = new String []{ workspacePath };
     }
 
     @Override
@@ -84,25 +85,40 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     public void init() throws Exception {
-        if (workspacePath == null || workspacePath.isEmpty()) {
-            LOGGER.error("Plugin registry path is not specified.");
-            throw new RuntimeException("Plugin registry path is not specified.");
+        String [] pluginsPath = configuration.getPluginsPath();
+        if ((pluginsPath == null || pluginsPath.length == 0) && workspacesPath == null) {
+            LOGGER.error("No plugin registry configured.");
+            throw new RuntimeException("No plugin registry configured.");
         }
 
-        File workspaceDir = new File(workspacePath);
-
-        // Quick sanity check on the install root
-        if (! workspaceDir.isDirectory()) {
-            LOGGER.error("Invalid registry directory, {} is not a directory.", workspaceDir.getAbsolutePath());
-            throw new RuntimeException("Invalid registry directory. Not a directory: "
-                    + workspaceDir.getAbsolutePath());
+        // Use override configuration
+        if (workspacesPath != null) {
+            pluginsPath = workspacesPath;
         }
 
-        loadPlugins(workspaceDir.getAbsolutePath());
+        for (String aWorkspacePath : pluginsPath) {
+            loadPluginsFromRegistry(aWorkspacePath);
+        }
+
+        printPlugins();
+        eventManager.publishEvent(PluginEvent.ENDED, null);
     }
 
-    private void loadPlugins(String registryDir) throws Exception {
-        Path registryPath = FileSystems.getDefault().getPath(registryDir);
+    private void loadPluginsFromRegistry(String registryPath) throws Exception {
+        File registryDir = new File(registryPath);
+
+        // Quick sanity check on the install root
+        if (! registryDir.isDirectory()) {
+            LOGGER.error("Invalid registry directory, {} is not a directory.", registryDir.getAbsolutePath());
+            throw new RuntimeException("Invalid registry directory. Not a directory: "
+                    + registryDir.getAbsolutePath());
+        }
+
+        loadPlugins(registryDir);
+    }
+
+    private void loadPlugins(File registryDir) throws Exception {
+        Path registryPath = registryDir.toPath();
         LOGGER.info("Loading plugins from {}",registryDir);
 
         try {
@@ -111,11 +127,8 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
             if (archiveIte.hasNext()) {
                 while (archiveIte.hasNext()) {
-                    loadPlugin(archiveIte.next());
+                    loadPlugin(registryDir, archiveIte.next());
                 }
-
-                printPlugins();
-                eventManager.publishEvent(PluginEvent.ENDED, null);
             } else {
                 LOGGER.warn("No plugin has been found in {}", registryDir);
             }
@@ -151,16 +164,17 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
      *          dependency01.jar
      *          dependency02.jar
      *
+     * @param registryDir The directory containing plugins
      * @param pluginArchivePath The directory containing the plugin definition
      */
-    private void loadPlugin(Path pluginArchivePath) {
+    private void loadPlugin(File registryDir, Path pluginArchivePath) {
         LOGGER.info("Loading plugin from {}", pluginArchivePath);
 
         try {
             // 1_ Extract plugin into a temporary working folder
             String sPluginFile = pluginArchivePath.toFile().getName();
             sPluginFile = sPluginFile.substring(0, sPluginFile.lastIndexOf(".zip"));
-            Path workDir = FileSystems.getDefault().getPath(workspacePath, ".work", sPluginFile);
+            Path workDir = FileSystems.getDefault().getPath(registryDir.getAbsolutePath(), ".work", sPluginFile);
             FileUtils.delete(workDir);
 
             FileUtils.unzip(pluginArchivePath.toString(), workDir);
@@ -369,5 +383,9 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         public Path getPluginManifest() {
             return pluginManifest;
         }
+    }
+
+    public void setConfiguration(PluginRegistryConfiguration configuration) {
+        this.configuration = configuration;
     }
 }

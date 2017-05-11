@@ -17,6 +17,7 @@ package io.gravitee.plugin.core;
 
 import io.gravitee.common.event.EventManager;
 import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.internal.PluginRegistryConfiguration;
 import io.gravitee.plugin.core.internal.PluginRegistryImpl;
 import org.junit.Assert;
 import org.junit.Test;
@@ -49,6 +50,8 @@ public class PluginRegistryTest {
     public void startWithEmptyWorkspace() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/empty-workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
+        pluginRegistry.setConfiguration(mock(PluginRegistryConfiguration.class));
+        pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
 
         Assert.assertTrue(pluginRegistry.plugins().isEmpty());
@@ -59,6 +62,7 @@ public class PluginRegistryTest {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = Mockito.spy(new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8")));
         pluginRegistry.setEventManager(mock(EventManager.class));
+        pluginRegistry.setConfiguration(mock(PluginRegistryConfiguration.class));
         pluginRegistry.start();
         verify(pluginRegistry, atMost(1)).init();
 
@@ -70,6 +74,8 @@ public class PluginRegistryTest {
     public void startWithWorkspace_noJar() throws Exception {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/invalid-workspace-nojar/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
+        pluginRegistry.setConfiguration(mock(PluginRegistryConfiguration.class));
+        pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.start();
 
         Assert.assertTrue(pluginRegistry.plugins().isEmpty());
@@ -80,6 +86,7 @@ public class PluginRegistryTest {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
         pluginRegistry.setEventManager(mock(EventManager.class));
+        pluginRegistry.setConfiguration(mock(PluginRegistryConfiguration.class));
         pluginRegistry.start();
 
         Assert.assertEquals(1, pluginRegistry.plugins().size());
@@ -90,6 +97,7 @@ public class PluginRegistryTest {
         URL dir = PluginRegistryTest.class.getResource("/io/gravitee/plugin/workspace/");
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
         pluginRegistry.setEventManager(mock(EventManager.class));
+        pluginRegistry.setConfiguration(mock(PluginRegistryConfiguration.class));
         pluginRegistry.start();
 
         Assert.assertEquals(1, pluginRegistry.plugins().size());
