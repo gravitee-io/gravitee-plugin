@@ -29,6 +29,8 @@ import java.util.List;
  */
 public class PluginRegistryConfiguration {
 
+    private static final String PLUGIN_WORK_DIR_PROPERTY = "plugins.workDir";
+
     private final static String PLUGIN_PATH_PROPERTY = "plugins.path[%s]";
 
     @Value("${plugins.path:${gravitee.home}/plugins}")
@@ -38,6 +40,8 @@ public class PluginRegistryConfiguration {
 
     @Autowired
     private Environment environment;
+
+    private String pluginWorkDir;
 
     @PostConstruct
     public void init() {
@@ -57,6 +61,8 @@ public class PluginRegistryConfiguration {
         }
 
         pluginsPath = paths.toArray(new String []{});
+
+        pluginWorkDir = environment.getProperty(PLUGIN_WORK_DIR_PROPERTY);
     }
 
     public String[] getPluginsPath() {
@@ -66,4 +72,13 @@ public class PluginRegistryConfiguration {
     public void setPluginsPath(String[] pluginsPath) {
         this.pluginsPath = pluginsPath;
     }
+
+    public String getPluginWorkDir() {
+      return pluginWorkDir;
+    }
+
+    public void setPluginWorkDir(String pluginWorkDir) {
+      this.pluginWorkDir = pluginWorkDir;
+    }
+
 }
