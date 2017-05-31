@@ -23,6 +23,7 @@ import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -175,6 +176,15 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             String sPluginFile = pluginArchivePath.toFile().getName();
             sPluginFile = sPluginFile.substring(0, sPluginFile.lastIndexOf(".zip"));
             Path workDir = FileSystems.getDefault().getPath(registryDir.getAbsolutePath(), ".work", sPluginFile);
+            if ( StringUtils.hasText(configuration.getPluginWorkDir()) ) {
+              // use specified workDir if specified in environment
+              workDir = FileSystems.getDefault().getPath(configuration.getPluginWorkDir(), sPluginFile);
+              // make sure the work dir exists
+              if ( !workDir.toFile().getParentFile().exists() ) {
+                workDir.toFile().getParentFile().mkdirs();
+              }
+            }
+
             FileUtils.delete(workDir);
 
             FileUtils.unzip(pluginArchivePath.toString(), workDir);
