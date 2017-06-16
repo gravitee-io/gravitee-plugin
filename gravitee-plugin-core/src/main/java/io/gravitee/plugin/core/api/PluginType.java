@@ -21,7 +21,7 @@ package io.gravitee.plugin.core.api;
  */
 public enum PluginType {
 
-    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE, FETCHER;
+    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE, FETCHER, CERTIFICATE;
 
     public static PluginType from(String sType) {
         for(PluginType pluginType : values()) {
