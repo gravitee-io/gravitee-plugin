@@ -192,11 +192,18 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             // 2_ Load plugin from the working folder
             PluginManifest manifest = readPluginManifest(workDir);
             if (manifest != null) {
-                URL[] dependencies = extractPluginDependencies(workDir);
+                URL[] pluginDependencies = extractPluginDependencies(workDir);
+                URL[] extDependencies = extractPluginExtensionDependencies(manifest, registryDir.toPath());
+
+                if (extDependencies != null) {
+                    URL[] dependencies = Arrays.copyOf(pluginDependencies, pluginDependencies.length + extDependencies.length);
+                    System.arraycopy(extDependencies, 0, dependencies, pluginDependencies.length, extDependencies.length);
+                    pluginDependencies = dependencies;
+                }
 
                 PluginImpl plugin = new PluginImpl(manifest);
                 plugin.setPath(workDir);
-                plugin.setDependencies(dependencies);
+                plugin.setDependencies(pluginDependencies);
 
                 eventManager.publishEvent(PluginEvent.DEPLOYED, plugin);
                 plugins.add(plugin);
@@ -218,6 +225,29 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             Files.walkFileTree(pluginDirPath, visitor);
             List<Path> pluginDependencies = visitor.getMatchedPaths();
             return listToArray(pluginDependencies);
+        } catch (IOException ioe) {
+            LOGGER.error("Unexpected error while looking for plugin dependencies", ioe);
+            return null;
+        }
+    }
+
+    /**
+     * Extract plugin dependency from ext directory to extend easily plugin classloader
+     * @param manifest Plugin manifest
+     * @param registryPath Path to the plugin registry
+     * @return
+     */
+    private URL[] extractPluginExtensionDependencies(PluginManifest manifest, Path registryPath) {
+        try {
+            GlobMatchingFileVisitor visitor = new GlobMatchingFileVisitor(JAR_GLOB);
+            Path extPath = Paths.get(registryPath.toString(), "ext", manifest.id());
+            if (extPath.toFile().exists()) {
+                Files.walkFileTree(extPath, visitor);
+                List<Path> pluginDependencies = visitor.getMatchedPaths();
+                return listToArray(pluginDependencies);
+            } else {
+                return null;
+            }
         } catch (IOException ioe) {
             LOGGER.error("Unexpected error while looking for plugin dependencies", ioe);
             return null;
