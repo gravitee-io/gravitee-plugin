@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.alert;
+
+import io.gravitee.plugin.core.api.PluginClassLoader;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum PluginType {
+public interface AlertClassLoaderFactory extends PluginClassLoaderFactory<AlertPlugin> {
 
-    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE, FETCHER, CERTIFICATE, EXTENSION_GRANT, NOTIFIER, ALERT;
-
-    public static PluginType from(String sType) {
-        for(PluginType pluginType : values()) {
-            if (pluginType.name().equalsIgnoreCase(sType)) {
-                return pluginType;
-            }
-        }
-
-        throw new IllegalArgumentException("Invalid plugin type: " + sType);
+    @Override
+    default PluginClassLoader getOrCreateClassLoader(AlertPlugin alertPlugin) {
+        return getOrCreateClassLoader(alertPlugin, alertPlugin.getClass().getClassLoader());
     }
 }

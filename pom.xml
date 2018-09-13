@@ -39,6 +39,8 @@
         <gravitee-policy-api.version>1.2.0</gravitee-policy-api.version>
         <gravitee-resource-api.version>1.0.0</gravitee-resource-api.version>
         <gravitee-fetcher-api.version>1.0.0</gravitee-fetcher-api.version>
+        <gravitee-notifier-api.version>1.0.0-SNAPSHOT</gravitee-notifier-api.version>
+        <gravitee-alert-api.version>1.0.0-SNAPSHOT</gravitee-alert-api.version>
         <reflections.version>0.9.10</reflections.version>
     </properties>
 
@@ -47,6 +49,7 @@
         <module>gravitee-plugin-policy</module>
         <module>gravitee-plugin-resource</module>
         <module>gravitee-plugin-fetcher</module>
+        <module>gravitee-plugin-alert</module>
     </modules>
 
     <dependencyManagement>
@@ -79,6 +82,18 @@
                 <groupId>io.gravitee.common</groupId>
                 <artifactId>gravitee-common</artifactId>
                 <version>${gravitee-common.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.notifier</groupId>
+                <artifactId>gravitee-notifier-api</artifactId>
+                <version>${gravitee-notifier-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.alert</groupId>
+                <artifactId>gravitee-alert-api</artifactId>
+                <version>${gravitee-alert-api.version}</version>
             </dependency>
 
             <!-- Reflection utils -->

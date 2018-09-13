@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.alert;
+
+import io.gravitee.alert.api.event.Alertable;
+import io.gravitee.alert.api.service.Alert;
+import io.gravitee.alert.api.trigger.Trigger;
+import io.gravitee.common.service.Service;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum PluginType {
+public interface AlertEngineService extends Service {
 
-    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE, FETCHER, CERTIFICATE, EXTENSION_GRANT, NOTIFIER, ALERT;
-
-    public static PluginType from(String sType) {
-        for(PluginType pluginType : values()) {
-            if (pluginType.name().equalsIgnoreCase(sType)) {
-                return pluginType;
-            }
-        }
-
-        throw new IllegalArgumentException("Invalid plugin type: " + sType);
-    }
+    void register(Alert alertService);
+    CompletableFuture<Void> send(Alertable alertable);
+    CompletableFuture<Void> send(Trigger trigger);
 }
