@@ -19,16 +19,12 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.policy.api.PolicyConfiguration;
-import io.gravitee.policy.api.PolicyContext;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Map;
 
 /**
- * @author David BRASSELY (david at gravitee.io)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 class PolicyPluginImpl implements PolicyPlugin {
@@ -36,8 +32,6 @@ class PolicyPluginImpl implements PolicyPlugin {
     private final Plugin plugin;
     private final Class<?> policyClass;
     private Class<? extends PolicyConfiguration> policyConfigurationClass;
-    private Class<? extends PolicyContext> policyContextClass;
-    private Map<Class<? extends Annotation>, Method> policyMethods;
 
     PolicyPluginImpl(final Plugin plugin, final Class<?> policyClass) {
         this.plugin = plugin;
@@ -48,16 +42,6 @@ class PolicyPluginImpl implements PolicyPlugin {
     @Override
     public Class<?> policy() {
         return policyClass;
-    }
-
-    @Override
-    public Class<? extends PolicyContext> context() {
-        return policyContextClass;
-    }
-
-    @Override
-    public Map<Class<? extends Annotation>, Method> methods() {
-        return policyMethods;
     }
 
     @Override
@@ -92,13 +76,5 @@ class PolicyPluginImpl implements PolicyPlugin {
 
     public void setConfiguration(Class<? extends PolicyConfiguration> policyConfigurationClass) {
         this.policyConfigurationClass = policyConfigurationClass;
-    }
-
-    public void setContext(Class<? extends PolicyContext> policyContextClass) {
-        this.policyContextClass = policyContextClass;
-    }
-
-    public void setMethods(Map<Class<? extends Annotation>, Method> policyMethods) {
-        this.policyMethods = policyMethods;
     }
 }
