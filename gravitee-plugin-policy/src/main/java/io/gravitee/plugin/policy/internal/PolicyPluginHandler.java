@@ -55,8 +55,6 @@ public class PolicyPluginHandler implements PluginHandler {
             LOGGER.info("Register a new policy: {} [{}]", plugin.id(), pluginClass.getName());
             PolicyPluginImpl policy = new PolicyPluginImpl(plugin, pluginClass);
             policy.setConfiguration(new PolicyConfigurationClassFinder().lookupFirst(pluginClass, policyClassLoader));
-            policy.setContext(new PolicyContextClassFinder().lookupFirst(pluginClass, policyClassLoader));
-        //    policy.setMethods(new PolicyMethodResolver().resolve(pluginClass));
 
             policyPluginManager.register(policy);
         } catch (Exception iae) {
