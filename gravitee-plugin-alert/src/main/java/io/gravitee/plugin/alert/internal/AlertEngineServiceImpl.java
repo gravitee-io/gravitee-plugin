@@ -19,17 +19,12 @@ import io.gravitee.alert.api.event.Alertable;
 import io.gravitee.alert.api.service.Alert;
 import io.gravitee.alert.api.trigger.Trigger;
 import io.gravitee.common.service.AbstractService;
-import io.gravitee.node.api.Node;
 import io.gravitee.plugin.alert.AlertEngineService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -42,13 +37,6 @@ public class AlertEngineServiceImpl extends AbstractService implements AlertEngi
 
     private final Collection<Alert> alerts = new ArrayList<>();
 
-    @Autowired
-    private Node node;
-    @Value("${http.port:8082}")
-    private String port;
-    @Value("${tenant:#{null}}")
-    private String tenant;
-
     @Override
     public void register(final Alert alert) {
         alerts.add(alert);
@@ -56,14 +44,6 @@ public class AlertEngineServiceImpl extends AbstractService implements AlertEngi
 
     @Override
     public CompletableFuture<Void> send(final Alertable alertable) {
-        final Map<String, Object> context = new LinkedHashMap<>(4);
-        context.put("Gateway", node.id());
-        context.put("Hostname", node.hostname());
-        context.put("Port", port);
-        if (tenant != null) {
-            context.put("Tenant", tenant);
-        }
-        alertable.setContext(context);
         return CompletableFuture.allOf(alerts.stream()
                 .filter(alert -> alert.canHandle(alertable))
                 .map(alert -> alert.send(alertable))
@@ -71,7 +51,7 @@ public class AlertEngineServiceImpl extends AbstractService implements AlertEngi
     }
 
     @Override
-    public CompletableFuture<Void> send(Trigger trigger) {
+    public CompletableFuture<Void> send(final Trigger trigger) {
         return CompletableFuture.allOf(alerts.stream()
                 .filter(alert -> alert.canHandle(trigger))
                 .map(alert -> alert.send(trigger))
