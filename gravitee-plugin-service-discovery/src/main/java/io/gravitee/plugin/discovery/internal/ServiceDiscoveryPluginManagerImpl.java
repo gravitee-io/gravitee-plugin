@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.policy;
+package io.gravitee.plugin.discovery.internal;
 
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
+import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
-public interface PolicyPluginManager {
+public class ServiceDiscoveryPluginManagerImpl extends AbstractConfigurablePluginManager<ServiceDiscoveryPlugin> {
 
-    void register(PolicyPlugin policyPlugin);
-
-    Collection<PolicyPlugin> findAll();
-
-    PolicyPlugin get(String policy);
-
-    String getPolicyConfiguration(String policy) throws IOException;
 }

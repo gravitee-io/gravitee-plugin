@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.resource;
+package io.gravitee.plugin.discovery.internal;
 
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.plugin.core.internal.PluginClassLoaderFactoryImpl;
+import io.gravitee.plugin.discovery.ServiceDiscoveryClassLoaderFactory;
+import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
 
 /**
- * @author David BRASSELY (david at gravitee.io)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ResourcePluginManager {
+public class ServiceDiscoveryClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<ServiceDiscoveryPlugin>
+        implements ServiceDiscoveryClassLoaderFactory {
 
-    void register(ResourcePlugin resourcePlugin);
-
-    Collection<ResourcePlugin> findAll();
-
-    ResourcePlugin get(String resource);
-
-    String getConfiguration(String resource) throws IOException;
 }

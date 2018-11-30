@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.resource.spring;
+package io.gravitee.plugin.discovery.spring;
 
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
-import io.gravitee.plugin.resource.ResourceClassLoaderFactory;
-import io.gravitee.plugin.resource.ResourcePlugin;
-import io.gravitee.plugin.resource.internal.ResourceClassLoaderFactoryImpl;
-import io.gravitee.plugin.resource.internal.ResourcePluginManagerImpl;
+import io.gravitee.plugin.discovery.ServiceDiscoveryClassLoaderFactory;
+import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
+import io.gravitee.plugin.discovery.internal.ServiceDiscoveryClassLoaderFactoryImpl;
+import io.gravitee.plugin.discovery.internal.ServiceDiscoveryPluginManagerImpl;
 import org.springframework.context.annotation.Bean;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginConfiguration {
+public class ServiceDiscoveryPluginConfiguration {
 
     @Bean
-    public ConfigurablePluginManager<ResourcePlugin> resourcePluginManager() {
-        return new ResourcePluginManagerImpl();
+    public ConfigurablePluginManager<ServiceDiscoveryPlugin> serviceDiscoveryPluginManager() {
+        return new ServiceDiscoveryPluginManagerImpl();
     }
 
     @Bean
-    public ResourceClassLoaderFactory resourceClassLoaderFactory() {
-        return new ResourceClassLoaderFactoryImpl();
+    public ServiceDiscoveryClassLoaderFactory serviceDiscoveryClassLoaderFactory() {
+        return new ServiceDiscoveryClassLoaderFactoryImpl();
     }
 }

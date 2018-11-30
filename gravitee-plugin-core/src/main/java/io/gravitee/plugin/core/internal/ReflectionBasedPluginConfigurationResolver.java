@@ -51,6 +51,7 @@ public class ReflectionBasedPluginConfigurationResolver implements PluginConfigu
 
             Reflections reflections = new Reflections(new ConfigurationBuilder()
                     .addClassLoader(pluginClass.getClassLoader())
+                    .setExpandSuperTypes(false)
                     .setUrls(ClasspathHelper.forClass(pluginClass, pluginClass.getClassLoader()))
                     .setScanners(new SubTypesScanner(false), new TypeAnnotationsScanner())
                     .filterInputsBy(new FilterBuilder().includePackage(pluginClass.getPackage().getName())));

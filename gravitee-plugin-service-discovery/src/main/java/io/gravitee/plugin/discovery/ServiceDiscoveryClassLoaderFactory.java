@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.fetcher;
+package io.gravitee.plugin.discovery;
 
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.plugin.core.api.PluginClassLoader;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FetcherPluginManager {
+public interface ServiceDiscoveryClassLoaderFactory extends PluginClassLoaderFactory<ServiceDiscoveryPlugin> {
 
-    void register(FetcherPlugin fetcherPlugin);
-
-    Collection<FetcherPlugin> findAll();
-
-    FetcherPlugin get(String resource);
-
-    String getConfiguration(String resource) throws IOException;
+    @Override
+    default PluginClassLoader getOrCreateClassLoader(ServiceDiscoveryPlugin serviceDiscoveryPlugin) {
+        return getOrCreateClassLoader(serviceDiscoveryPlugin, serviceDiscoveryPlugin.getClass().getClassLoader());
+    }
 }

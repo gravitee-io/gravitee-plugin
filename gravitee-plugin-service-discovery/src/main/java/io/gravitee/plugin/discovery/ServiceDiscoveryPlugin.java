@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.resource.internal;
+package io.gravitee.plugin.discovery;
 
-import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
-import io.gravitee.plugin.resource.ResourcePlugin;
+import io.gravitee.discovery.api.ServiceDiscovery;
+import io.gravitee.discovery.api.ServiceDiscoveryConfiguration;
+import io.gravitee.plugin.core.api.ConfigurablePlugin;
+import io.gravitee.plugin.core.api.PluginType;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginManagerImpl extends AbstractConfigurablePluginManager<ResourcePlugin> {
+public interface ServiceDiscoveryPlugin<C extends ServiceDiscoveryConfiguration> extends ConfigurablePlugin<C> {
 
+    Class<? extends ServiceDiscovery> serviceDiscovery();
+
+    @Override
+    default PluginType type() {
+        return PluginType.SERVICE_DISCOVERY;
+    }
 }

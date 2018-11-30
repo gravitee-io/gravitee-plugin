@@ -96,6 +96,7 @@ public class PluginEventListener extends AbstractService implements EventListene
         deployPlugins(PluginType.EXTENSION_GRANT);
         deployPlugins(PluginType.NOTIFIER);
         deployPlugins(PluginType.ALERT);
+        deployPlugins(PluginType.SERVICE_DISCOVERY);
     }
 
     private void deployPlugins(PluginType pluginType) {

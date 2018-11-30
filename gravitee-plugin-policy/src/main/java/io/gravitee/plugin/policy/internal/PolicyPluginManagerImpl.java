@@ -15,56 +15,13 @@
  */
 package io.gravitee.plugin.policy.internal;
 
+import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
 import io.gravitee.plugin.policy.PolicyPlugin;
-import io.gravitee.plugin.policy.PolicyPluginManager;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
-public class PolicyPluginManagerImpl implements PolicyPluginManager {
+public class PolicyPluginManagerImpl extends AbstractConfigurablePluginManager<PolicyPlugin> {
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
-
-    private final Map<String, PolicyPlugin> definitions = new HashMap<>();
-
-    @Override
-    public void register(PolicyPlugin policyPlugin) {
-        definitions.putIfAbsent(policyPlugin.id(), policyPlugin);
-    }
-
-    @Override
-    public Collection<PolicyPlugin> findAll() {
-        return definitions.values();
-    }
-
-    @Override
-    public PolicyPlugin get(String policy) {
-        return definitions.get(policy);
-    }
-
-    @Override
-    public String getPolicyConfiguration(String policy) throws IOException {
-        Path policyWorkspace = get(policy).path();
-
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
-
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
-
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
-            }
-        }
-
-        return null;
-    }
 }
