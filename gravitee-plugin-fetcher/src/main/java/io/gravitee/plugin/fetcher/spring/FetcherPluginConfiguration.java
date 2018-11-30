@@ -15,8 +15,9 @@
  */
 package io.gravitee.plugin.fetcher.spring;
 
+import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.fetcher.FetcherClassLoaderFactory;
-import io.gravitee.plugin.fetcher.FetcherPluginManager;
+import io.gravitee.plugin.fetcher.FetcherPlugin;
 import io.gravitee.plugin.fetcher.internal.FetcherClassLoaderFactoryImpl;
 import io.gravitee.plugin.fetcher.internal.FetcherPluginManagerImpl;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +29,7 @@ import org.springframework.context.annotation.Bean;
 public class FetcherPluginConfiguration {
 
     @Bean
-    public FetcherPluginManager fetcherPluginManager() {
+    public ConfigurablePluginManager<FetcherPlugin> fetcherPluginManager() {
         return new FetcherPluginManagerImpl();
     }
 

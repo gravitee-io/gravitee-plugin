@@ -15,21 +15,23 @@
  */
 package io.gravitee.plugin.policy.spring;
 
+import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.policy.PolicyClassLoaderFactory;
-import io.gravitee.plugin.policy.PolicyPluginManager;
+import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.plugin.policy.internal.PolicyClassLoaderFactoryImpl;
 import io.gravitee.plugin.policy.internal.PolicyPluginManagerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @Configuration
 public class PolicyPluginConfiguration {
 
     @Bean
-    public PolicyPluginManager policyManager() {
+    public ConfigurablePluginManager<PolicyPlugin> policyManager() {
         return new PolicyPluginManagerImpl();
     }
 

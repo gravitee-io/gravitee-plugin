@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.resource.internal;
+package io.gravitee.plugin.core.api;
 
-import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
-import io.gravitee.plugin.resource.ResourcePlugin;
+import java.io.IOException;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginManagerImpl extends AbstractConfigurablePluginManager<ResourcePlugin> {
+public interface ConfigurablePluginManager<T extends ConfigurablePlugin> extends PluginManager<T> {
 
+    String getSchema(String pluginId) throws IOException;
 }

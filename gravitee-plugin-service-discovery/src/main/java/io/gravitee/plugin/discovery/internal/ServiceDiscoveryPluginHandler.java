@@ -13,59 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.resource.internal;
+package io.gravitee.plugin.discovery.internal;
 
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
-import io.gravitee.plugin.resource.ResourcePlugin;
+import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ClassUtils;
 
-import java.io.IOException;
 import java.net.URLClassLoader;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginHandler implements PluginHandler {
+public class ServiceDiscoveryPluginHandler implements PluginHandler {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(ResourcePluginHandler.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryPluginHandler.class);
 
     @Autowired
-    private ConfigurablePluginManager<ResourcePlugin> resourcePluginManager;
+    private ConfigurablePluginManager<ServiceDiscoveryPlugin> serviceDiscoveryPluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.RESOURCE == plugin.type();
+        return PluginType.SERVICE_DISCOVERY == plugin.type();
     }
 
     @Override
     public void handle(Plugin plugin) {
-        URLClassLoader resourceClassLoader = null;
+        URLClassLoader serviceDiscoveryClassLoader = null;
         try {
-            resourceClassLoader = new URLClassLoader(plugin.dependencies(),
+            serviceDiscoveryClassLoader = new URLClassLoader(plugin.dependencies(),
                     this.getClass().getClassLoader());
 
-            Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), resourceClassLoader);
+            Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), serviceDiscoveryClassLoader);
 
-            LOGGER.info("Register a new resource: {} [{}]", plugin.id(), pluginClass.getName());
-            ResourcePluginImpl resource = new ResourcePluginImpl(plugin, pluginClass);
-            resource.setConfiguration(new ResourceConfigurationClassFinder().lookupFirst(pluginClass, resourceClassLoader));
-            resourcePluginManager.register(resource);
+            LOGGER.info("Register a new service discovery: {} [{}]", plugin.id(), pluginClass.getName());
+            ServiceDiscoveryPluginImpl serviceDiscovery = new ServiceDiscoveryPluginImpl(plugin, pluginClass);
+            serviceDiscovery.setConfiguration(new ServiceDiscoveryConfigurationClassFinder().lookupFirst(pluginClass, serviceDiscoveryClassLoader));
+            serviceDiscoveryPluginManager.register(serviceDiscovery);
         } catch (Exception iae) {
-            LOGGER.error("Unexpected error while creating resource instance", iae);
-        } finally {
-            if (resourceClassLoader != null) {
-                try {
-                    resourceClassLoader.close();
-                } catch (IOException e) {
-                }
-            }
+            LOGGER.error("Unexpected error while creating service discovery instance", iae);
         }
     }
 }

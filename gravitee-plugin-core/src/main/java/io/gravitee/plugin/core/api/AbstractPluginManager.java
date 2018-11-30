@@ -13,15 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.resource.internal;
+package io.gravitee.plugin.core.api;
 
-import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
-import io.gravitee.plugin.resource.ResourcePlugin;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginManagerImpl extends AbstractConfigurablePluginManager<ResourcePlugin> {
+public abstract class AbstractPluginManager<T extends Plugin> implements PluginManager<T> {
 
+    private final Map<String, T> plugins = new HashMap<>();
+
+    @Override
+    public void register(T plugin) {
+        plugins.putIfAbsent(plugin.id(), plugin);
+    }
+
+    @Override
+    public Collection<T> findAll() {
+        return plugins.values();
+    }
+
+    @Override
+    public T get(String pluginId) {
+        return plugins.get(pluginId);
+    }
 }

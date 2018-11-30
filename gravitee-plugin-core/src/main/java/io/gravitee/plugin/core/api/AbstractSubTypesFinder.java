@@ -40,6 +40,7 @@ public abstract class AbstractSubTypesFinder<T> implements SubTypesFinder<T> {
     public Collection<Class<? extends T>> lookup(Class<?> clazz, ClassLoader classLoader) {
         Reflections reflections = new Reflections(new ConfigurationBuilder()
                 .addClassLoader(classLoader)
+                .setExpandSuperTypes(false)
                 .setUrls(ClasspathHelper.forClass(clazz, classLoader))
                 .setScanners(new SubTypesScanner(true), new TypeAnnotationsScanner())
                 .filterInputsBy(new FilterBuilder().includePackage(clazz.getPackage().getName())));

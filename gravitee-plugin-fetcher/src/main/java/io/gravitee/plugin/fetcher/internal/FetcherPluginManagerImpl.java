@@ -15,57 +15,13 @@
  */
 package io.gravitee.plugin.fetcher.internal;
 
+import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
 import io.gravitee.plugin.fetcher.FetcherPlugin;
-import io.gravitee.plugin.fetcher.FetcherPluginManager;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FetcherPluginManagerImpl implements FetcherPluginManager {
+public class FetcherPluginManagerImpl extends AbstractConfigurablePluginManager<FetcherPlugin> {
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
-
-    private final Map<String, FetcherPlugin> definitions = new HashMap<>();
-
-    @Override
-    public void register(FetcherPlugin fetcherPlugin) {
-        definitions.put(fetcherPlugin.id(), fetcherPlugin);
-    }
-
-    @Override
-    public Collection<FetcherPlugin> findAll() {
-        return definitions.values();
-    }
-
-    @Override
-    public FetcherPlugin get(String resource) {
-        return definitions.get(resource);
-    }
-
-    @Override
-    public String getConfiguration(String resource) throws IOException {
-        Path resourceWorkspace = get(resource).path();
-
-        File[] schemas = resourceWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
-
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
-
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
-            }
-        }
-
-        return null;
-    }
 }

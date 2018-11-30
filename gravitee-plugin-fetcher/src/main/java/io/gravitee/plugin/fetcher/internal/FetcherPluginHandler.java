@@ -15,10 +15,11 @@
  */
 package io.gravitee.plugin.fetcher.internal;
 
+import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
-import io.gravitee.plugin.fetcher.FetcherPluginManager;
+import io.gravitee.plugin.fetcher.FetcherPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class FetcherPluginHandler implements PluginHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(FetcherPluginHandler.class);
 
     @Autowired
-    private FetcherPluginManager fetcherPluginManager;
+    private ConfigurablePluginManager<FetcherPlugin> fetcherPluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
