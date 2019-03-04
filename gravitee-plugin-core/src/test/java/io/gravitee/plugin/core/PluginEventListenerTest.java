@@ -53,9 +53,7 @@ public class PluginEventListenerTest {
     @Test
     public void shouldLoadSinglePlugin() {
         when(plugin.id()).thenReturn("policy");
-        when(plugin.manifest()).thenReturn(pluginManifest);
         when(plugin.type()).thenReturn(PluginType.POLICY);
-        when(pluginManifest.version()).thenReturn("1.0.0-SNAPSHOT");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {
             @Override
@@ -109,9 +107,7 @@ public class PluginEventListenerTest {
         eventListener.setFailOnDuplicate(true);
 
         when(plugin.id()).thenReturn("policy");
-        when(plugin.manifest()).thenReturn(pluginManifest);
         when(plugin.type()).thenReturn(PluginType.POLICY);
-        when(pluginManifest.version()).thenReturn("1.0.0-SNAPSHOT");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {
             @Override
@@ -126,9 +122,7 @@ public class PluginEventListenerTest {
         });
 
         when(plugin2.id()).thenReturn("policy");
-        when(plugin2.manifest()).thenReturn(pluginManifest2);
         when(plugin2.type()).thenReturn(PluginType.RESOURCE);
-        when(pluginManifest2.version()).thenReturn("1.0.0-SNAPSHOT");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {
             @Override

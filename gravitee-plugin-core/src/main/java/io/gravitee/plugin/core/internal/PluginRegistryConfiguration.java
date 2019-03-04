@@ -15,11 +15,11 @@
  */
 package io.gravitee.plugin.core.internal;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PluginRegistryConfiguration {
+public class PluginRegistryConfiguration implements InitializingBean {
 
     private static final String PLUGIN_WORK_DIR_PROPERTY = "plugins.workDir";
 
@@ -43,8 +43,7 @@ public class PluginRegistryConfiguration {
 
     private String pluginWorkDir;
 
-    @PostConstruct
-    public void init() {
+    public void afterPropertiesSet() {
         String key = String.format(PLUGIN_PATH_PROPERTY, 0);
         List<String> paths = new ArrayList<>();
 
