@@ -122,8 +122,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         Path registryPath = registryDir.toPath();
         LOGGER.info("Loading plugins from {}",registryDir);
 
-        try {
-            DirectoryStream<Path> stream = FileUtils.newDirectoryStream(registryPath, ZIP_GLOB);
+        try (DirectoryStream<Path> stream = FileUtils.newDirectoryStream(registryPath, ZIP_GLOB)){
             Iterator<Path> archiveIte = stream.iterator();
 
             if (archiveIte.hasNext()) {
@@ -177,12 +176,12 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             sPluginFile = sPluginFile.substring(0, sPluginFile.lastIndexOf(".zip"));
             Path workDir = FileSystems.getDefault().getPath(registryDir.getAbsolutePath(), ".work", sPluginFile);
             if ( StringUtils.hasText(configuration.getPluginWorkDir()) ) {
-              // use specified workDir if specified in environment
-              workDir = FileSystems.getDefault().getPath(configuration.getPluginWorkDir(), sPluginFile);
-              // make sure the work dir exists
-              if ( !workDir.toFile().getParentFile().exists() ) {
-                workDir.toFile().getParentFile().mkdirs();
-              }
+                // use specified workDir if specified in environment
+                workDir = FileSystems.getDefault().getPath(configuration.getPluginWorkDir(), sPluginFile);
+                // make sure the work dir exists
+                if ( !workDir.toFile().getParentFile().exists() ) {
+                    workDir.toFile().getParentFile().mkdirs();
+                }
             }
 
             FileUtils.delete(workDir);
@@ -260,8 +259,8 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
      * @return
      */
     private PluginManifest readPluginManifest(Path pluginPath) {
-        try {
-            Iterator iterator = FileUtils.newDirectoryStream(pluginPath, JAR_GLOB).iterator();
+        try (DirectoryStream stream = FileUtils.newDirectoryStream(pluginPath, JAR_GLOB)){
+            Iterator iterator = stream.iterator();
             if (! iterator.hasNext()) {
                 LOGGER.debug("Unable to find a jar in the root directory: {}", pluginPath);
                 return null;

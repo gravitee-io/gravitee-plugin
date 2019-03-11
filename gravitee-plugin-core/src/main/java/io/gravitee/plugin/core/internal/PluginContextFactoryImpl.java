@@ -52,15 +52,15 @@ public class PluginContextFactoryImpl implements PluginContextFactory, Applicati
         pluginContextConfigurer.registerBeanFactoryPostProcessor();
         pluginContextConfigurer.registerBeans();
 
-        ClassLoader pluginClassLoader = pluginContextConfigurer.classLoader();
-        ClassLoader containerClassLoader = Thread.currentThread().getContextClassLoader();
+//        ClassLoader pluginClassLoader = pluginContextConfigurer.classLoader();
+//        ClassLoader containerClassLoader = Thread.currentThread().getContextClassLoader();
         try {
-            Thread.currentThread().setContextClassLoader(pluginClassLoader);
+//            Thread.currentThread().setContextClassLoader(pluginClassLoader);
             pluginContext.refresh();
         } catch (Exception ex) {
             LOGGER.error("Unable to refresh plugin context", ex);
         } finally {
-            Thread.currentThread().setContextClassLoader(containerClassLoader);
+//            Thread.currentThread().setContextClassLoader(containerClassLoader);
         }
 
         pluginContexts.putIfAbsent(plugin, pluginContext);
