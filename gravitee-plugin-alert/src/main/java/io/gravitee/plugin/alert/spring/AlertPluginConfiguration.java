@@ -15,10 +15,12 @@
  */
 package io.gravitee.plugin.alert.spring;
 
+import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.plugin.alert.AlertClassLoaderFactory;
-import io.gravitee.plugin.alert.AlertEngineService;
-import io.gravitee.plugin.alert.internal.AlertClassLoaderFactoryImpl;
-import io.gravitee.plugin.alert.internal.AlertEngineServiceImpl;
+import io.gravitee.plugin.alert.AlertEventProducer;
+import io.gravitee.plugin.alert.AlertEventProducerManager;
+import io.gravitee.plugin.alert.AlertTriggerProviderManager;
+import io.gravitee.plugin.alert.internal.*;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -28,8 +30,23 @@ import org.springframework.context.annotation.Bean;
 public class AlertPluginConfiguration {
 
     @Bean
-    public AlertEngineService alertEngineService() {
-        return new AlertEngineServiceImpl();
+    public AlertEventProducerManager alertEventProducerManager() {
+        return new AlertEventProducerManagerImpl();
+    }
+
+    @Bean
+    public AlertTriggerProviderManager alertTriggerProviderManager() {
+        return new AlertTriggerProviderManagerImpl();
+    }
+
+    @Bean
+    public AlertEventProducer alertEventProducer() {
+        return new AlertEventProducerImpl();
+    }
+
+    @Bean
+    public TriggerProvider alertTriggerProvider() {
+        return new AlertTriggerProviderImpl();
     }
 
     @Bean

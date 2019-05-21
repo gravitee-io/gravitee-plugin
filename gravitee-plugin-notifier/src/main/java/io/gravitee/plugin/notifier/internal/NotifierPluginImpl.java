@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.alert.internal;
+package io.gravitee.plugin.notifier.internal;
 
-import io.gravitee.alert.api.service.Alert;
-import io.gravitee.plugin.alert.AlertPlugin;
+import io.gravitee.notifier.api.NotifierConfiguration;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
+import io.gravitee.plugin.notifier.NotifierPlugin;
 
 import java.net.URL;
 import java.nio.file.Path;
 
 /**
- * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-class AlertPluginImpl implements AlertPlugin {
+class NotifierPluginImpl implements NotifierPlugin {
 
     private final Plugin plugin;
-    private final Alert alertClass;
+    private final Class<?> notifierClass;
+    private Class<? extends NotifierConfiguration> notifierConfigurationClass;
 
-    AlertPluginImpl(final Plugin plugin, final Alert alertClass) {
+    NotifierPluginImpl(final Plugin plugin, final Class<?> notifierClass) {
         this.plugin = plugin;
-        this.alertClass = alertClass;
+        this.notifierClass = notifierClass;
     }
 
     @Override
-    public Alert alert() {
-        return alertClass;
+    public Class<?> notifier() {
+        return notifierClass;
     }
 
     @Override
@@ -65,5 +66,14 @@ class AlertPluginImpl implements AlertPlugin {
     @Override
     public Path path() {
         return plugin.path();
+    }
+
+    @Override
+    public Class configuration() {
+        return notifierConfigurationClass;
+    }
+
+    public void setConfiguration(Class<? extends NotifierConfiguration> notifierConfigurationClass) {
+        this.notifierConfigurationClass = notifierConfigurationClass;
     }
 }

@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.alert.internal;
+package io.gravitee.plugin.alert;
 
-import io.gravitee.plugin.alert.AlertClassLoaderFactory;
-import io.gravitee.plugin.alert.AlertPlugin;
-import io.gravitee.plugin.core.internal.PluginClassLoaderFactoryImpl;
+import io.gravitee.alert.api.event.EventProducer;
+import io.gravitee.common.service.Service;
+
+import java.util.Collection;
 
 /**
- * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AlertClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<AlertPlugin>
-        implements AlertClassLoaderFactory {
+public interface AlertEventProducerManager extends Service {
 
+    void register(EventProducer producer);
+
+    Collection<EventProducer> findAll();
 }
