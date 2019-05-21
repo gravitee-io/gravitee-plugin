@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.alert;
+package io.gravitee.plugin.notifier.spring;
 
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginType;
+import io.gravitee.plugin.core.api.ConfigurablePluginManager;
+import io.gravitee.plugin.notifier.NotifierClassLoaderFactory;
+import io.gravitee.plugin.notifier.NotifierPlugin;
+import io.gravitee.plugin.notifier.internal.NotifierClassLoaderFactoryImpl;
+import io.gravitee.plugin.notifier.internal.NotifierPluginManagerImpl;
+import org.springframework.context.annotation.Bean;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AlertPlugin extends Plugin {
+public class NotifierPluginConfiguration {
 
-    @Override
-    default PluginType type() {
-        return PluginType.ALERT;
+    @Bean
+    public ConfigurablePluginManager<NotifierPlugin> notifierPluginManager() {
+        return new NotifierPluginManagerImpl();
+    }
+
+    @Bean
+    public NotifierClassLoaderFactory notifierClassLoaderFactory() {
+        return new NotifierClassLoaderFactoryImpl();
     }
 }

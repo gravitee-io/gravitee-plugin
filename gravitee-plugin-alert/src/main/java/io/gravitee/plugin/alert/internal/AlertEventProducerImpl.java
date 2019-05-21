@@ -13,19 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.alert;
+package io.gravitee.plugin.alert.internal;
 
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginType;
+import io.gravitee.alert.api.event.AbstractEventProducer;
+import io.gravitee.alert.api.event.Event;
+import io.gravitee.plugin.alert.AlertEventProducer;
+import io.gravitee.plugin.alert.AlertEventProducerManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AlertPlugin extends Plugin {
+public class AlertEventProducerImpl extends AbstractEventProducer implements AlertEventProducer {
+
+    @Autowired
+    private AlertEventProducerManager producerManager;
 
     @Override
-    default PluginType type() {
-        return PluginType.ALERT;
+    public void send(Event event) {
+        producerManager.findAll().forEach(eventProducer -> eventProducer.send(event));
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return producerManager.findAll().isEmpty();
     }
 }

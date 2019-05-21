@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.alert;
+package io.gravitee.plugin.notifier;
 
-import io.gravitee.alert.api.event.Alertable;
-import io.gravitee.alert.api.service.Alert;
-import io.gravitee.alert.api.trigger.Trigger;
-import io.gravitee.common.service.Service;
-
-import java.util.concurrent.CompletableFuture;
+import io.gravitee.plugin.core.api.PluginClassLoader;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 
 /**
- * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AlertEngineService extends Service {
+public interface NotifierClassLoaderFactory extends PluginClassLoaderFactory<NotifierPlugin> {
 
-    void register(Alert alertService);
-    CompletableFuture<Void> send(Alertable alertable);
-    CompletableFuture<Void> send(Trigger trigger);
+    @Override
+    default PluginClassLoader getOrCreateClassLoader(NotifierPlugin notifierPlugin) {
+        return getOrCreateClassLoader(notifierPlugin, notifierPlugin.getClass().getClassLoader());
+    }
 }

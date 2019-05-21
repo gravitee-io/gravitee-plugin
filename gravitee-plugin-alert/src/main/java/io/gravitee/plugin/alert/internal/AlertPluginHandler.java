@@ -15,11 +15,14 @@
  */
 package io.gravitee.plugin.alert.internal;
 
-import io.gravitee.alert.api.service.Alert;
-import io.gravitee.plugin.alert.AlertEngineService;
+import io.gravitee.alert.api.event.EventProducer;
+import io.gravitee.alert.api.trigger.TriggerProvider;
+import io.gravitee.plugin.alert.AlertEventProducerManager;
+import io.gravitee.plugin.alert.AlertTriggerProviderManager;
 import io.gravitee.plugin.core.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
@@ -34,12 +37,18 @@ public class AlertPluginHandler implements PluginHandler {
 
     @Autowired
     private Environment environment;
+
     @Autowired
     private PluginContextFactory pluginContextFactory;
+
     @Autowired
     private PluginClassLoaderFactory pluginClassLoaderFactory;
+
     @Autowired
-    private AlertEngineService alertService;
+    private AlertEventProducerManager eventProducerManager;
+
+    @Autowired
+    private AlertTriggerProviderManager triggerProviderManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -48,14 +57,28 @@ public class AlertPluginHandler implements PluginHandler {
 
     @Override
     public void handle(Plugin plugin) {
-        LOGGER.info("Register a new alert: {} [{}]", plugin.id(), plugin.clazz());
+        LOGGER.info("Register a new alert: {} type[{}]", plugin.id(), plugin.type());
         boolean enabled = isEnabled(plugin);
         if (enabled) {
             try {
                 pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
                 final ApplicationContext context = pluginContextFactory.create(plugin);
-                final Alert alert = context.getBean(Alert.class);
-                alertService.register(alert);
+
+                if (isEnabled(plugin)) {
+                    // Look for an event producer
+                    try {
+                        eventProducerManager.register(context.getBean(EventProducer.class));
+                    } catch (NoSuchBeanDefinitionException nsbee) {
+                        // No event producer to register
+                    }
+
+                    // Look for a trigger provider
+                    try {
+                        triggerProviderManager.register(context.getBean(TriggerProvider.class));
+                    } catch (NoSuchBeanDefinitionException nsbee) {
+                        // No event producer to register
+                    }
+                }
             } catch (Exception iae) {
                 LOGGER.error("Unexpected error while create alert instance", iae);
                 // Be sure that the context does not exist anymore.
@@ -67,7 +90,7 @@ public class AlertPluginHandler implements PluginHandler {
     }
 
     private boolean isEnabled(Plugin alertPlugin) {
-        boolean enabled = environment.getProperty(alertPlugin.id() + ".enabled", Boolean.class, false);
+        boolean enabled = environment.getProperty("alerts." + alertPlugin.id() + ".enabled", Boolean.class, true);
         LOGGER.debug("Plugin {} configuration: {}", alertPlugin.id(), enabled);
         return enabled;
     }
