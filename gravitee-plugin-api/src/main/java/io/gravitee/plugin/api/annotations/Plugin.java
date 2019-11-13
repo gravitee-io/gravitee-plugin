@@ -13,19 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.api.annotations;
 
-import java.util.Collection;
+
+import io.gravitee.plugin.api.DeploymentContext;
+import io.gravitee.plugin.api.DeploymentLifecycle;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SubTypesFinder<T> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Plugin {
 
-    Collection<Class<? extends T>> lookup(Class<?> clazz, ClassLoader classLoader);
+    Class<? extends DeploymentLifecycle> deployment() default DefaultDeploymentLifecycle.class;
 
-    default Collection<Class<? extends T>> lookup(Class<?> clazz) {
-        return lookup(clazz, clazz.getClassLoader());
+    final class DefaultDeploymentLifecycle implements DeploymentLifecycle {
+        @Override
+        public void onDeploy(DeploymentContext context) {
+
+        }
     }
 }

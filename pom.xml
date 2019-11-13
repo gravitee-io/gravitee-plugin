@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>15</version>
+        <version>17</version>
     </parent>
 
     <groupId>io.gravitee.plugin</groupId>
@@ -34,6 +34,7 @@
     <name>Gravitee.io APIM - Plugin</name>
 
     <properties>
+        <gravitee-node.version>1.6.0-SNAPSHOT</gravitee-node.version>
         <gravitee-common.version>1.15.0</gravitee-common.version>
         <gravitee-gateway-api.version>1.16.0</gravitee-gateway-api.version>
         <gravitee-policy-api.version>1.5.0</gravitee-policy-api.version>
@@ -46,6 +47,7 @@
     </properties>
 
     <modules>
+        <module>gravitee-plugin-api</module>
         <module>gravitee-plugin-core</module>
         <module>gravitee-plugin-policy</module>
         <module>gravitee-plugin-resource</module>

@@ -20,23 +20,15 @@ import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
 import io.gravitee.plugin.core.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
 
 /**
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AlertPluginHandler implements PluginHandler {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlertPluginHandler.class);
-
-    @Autowired
-    private Environment environment;
+public class AlertPluginHandler extends AbstractSpringPluginHandler<Void> {
 
     @Autowired
     private PluginContextFactory pluginContextFactory;
@@ -56,42 +48,43 @@ public class AlertPluginHandler implements PluginHandler {
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        LOGGER.info("Register a new alert: {} type[{}]", plugin.id(), plugin.type());
-        boolean enabled = isEnabled(plugin);
-        if (enabled) {
+    protected void handle(Plugin plugin, Class pluginClass) {
+        try {
+            ApplicationContext context = pluginContextFactory.create(plugin);
+
+            // Look for an event producer
             try {
-                pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-                final ApplicationContext context = pluginContextFactory.create(plugin);
-
-                if (isEnabled(plugin)) {
-                    // Look for an event producer
-                    try {
-                        eventProducerManager.register(context.getBean(EventProducer.class));
-                    } catch (NoSuchBeanDefinitionException nsbee) {
-                        // No event producer to register
-                    }
-
-                    // Look for a trigger provider
-                    try {
-                        triggerProviderManager.register(context.getBean(TriggerProvider.class));
-                    } catch (NoSuchBeanDefinitionException nsbee) {
-                        // No event producer to register
-                    }
-                }
-            } catch (Exception iae) {
-                LOGGER.error("Unexpected error while create alert instance", iae);
-                // Be sure that the context does not exist anymore.
-                pluginContextFactory.remove(plugin);
+                eventProducerManager.register(context.getBean(EventProducer.class));
+            } catch (NoSuchBeanDefinitionException nsbee) {
+                // No event producer to register
             }
-        } else {
-            LOGGER.warn("Plugin {} is disabled. Please have a look to your configuration to re-enable it", plugin.id());
+
+            // Look for a trigger provider
+            try {
+                triggerProviderManager.register(context.getBean(TriggerProvider.class));
+            } catch (NoSuchBeanDefinitionException nsbee) {
+                // No event producer to register
+            }
+        } catch (Exception ex) {
+            logger.error("Unexpected error while creating {}", plugin.id(), ex);
+
+            // Be sure that the context does not exist anymore.
+            pluginContextFactory.remove(plugin);
         }
     }
 
-    private boolean isEnabled(Plugin alertPlugin) {
-        boolean enabled = environment.getProperty("alerts." + alertPlugin.id() + ".enabled", Boolean.class, true);
-        LOGGER.debug("Plugin {} configuration: {}", alertPlugin.id(), enabled);
-        return enabled;
+    @Override
+    protected String type() {
+        return "alerts";
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) throws Exception {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    }
+
+    @Override
+    protected void register(Void plugin) {
+        // Nothing to do there
     }
 }

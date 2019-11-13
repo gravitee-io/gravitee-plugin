@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.api;
 
-import java.util.Collection;
+import io.gravitee.node.api.Node;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface SubTypesFinder<T> {
+public interface DeploymentContext {
 
-    Collection<Class<? extends T>> lookup(Class<?> clazz, ClassLoader classLoader);
-
-    default Collection<Class<? extends T>> lookup(Class<?> clazz) {
-        return lookup(clazz, clazz.getClassLoader());
-    }
+    Node node();
 }

@@ -25,7 +25,7 @@ import org.reflections.util.FilterBuilder;
 import java.util.Collection;
 
 /**
- * @author David BRASSELY (david at gravitee.io)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractSubTypesFinder<T> implements SubTypesFinder<T> {
