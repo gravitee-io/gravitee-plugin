@@ -15,24 +15,22 @@
  */
 package io.gravitee.plugin.core.api;
 
-import java.util.Collection;
-
 /**
- * @author David BRASSELY (david at gravitee.io)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AbstractSingleSubTypesFinder<T> extends AbstractSubTypesFinder<T> {
+public abstract class AbstractSimplePluginHandler<T extends Plugin> extends AbstractPluginHandler {
 
-    protected AbstractSingleSubTypesFinder(Class<T> subType) {
-        super(subType);
+    @Override
+    public void handle(Plugin plugin, Class<?> pluginClass) {
+        // Create the plugin instance
+        T pluginInst = create(plugin, pluginClass);
+
+        // And register
+        register(pluginInst);
     }
 
-    public Class<? extends T> lookupFirst(Class clazz) {
-        return lookupFirst(clazz, clazz.getClassLoader());
-    }
+    protected abstract T create(Plugin plugin, Class<?> pluginClass);
 
-    public Class<? extends T> lookupFirst(Class clazz, ClassLoader classLoader) {
-        Collection<Class<? extends T>> classes = lookup(clazz, classLoader);
-        return classes.isEmpty() ? null : classes.iterator().next();
-    }
+    protected abstract void register(T plugin);
 }

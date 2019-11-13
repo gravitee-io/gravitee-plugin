@@ -15,15 +15,12 @@
  */
 package io.gravitee.plugin.fetcher.internal;
 
+import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.fetcher.FetcherPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ClassUtils;
 
 import java.net.URLClassLoader;
 
@@ -31,9 +28,7 @@ import java.net.URLClassLoader;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FetcherPluginHandler implements PluginHandler {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(FetcherPluginHandler.class);
+public class FetcherPluginHandler extends AbstractSimplePluginHandler<FetcherPlugin> {
 
     @Autowired
     private ConfigurablePluginManager<FetcherPlugin> fetcherPluginManager;
@@ -44,19 +39,26 @@ public class FetcherPluginHandler implements PluginHandler {
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        try {
-            URLClassLoader fetcherClassLoader = new URLClassLoader(plugin.dependencies(),
-                    this.getClass().getClassLoader());
+    protected String type() {
+        return null;
+    }
 
-            Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), fetcherClassLoader);
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) throws Exception {
+        return new URLClassLoader(plugin.dependencies(),
+                this.getClass().getClassLoader());
+    }
 
-            LOGGER.info("Register a new fetcher: {} [{}]", plugin.id(), pluginClass.getName());
-            FetcherPluginImpl fetcher = new FetcherPluginImpl(plugin, pluginClass);
-            fetcher.setConfiguration(new FetcherConfigurationClassFinder().lookupFirst(pluginClass, fetcherClassLoader));
-            fetcherPluginManager.register(fetcher);
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while creating fetcher instance", iae);
-        }
+    @Override
+    protected FetcherPlugin create(Plugin plugin, Class<?> pluginClass) {
+        FetcherPluginImpl fetcher = new FetcherPluginImpl(plugin, pluginClass);
+        fetcher.setConfiguration(new FetcherConfigurationClassFinder().lookupFirst(pluginClass));
+
+        return fetcher;
+    }
+
+    @Override
+    protected void register(FetcherPlugin plugin) {
+        fetcherPluginManager.register(plugin);
     }
 }

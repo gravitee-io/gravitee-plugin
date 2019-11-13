@@ -15,15 +15,12 @@
  */
 package io.gravitee.plugin.discovery.internal;
 
+import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ClassUtils;
 
 import java.net.URLClassLoader;
 
@@ -31,9 +28,7 @@ import java.net.URLClassLoader;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ServiceDiscoveryPluginHandler implements PluginHandler {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryPluginHandler.class);
+public class ServiceDiscoveryPluginHandler extends AbstractSimplePluginHandler<ServiceDiscoveryPlugin> {
 
     @Autowired
     private ConfigurablePluginManager<ServiceDiscoveryPlugin> serviceDiscoveryPluginManager;
@@ -44,20 +39,26 @@ public class ServiceDiscoveryPluginHandler implements PluginHandler {
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        URLClassLoader serviceDiscoveryClassLoader = null;
-        try {
-            serviceDiscoveryClassLoader = new URLClassLoader(plugin.dependencies(),
-                    this.getClass().getClassLoader());
+    protected String type() {
+        return "service-discoveries";
+    }
 
-            Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), serviceDiscoveryClassLoader);
+    @Override
+    protected ServiceDiscoveryPlugin create(Plugin plugin, Class<?> pluginClass) {
+        ServiceDiscoveryPluginImpl serviceDiscoveryPlugin = new ServiceDiscoveryPluginImpl(plugin, pluginClass);
+        serviceDiscoveryPlugin.setConfiguration(new ServiceDiscoveryConfigurationClassFinder().lookupFirst(pluginClass));
 
-            LOGGER.info("Register a new service discovery: {} [{}]", plugin.id(), pluginClass.getName());
-            ServiceDiscoveryPluginImpl serviceDiscovery = new ServiceDiscoveryPluginImpl(plugin, pluginClass);
-            serviceDiscovery.setConfiguration(new ServiceDiscoveryConfigurationClassFinder().lookupFirst(pluginClass, serviceDiscoveryClassLoader));
-            serviceDiscoveryPluginManager.register(serviceDiscovery);
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while creating service discovery instance", iae);
-        }
+        return serviceDiscoveryPlugin;
+    }
+
+    @Override
+    protected void register(ServiceDiscoveryPlugin plugin) {
+        serviceDiscoveryPluginManager.register(plugin);
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) throws Exception {
+        return new URLClassLoader(plugin.dependencies(),
+                this.getClass().getClassLoader());
     }
 }

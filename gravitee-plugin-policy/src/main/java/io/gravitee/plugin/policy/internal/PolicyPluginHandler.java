@@ -15,15 +15,12 @@
  */
 package io.gravitee.plugin.policy.internal;
 
+import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.policy.PolicyPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ClassUtils;
 
 import java.io.IOException;
 import java.net.URLClassLoader;
@@ -32,9 +29,7 @@ import java.net.URLClassLoader;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PolicyPluginHandler implements PluginHandler {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(PolicyPluginHandler.class);
+public class PolicyPluginHandler extends AbstractSimplePluginHandler<PolicyPlugin> {
 
     @Autowired
     private ConfigurablePluginManager<PolicyPlugin> policyPluginManager;
@@ -45,28 +40,34 @@ public class PolicyPluginHandler implements PluginHandler {
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        URLClassLoader policyClassLoader = null;
+    protected String type() {
+        return "policies";
+    }
+
+    @Override
+    protected PolicyPlugin create(Plugin plugin, Class<?> pluginClass) {
+        PolicyPluginImpl policyPlugin = new PolicyPluginImpl(plugin, pluginClass);
+        policyPlugin.setConfiguration(new PolicyConfigurationClassFinder().lookupFirst(pluginClass));
+
+        return policyPlugin;
+    }
+
+    @Override
+    protected void register(PolicyPlugin policyPlugin) {
+        policyPluginManager.register(policyPlugin);
+
+        // Once registered, the classloader should be released
+        URLClassLoader classLoader = (URLClassLoader) policyPlugin.policy().getClassLoader();
         try {
-            policyClassLoader = new URLClassLoader(plugin.dependencies(),
-                    this.getClass().getClassLoader());
-
-            Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), policyClassLoader);
-
-            LOGGER.info("Register a new policy: {} [{}]", plugin.id(), pluginClass.getName());
-            PolicyPluginImpl policy = new PolicyPluginImpl(plugin, pluginClass);
-            policy.setConfiguration(new PolicyConfigurationClassFinder().lookupFirst(pluginClass, policyClassLoader));
-
-            policyPluginManager.register(policy);
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while creating policy instance", iae);
-        } finally {
-            if (policyClassLoader != null) {
-                try {
-                    policyClassLoader.close();
-                } catch (IOException e) {
-                }
-            }
+            classLoader.close();
+        } catch (IOException e) {
+            logger.error("Unexpected exception while trying to release the policy classloader");
         }
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return new URLClassLoader(plugin.dependencies(),
+                this.getClass().getClassLoader());
     }
 }

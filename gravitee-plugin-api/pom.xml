@@ -27,28 +27,16 @@
         <version>1.10.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>gravitee-plugin-core</artifactId>
+    <artifactId>gravitee-plugin-api</artifactId>
     <version>1.10.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Gravitee.io APIM - Plugin - Core</name>
+    <name>Gravitee.io APIM - Plugin - API</name>
 
     <dependencies>
-        <!-- Gravitee dependencies -->
         <dependency>
-            <groupId>io.gravitee.plugin</groupId>
-            <artifactId>gravitee-plugin-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.common</groupId>
-            <artifactId>gravitee-common</artifactId>
-        </dependency>
-
-        <!-- Reflection utils -->
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-api</artifactId>
+            <version>${gravitee-node.version}</version>
         </dependency>
     </dependencies>
 </project>

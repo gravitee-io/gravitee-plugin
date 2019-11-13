@@ -15,15 +15,12 @@
  */
 package io.gravitee.plugin.resource.internal;
 
+import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.resource.ResourcePlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ClassUtils;
 
 import java.io.IOException;
 import java.net.URLClassLoader;
@@ -32,9 +29,7 @@ import java.net.URLClassLoader;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginHandler implements PluginHandler {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(ResourcePluginHandler.class);
+public class ResourcePluginHandler extends AbstractSimplePluginHandler<ResourcePlugin> {
 
     @Autowired
     private ConfigurablePluginManager<ResourcePlugin> resourcePluginManager;
@@ -45,27 +40,34 @@ public class ResourcePluginHandler implements PluginHandler {
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        URLClassLoader resourceClassLoader = null;
+    protected String type() {
+        return "resources";
+    }
+
+    @Override
+    protected ResourcePlugin create(Plugin plugin, Class<?> pluginClass) {
+        ResourcePluginImpl resourcePlugin = new ResourcePluginImpl(plugin, pluginClass);
+        resourcePlugin.setConfiguration(new ResourceConfigurationClassFinder().lookupFirst(pluginClass));
+
+        return resourcePlugin;
+    }
+
+    @Override
+    protected void register(ResourcePlugin plugin) {
+        resourcePluginManager.register(plugin);
+
+        // Once registered, the classloader should be released
+        URLClassLoader classLoader = (URLClassLoader) plugin.resource().getClassLoader();
         try {
-            resourceClassLoader = new URLClassLoader(plugin.dependencies(),
-                    this.getClass().getClassLoader());
-
-            Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), resourceClassLoader);
-
-            LOGGER.info("Register a new resource: {} [{}]", plugin.id(), pluginClass.getName());
-            ResourcePluginImpl resource = new ResourcePluginImpl(plugin, pluginClass);
-            resource.setConfiguration(new ResourceConfigurationClassFinder().lookupFirst(pluginClass, resourceClassLoader));
-            resourcePluginManager.register(resource);
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while creating resource instance", iae);
-        } finally {
-            if (resourceClassLoader != null) {
-                try {
-                    resourceClassLoader.close();
-                } catch (IOException e) {
-                }
-            }
+            classLoader.close();
+        } catch (IOException e) {
+            logger.error("Unexpected exception while trying to release the notifier classloader");
         }
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) throws Exception {
+        return new URLClassLoader(plugin.dependencies(),
+                this.getClass().getClassLoader());
     }
 }
