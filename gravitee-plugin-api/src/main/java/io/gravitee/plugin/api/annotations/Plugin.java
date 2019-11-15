@@ -15,7 +15,6 @@
  */
 package io.gravitee.plugin.api.annotations;
 
-
 import io.gravitee.plugin.api.DeploymentContext;
 import io.gravitee.plugin.api.DeploymentLifecycle;
 

@@ -19,7 +19,7 @@ package io.gravitee.plugin.api;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeploymentLifecycle<T extends DeploymentContext> {
+public interface DeploymentContextFactory<T extends DeploymentContext> {
 
-    void onDeploy(T context);
+    T create();
 }
