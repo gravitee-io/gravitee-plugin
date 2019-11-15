@@ -15,8 +15,7 @@
  */
 package io.gravitee.plugin.core.api;
 
-import io.gravitee.node.api.Node;
-import io.gravitee.plugin.api.DeploymentContext;
+import io.gravitee.plugin.api.DeploymentContextFactory;
 import io.gravitee.plugin.api.DeploymentLifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +37,7 @@ public abstract class AbstractPluginHandler implements PluginHandler {
     private Environment environment;
 
     @Autowired
-    private Node node;
+    private DeploymentContextFactory deploymentContextFactory;
 
     @Override
     public void handle(Plugin plugin) {
@@ -61,12 +60,7 @@ public abstract class AbstractPluginHandler implements PluginHandler {
                     // Load deployment lifecycle implementation from plugin classloader
                     DeploymentLifecycle deploymentLifecycle = deploymentClass.newInstance();
 
-                    deploymentLifecycle.onDeploy(new DeploymentContext() {
-                        @Override
-                        public Node node() {
-                            return node;
-                        }
-                    });
+                    deploymentLifecycle.onDeploy(deploymentContextFactory.create());
                 }
 
                 handle(plugin, pluginClass);

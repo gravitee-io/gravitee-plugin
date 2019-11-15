@@ -15,9 +15,10 @@
  */
 package io.gravitee.plugin.api;
 
-import io.gravitee.node.api.Node;
-
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public interface DeploymentContext {
 
-    Node node();
 }
