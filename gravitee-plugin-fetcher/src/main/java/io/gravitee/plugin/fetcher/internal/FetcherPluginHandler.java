@@ -45,9 +45,8 @@ public class FetcherPluginHandler implements PluginHandler {
 
     @Override
     public void handle(Plugin plugin) {
-        try {
-            URLClassLoader fetcherClassLoader = new URLClassLoader(plugin.dependencies(),
-                    this.getClass().getClassLoader());
+        try (URLClassLoader fetcherClassLoader = new URLClassLoader(plugin.dependencies(),
+                    this.getClass().getClassLoader())) {
 
             Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), fetcherClassLoader);
 

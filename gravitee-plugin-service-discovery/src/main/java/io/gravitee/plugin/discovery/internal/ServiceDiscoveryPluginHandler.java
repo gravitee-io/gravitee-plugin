@@ -45,10 +45,8 @@ public class ServiceDiscoveryPluginHandler implements PluginHandler {
 
     @Override
     public void handle(Plugin plugin) {
-        URLClassLoader serviceDiscoveryClassLoader = null;
-        try {
-            serviceDiscoveryClassLoader = new URLClassLoader(plugin.dependencies(),
-                    this.getClass().getClassLoader());
+        try (URLClassLoader serviceDiscoveryClassLoader = new URLClassLoader(plugin.dependencies(),
+                    this.getClass().getClassLoader())) {
 
             Class<?> pluginClass = ClassUtils.forName(plugin.clazz(), serviceDiscoveryClassLoader);
 
