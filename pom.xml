@@ -29,18 +29,18 @@
 
     <groupId>io.gravitee.plugin</groupId>
     <artifactId>gravitee-plugin</artifactId>
-    <version>1.11.0-SNAPSHOT</version>
+    <version>1.11.0</version>
     <packaging>pom</packaging>
     <name>Gravitee.io APIM - Plugin</name>
 
     <properties>
-        <gravitee-common.version>1.16.0</gravitee-common.version>
+        <gravitee-common.version>1.16.1</gravitee-common.version>
         <gravitee-gateway-api.version>1.20.0</gravitee-gateway-api.version>
         <gravitee-policy-api.version>1.6.0</gravitee-policy-api.version>
         <gravitee-resource-api.version>1.1.0</gravitee-resource-api.version>
         <gravitee-fetcher-api.version>1.2.0</gravitee-fetcher-api.version>
-        <gravitee-alert-api.version>1.2.0</gravitee-alert-api.version>
-        <gravitee-notifier-api.version>1.2.0</gravitee-notifier-api.version>
+        <gravitee-alert-api.version>1.2.1</gravitee-alert-api.version>
+        <gravitee-notifier-api.version>1.2.1</gravitee-notifier-api.version>
         <gravitee-service-discovery-api.version>1.1.0</gravitee-service-discovery-api.version>
         <reflections.version>0.9.11</reflections.version>
     </properties>
