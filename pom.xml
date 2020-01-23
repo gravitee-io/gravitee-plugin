@@ -42,6 +42,7 @@
         <gravitee-alert-api.version>1.2.1</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.2.1</gravitee-notifier-api.version>
         <gravitee-service-discovery-api.version>1.1.0</gravitee-service-discovery-api.version>
+        <gravitee-platform-repository-api.version>1.0.0-SNAPSHOT</gravitee-platform-repository-api.version>
         <reflections.version>0.9.11</reflections.version>
     </properties>
 
@@ -54,10 +55,59 @@
         <module>gravitee-plugin-alert</module>
         <module>gravitee-plugin-service-discovery</module>
         <module>gravitee-plugin-notifier</module>
+        <module>gravitee-plugin-repository</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Self import modules -->
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-policy</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-resource</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-fetcher</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-alert</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-service-discovery</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-notifier</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-repository</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Dependencies -->
             <dependency>
                 <groupId>io.gravitee.gateway</groupId>
                 <artifactId>gravitee-gateway-api</artifactId>
@@ -104,6 +154,12 @@
                 <groupId>io.gravitee.notifier</groupId>
                 <artifactId>gravitee-notifier-api</artifactId>
                 <version>${gravitee-notifier-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.platform</groupId>
+                <artifactId>gravitee-platform-repository-api</artifactId>
+                <version>${gravitee-platform-repository-api.version}</version>
             </dependency>
 
             <!-- Reflection utils -->
