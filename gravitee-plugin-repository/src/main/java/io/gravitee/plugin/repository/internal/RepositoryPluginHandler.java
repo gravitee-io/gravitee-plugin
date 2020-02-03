@@ -99,7 +99,7 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
                         tries++;
 
                         if (!loaded) {
-                            LOGGER.error("Unable to load repository {} for scope {}. Retry in {} ms...", scope, plugin.id(), RETRY_DELAY_MS);
+                            LOGGER.error("Unable to load repository {} for scope {}. Retry in {} ms...", plugin.id(), scope, RETRY_DELAY_MS);
                         }
                     }
                 } else {
