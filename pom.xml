@@ -34,7 +34,7 @@
     <name>Gravitee.io APIM - Plugin</name>
 
     <properties>
-        <gravitee-common.version>1.16.1</gravitee-common.version>
+        <gravitee-common.version>1.16.2</gravitee-common.version>
         <gravitee-gateway-api.version>1.20.0</gravitee-gateway-api.version>
         <gravitee-policy-api.version>1.6.0</gravitee-policy-api.version>
         <gravitee-resource-api.version>1.1.0</gravitee-resource-api.version>
