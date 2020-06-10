@@ -19,6 +19,7 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.policy.api.PolicyConfiguration;
+import io.gravitee.policy.api.PolicyContext;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -32,11 +33,17 @@ class PolicyPluginImpl implements PolicyPlugin {
     private final Plugin plugin;
     private final Class<?> policyClass;
     private Class<? extends PolicyConfiguration> policyConfigurationClass;
+    private Class<? extends PolicyContext> policyContextClass;
 
     PolicyPluginImpl(final Plugin plugin, final Class<?> policyClass) {
         this.plugin = plugin;
         this.policyClass = policyClass;
         this.policyConfigurationClass = null;
+    }
+
+    @Override
+    public Class<? extends PolicyContext> context() {
+        return policyContextClass;
     }
 
     @Override
@@ -76,5 +83,9 @@ class PolicyPluginImpl implements PolicyPlugin {
 
     public void setConfiguration(Class<? extends PolicyConfiguration> policyConfigurationClass) {
         this.policyConfigurationClass = policyConfigurationClass;
+    }
+
+    public void setContext(Class<? extends PolicyContext> policyContextClass) {
+        this.policyContextClass = policyContextClass;
     }
 }

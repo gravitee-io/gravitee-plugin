@@ -18,6 +18,7 @@ package io.gravitee.plugin.policy;
 import io.gravitee.plugin.core.api.ConfigurablePlugin;
 import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.policy.api.PolicyConfiguration;
+import io.gravitee.policy.api.PolicyContext;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -27,8 +28,11 @@ public interface PolicyPlugin<C extends PolicyConfiguration> extends Configurabl
 
     Class<?> policy();
 
+    Class<? extends PolicyContext> context();
+
     @Override
     default PluginType type() {
         return PluginType.POLICY;
     }
+
 }
