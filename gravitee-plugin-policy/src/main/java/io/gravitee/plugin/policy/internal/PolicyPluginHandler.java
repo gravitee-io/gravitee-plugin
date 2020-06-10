@@ -48,6 +48,7 @@ public class PolicyPluginHandler extends AbstractSimplePluginHandler<PolicyPlugi
     protected PolicyPlugin create(Plugin plugin, Class<?> pluginClass) {
         PolicyPluginImpl policyPlugin = new PolicyPluginImpl(plugin, pluginClass);
         policyPlugin.setConfiguration(new PolicyConfigurationClassFinder().lookupFirst(pluginClass));
+        policyPlugin.setContext(new PolicyContextClassFinder().lookupFirst(pluginClass, policyPlugin.policy().getClassLoader()));
 
         return policyPlugin;
     }
