@@ -43,7 +43,7 @@
         <gravitee-notifier-api.version>1.2.1</gravitee-notifier-api.version>
         <gravitee-service-discovery-api.version>1.1.1</gravitee-service-discovery-api.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
-        <reflections.version>0.9.11</reflections.version>
+        <reflections.version>0.9.12</reflections.version>
     </properties>
 
     <modules>
