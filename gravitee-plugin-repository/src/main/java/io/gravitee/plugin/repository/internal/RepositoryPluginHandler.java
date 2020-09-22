@@ -15,11 +15,14 @@
  */
 package io.gravitee.plugin.repository.internal;
 
-import io.gravitee.plugin.core.api.*;
-import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
 import io.gravitee.platform.repository.api.RepositoryProvider;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.platform.repository.api.Scope;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import io.gravitee.plugin.core.api.PluginHandler;
+import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,7 +33,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -41,6 +47,8 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
 
     private final static Logger LOGGER = LoggerFactory.getLogger(RepositoryPluginHandler.class);
     public static final int RETRY_DELAY_MS = 5000;
+
+    private final static String PLUGIN_TYPE = "repository";
 
     @Autowired
     private Environment environment;
@@ -69,7 +77,7 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.REPOSITORY;
+        return PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override

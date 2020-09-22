@@ -18,7 +18,6 @@ package io.gravitee.plugin.notifier;
 import io.gravitee.notifier.api.Notifier;
 import io.gravitee.notifier.api.NotifierConfiguration;
 import io.gravitee.plugin.core.api.ConfigurablePlugin;
-import io.gravitee.plugin.core.api.PluginType;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -26,10 +25,12 @@ import io.gravitee.plugin.core.api.PluginType;
  */
 public interface NotifierPlugin<C extends NotifierConfiguration> extends ConfigurablePlugin<C> {
 
+    String PLUGIN_TYPE = "notifier";
+
     Class<? extends Notifier> notifier();
 
     @Override
-    default PluginType type() {
-        return PluginType.NOTIFIER;
+    default String type() {
+        return PLUGIN_TYPE;
     }
 }

@@ -85,30 +85,13 @@ public class PluginEventListener extends AbstractService implements EventListene
 
     private void deployPlugins() {
         // Plugins loading should be re-ordered to manage inter-dependencies
-        deployPlugins(PluginType.REPOSITORY);
-        deployPlugins(PluginType.IDENTITY_PROVIDER);
-        deployPlugins(PluginType.RESOURCE);
-        deployPlugins(PluginType.POLICY);
-        deployPlugins(PluginType.SERVICE);
-        deployPlugins(PluginType.REPORTER);
-        deployPlugins(PluginType.FETCHER);
-        deployPlugins(PluginType.CERTIFICATE);
-        deployPlugins(PluginType.EXTENSION_GRANT);
-        deployPlugins(PluginType.NOTIFIER);
-        deployPlugins(PluginType.ALERT);
-        deployPlugins(PluginType.SERVICE_DISCOVERY);
-        deployPlugins(PluginType.PROTOCOL);
-        deployPlugins(PluginType.INGESTER);
-        deployPlugins(PluginType.PROCESSOR);
-        deployPlugins(PluginType.FACTOR);
-        deployPlugins(PluginType.COCKPIT);
-        deployPlugins(PluginType.COCKPIT_CONTROLLER);
+        plugins.values().stream().map(Plugin::type).distinct().forEach(this::deployPlugins);
     }
 
-    private void deployPlugins(PluginType pluginType) {
-        LOGGER.info("Installing {} plugins...", pluginType.name());
+    private void deployPlugins(String pluginType) {
+        LOGGER.info("Installing {} plugins...", pluginType);
         plugins.values().stream()
-                .filter(plugin -> pluginType == plugin.type())
+                .filter(plugin -> pluginType.equalsIgnoreCase(plugin.type()))
                 .forEach(plugin ->
                         pluginHandlers.stream()
                                 .filter(pluginHandler -> pluginHandler.canHandle(plugin))
@@ -131,9 +114,9 @@ public class PluginEventListener extends AbstractService implements EventListene
 
     private static class PluginKey {
         private final String id;
-        private final PluginType type;
+        private final String type;
 
-        public PluginKey(final String id, final PluginType type) {
+        public PluginKey(final String id, final String type) {
             this.id = id;
             this.type = type;
         }

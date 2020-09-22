@@ -15,8 +15,13 @@
  */
 package io.gravitee.plugin.core.internal;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 public interface PluginManifestProperties {
 
@@ -26,4 +31,11 @@ public interface PluginManifestProperties {
     String MANIFEST_DESCRIPTION_PROPERTY = "description";
     String MANIFEST_CLASS_PROPERTY = "class";
     String MANIFEST_TYPE_PROPERTY = "type";
+    String MANIFEST_ICON_PROPERTY = "icon";
+    String MANIFEST_CATEGORY_PROPERTY = "category";
+
+    Set<String> MANIFEST_PROPERTIES = new HashSet<>(Arrays.asList(
+       MANIFEST_ID_PROPERTY, MANIFEST_NAME_PROPERTY, MANIFEST_VERSION_PROPERTY, MANIFEST_DESCRIPTION_PROPERTY,
+            MANIFEST_CLASS_PROPERTY, MANIFEST_TYPE_PROPERTY
+    ));
 }

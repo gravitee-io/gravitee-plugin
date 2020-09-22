@@ -15,8 +15,11 @@
  */
 package io.gravitee.plugin.core.api;
 
+import java.util.Map;
+
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 public interface PluginManifest {
 
@@ -26,9 +29,15 @@ public interface PluginManifest {
 
     String description();
 
+    String category();
+
     String version();
 
     String plugin();
 
     String type();
+
+    default Map<String, String> properties() {
+        return null;
+    }
 }

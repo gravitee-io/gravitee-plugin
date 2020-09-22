@@ -33,7 +33,7 @@ public class CockpitPluginHandler extends AbstractSpringPluginHandler<CockpitCon
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.COCKPIT;
+        return plugin.type().equalsIgnoreCase(type());
     }
 
     @Override

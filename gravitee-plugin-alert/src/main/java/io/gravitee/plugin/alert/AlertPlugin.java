@@ -16,7 +16,6 @@
 package io.gravitee.plugin.alert;
 
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginType;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -24,8 +23,10 @@ import io.gravitee.plugin.core.api.PluginType;
  */
 public interface AlertPlugin extends Plugin {
 
+    String PLUGIN_TYPE = "alert";
+
     @Override
-    default PluginType type() {
-        return PluginType.ALERT;
+    default String type() {
+        return PLUGIN_TYPE;
     }
 }

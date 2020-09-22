@@ -18,7 +18,6 @@ package io.gravitee.plugin.policy.internal;
 import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,7 +35,7 @@ public class PolicyPluginHandler extends AbstractSimplePluginHandler<PolicyPlugi
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.POLICY;
+        return PolicyPlugin.PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override

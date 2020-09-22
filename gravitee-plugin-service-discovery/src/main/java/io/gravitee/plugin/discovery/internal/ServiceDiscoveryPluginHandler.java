@@ -18,7 +18,6 @@ package io.gravitee.plugin.discovery.internal;
 import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,7 +34,7 @@ public class ServiceDiscoveryPluginHandler extends AbstractSimplePluginHandler<S
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.SERVICE_DISCOVERY == plugin.type();
+        return ServiceDiscoveryPlugin.PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override

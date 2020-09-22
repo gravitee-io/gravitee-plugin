@@ -15,32 +15,75 @@
  */
 package io.gravitee.plugin.core.api;
 
+import io.gravitee.plugin.core.internal.PluginManifestProperties;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePlugin>
-        extends AbstractPluginManager<T> implements ConfigurablePluginManager<T> {
+    extends AbstractPluginManager<T> implements ConfigurablePluginManager<T> {
 
     private final static String SCHEMAS_DIRECTORY = "schemas";
 
+    private final static String DOCS_DIRECTORY = "docs";
+
     @Override
     public String getSchema(String pluginId) throws IOException {
-        Path pluginWorkspace = get(pluginId).path();
+        return getFirstFile(pluginId, SCHEMAS_DIRECTORY);
+    }
 
-        File[] schemas = pluginWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+    @Override
+    public String getIcon(String pluginId) throws IOException {
+        T plugin = get(pluginId);
+        Map<String, String> properties = plugin.manifest().properties();
+        if (properties != null) {
+            String icon = properties.get(PluginManifestProperties.MANIFEST_ICON_PROPERTY);
+            if (icon != null) {
+                Path iconFile = Paths.get(plugin.path().toString(), icon);
+                String mimeType = Files.probeContentType(iconFile);
+                return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(iconFile));
+            }
+        }
 
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
+        return null;
+    }
 
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+    @Override
+    public String getDocumentation(String pluginId) throws IOException {
+        return getFirstFile(pluginId, DOCS_DIRECTORY);
+    }
+
+    @Override
+    public String getCategory(String pluginId) throws IOException {
+        T plugin = get(pluginId);
+        Map<String, String> properties = plugin.manifest().properties();
+        if (properties != null) {
+            return properties.get(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
+        }
+        return null;
+    }
+
+
+    private String getFirstFile(String pluginId, String directory) throws IOException {
+        Path workspaceDir = get(pluginId).path();
+
+        File[] matches = workspaceDir.toFile().listFiles(
+            pathname -> pathname.isDirectory() && pathname.getName().equals(directory));
+
+        if (matches.length == 1) {
+            File dir = matches[0];
+
+            if (dir.listFiles().length > 0) {
+                return new String(Files.readAllBytes(dir.listFiles()[0].toPath()));
             }
         }
 
