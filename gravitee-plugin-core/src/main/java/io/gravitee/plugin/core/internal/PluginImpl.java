@@ -17,7 +17,6 @@ package io.gravitee.plugin.core.internal;
 
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
-import io.gravitee.plugin.core.api.PluginType;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -28,37 +27,27 @@ import java.nio.file.Path;
  */
 public class PluginImpl implements Plugin {
 
-    private String id;
-    private String clazz;
-    private PluginType type;
     private Path path;
     private PluginManifest manifest;
     private URL[] dependencies;
 
-    public PluginImpl() {
-
-    }
-
-    public PluginImpl(PluginManifest manifest) {
-        this.id = manifest.id();
-        this.clazz = manifest.plugin();
-        this.type = PluginType.from(manifest.type());
+    PluginImpl(PluginManifest manifest) {
         this.manifest = manifest;
     }
 
     @Override
     public String id() {
-        return id;
+        return manifest.id();
     }
 
     @Override
     public String clazz() {
-        return clazz;
+        return manifest.plugin();
     }
 
     @Override
-    public PluginType type() {
-        return type;
+    public String type() {
+        return manifest.type();
     }
 
     @Override
@@ -76,24 +65,8 @@ public class PluginImpl implements Plugin {
         return dependencies;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setClazz(String clazz) {
-        this.clazz = clazz;
-    }
-
-    public void setType(PluginType type) {
-        this.type = type;
-    }
-
     public void setPath(Path path) {
         this.path = path;
-    }
-
-    public void setManifest(PluginManifest manifest) {
-        this.manifest = manifest;
     }
 
     public void setDependencies(URL[] dependencies) {
@@ -107,11 +80,11 @@ public class PluginImpl implements Plugin {
 
         PluginImpl plugin = (PluginImpl) o;
 
-        return id.equals(plugin.id);
+        return manifest.id().equals(plugin.id());
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return id().hashCode();
     }
 }

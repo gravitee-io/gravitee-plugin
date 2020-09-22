@@ -20,11 +20,12 @@ import io.gravitee.common.service.Service;
 import java.util.Collection;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 public interface PluginRegistry extends Service {
 
     Collection<Plugin> plugins();
 
-    Collection<Plugin> plugins(PluginType type);
+    Collection<Plugin> plugins(String type);
 }

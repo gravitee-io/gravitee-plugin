@@ -15,7 +15,10 @@
  */
 package io.gravitee.plugin.core.internal;
 
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginConfigurationResolver;
+import io.gravitee.plugin.core.api.PluginContextConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * @author David BRASSELY (david at gravitee.io)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class AnnotationBasedPluginContextConfigurer implements PluginContextConfigurer {
@@ -47,7 +50,7 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
     @Autowired
     private ApplicationContext containerContext;
 
-    protected GenericApplicationContext pluginContext;
+    private GenericApplicationContext pluginContext;
 
     private final Plugin plugin;
 
@@ -98,7 +101,8 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
     @Override
     public void registerBeans() {
         // This specific case should be handle by the plugin handler while creating the plugin context
-        if (plugin.type() != PluginType.POLICY) {
+        // TODO: find a way to handle this properly
+        if (! plugin.type().equalsIgnoreCase("policy")) {
             pluginContext.registerBeanDefinition(plugin.clazz(),
                     BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition());
         }

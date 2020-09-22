@@ -141,15 +141,13 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     private void printPlugins() {
-        for (PluginType pluginType : PluginType.values()) {
-            printPluginByType(pluginType);
-        }
+        plugins.stream().map(Plugin::type).distinct().forEach(this::printPluginByType);
     }
 
-    private void printPluginByType(PluginType pluginType) {
-        LOGGER.info("List of available {}: ", pluginType.name().toLowerCase());
+    private void printPluginByType(String pluginType) {
+        LOGGER.info("List of available {}: ", pluginType.toLowerCase());
         plugins.stream()
-                .filter(plugin -> pluginType == plugin.type())
+                .filter(plugin -> pluginType.equalsIgnoreCase(plugin.type()))
                 .forEach(plugin -> LOGGER.info("\t> {} [{}] has been loaded",
                         plugin.id(), plugin.manifest().version()));
     }
@@ -338,6 +336,15 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         final String name = properties.getProperty(PluginManifestProperties.MANIFEST_NAME_PROPERTY);
         final String version = properties.getProperty(PluginManifestProperties.MANIFEST_VERSION_PROPERTY);
         final String type = properties.getProperty(PluginManifestProperties.MANIFEST_TYPE_PROPERTY);
+        final String category = properties.getProperty(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
+
+        final Map<String, String> propertiesMap = new HashMap<>();
+        properties.forEach((o, o2) -> {
+            String key = o.toString();
+            if (! PluginManifestProperties.MANIFEST_PROPERTIES.contains(key)) {
+                propertiesMap.put(o.toString(), o2.toString());
+            }
+        });
 
         return new PluginManifest() {
             @Override
@@ -356,6 +363,11 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             }
 
             @Override
+            public String category() {
+                return category;
+            }
+
+            @Override
             public String version() {
                 return version;
             }
@@ -368,6 +380,11 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             @Override
             public String type() {
                 return type;
+            }
+
+            @Override
+            public Map<String, String> properties() {
+                return propertiesMap;
             }
         };
     }
@@ -395,9 +412,9 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     @Override
-    public Collection<Plugin> plugins(PluginType type) {
+    public Collection<Plugin> plugins(String type) {
         return plugins.stream()
-                .filter(pluginContext -> pluginContext.type() == type)
+                .filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type()))
                 .collect(Collectors.toSet());
     }
 

@@ -18,7 +18,6 @@ package io.gravitee.plugin.fetcher;
 import io.gravitee.fetcher.api.Fetcher;
 import io.gravitee.fetcher.api.FetcherConfiguration;
 import io.gravitee.plugin.core.api.ConfigurablePlugin;
-import io.gravitee.plugin.core.api.PluginType;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -26,10 +25,12 @@ import io.gravitee.plugin.core.api.PluginType;
  */
 public interface FetcherPlugin<C extends FetcherConfiguration> extends ConfigurablePlugin<C> {
 
+    String PLUGIN_TYPE = "fetcher";
+
     Class<? extends Fetcher> fetcher();
 
     @Override
-    default PluginType type() {
-        return PluginType.FETCHER;
+    default String type() {
+        return PLUGIN_TYPE;
     }
 }

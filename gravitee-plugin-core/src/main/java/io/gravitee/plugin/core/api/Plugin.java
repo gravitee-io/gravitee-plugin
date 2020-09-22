@@ -19,7 +19,8 @@ import java.net.URL;
 import java.nio.file.Path;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 public interface Plugin {
 
@@ -36,7 +37,7 @@ public interface Plugin {
     /**
      * Plugin type
      */
-    PluginType type();
+    String type();
 
     /**
      * Plugin installation path.

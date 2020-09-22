@@ -15,6 +15,7 @@
  */
 package io.gravitee.plugin.core.api;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -28,4 +29,10 @@ public interface PluginManager<T extends Plugin> {
     Collection<T> findAll();
 
     T get(String pluginId);
+
+    String getIcon(String pluginId) throws IOException;
+
+    String getDocumentation(String pluginId) throws IOException;
+
+    String getCategory(String pluginId) throws IOException;
 }

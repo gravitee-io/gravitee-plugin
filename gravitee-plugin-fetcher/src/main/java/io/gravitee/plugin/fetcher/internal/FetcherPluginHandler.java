@@ -18,7 +18,6 @@ package io.gravitee.plugin.fetcher.internal;
 import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.fetcher.FetcherPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,7 +34,7 @@ public class FetcherPluginHandler extends AbstractSimplePluginHandler<FetcherPlu
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.FETCHER == plugin.type();
+        return FetcherPlugin.PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override

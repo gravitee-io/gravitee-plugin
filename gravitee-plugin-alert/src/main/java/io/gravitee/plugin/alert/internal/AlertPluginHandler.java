@@ -18,8 +18,12 @@ package io.gravitee.plugin.alert.internal;
 import io.gravitee.alert.api.event.EventProducer;
 import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
+import io.gravitee.plugin.alert.AlertPlugin;
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.api.AbstractSpringPluginHandler;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -44,7 +48,7 @@ public class AlertPluginHandler extends AbstractSpringPluginHandler<Void> {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.ALERT == plugin.type();
+        return AlertPlugin.PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override

@@ -18,7 +18,6 @@ package io.gravitee.plugin.discovery;
 import io.gravitee.discovery.api.ServiceDiscovery;
 import io.gravitee.discovery.api.ServiceDiscoveryConfiguration;
 import io.gravitee.plugin.core.api.ConfigurablePlugin;
-import io.gravitee.plugin.core.api.PluginType;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -26,10 +25,12 @@ import io.gravitee.plugin.core.api.PluginType;
  */
 public interface ServiceDiscoveryPlugin<C extends ServiceDiscoveryConfiguration> extends ConfigurablePlugin<C> {
 
+    String PLUGIN_TYPE = "service_discovery";
+
     Class<? extends ServiceDiscovery> serviceDiscovery();
 
     @Override
-    default PluginType type() {
-        return PluginType.SERVICE_DISCOVERY;
+    default String type() {
+        return PLUGIN_TYPE;
     }
 }

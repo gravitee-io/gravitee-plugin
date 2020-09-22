@@ -16,7 +16,7 @@
 package io.gravitee.plugin.core.api;
 
 /**
- * @author David BRASSELY (david at gravitee.io)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ConfigurablePlugin<T> extends Plugin {

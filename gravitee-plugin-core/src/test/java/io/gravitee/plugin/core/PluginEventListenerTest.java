@@ -19,7 +19,6 @@ import io.gravitee.common.event.Event;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginEvent;
 import io.gravitee.plugin.core.api.PluginManifest;
-import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.core.internal.PluginEventListener;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +52,7 @@ public class PluginEventListenerTest {
     @Test
     public void shouldLoadSinglePlugin() {
         when(plugin.id()).thenReturn("policy");
-        when(plugin.type()).thenReturn(PluginType.POLICY);
+        when(plugin.type()).thenReturn("policy");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {
             @Override
@@ -74,7 +73,7 @@ public class PluginEventListenerTest {
 
         when(plugin.id()).thenReturn("policy");
         when(plugin.manifest()).thenReturn(pluginManifest);
-        when(plugin.type()).thenReturn(PluginType.POLICY);
+        when(plugin.type()).thenReturn("policy");
         when(pluginManifest.version()).thenReturn("1.0.0-SNAPSHOT");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {
@@ -107,7 +106,7 @@ public class PluginEventListenerTest {
         eventListener.setFailOnDuplicate(true);
 
         when(plugin.id()).thenReturn("policy");
-        when(plugin.type()).thenReturn(PluginType.POLICY);
+        when(plugin.type()).thenReturn("policy");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {
             @Override
@@ -122,7 +121,7 @@ public class PluginEventListenerTest {
         });
 
         when(plugin2.id()).thenReturn("policy");
-        when(plugin2.type()).thenReturn(PluginType.RESOURCE);
+        when(plugin2.type()).thenReturn("resource");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {
             @Override
@@ -143,7 +142,7 @@ public class PluginEventListenerTest {
 
         when(plugin.id()).thenReturn("policy");
         when(plugin.manifest()).thenReturn(pluginManifest);
-        when(plugin.type()).thenReturn(PluginType.POLICY);
+        when(plugin.type()).thenReturn("policy");
         when(pluginManifest.version()).thenReturn("1.0.0-SNAPSHOT");
 
         eventListener.onEvent(new Event<PluginEvent, Plugin>() {

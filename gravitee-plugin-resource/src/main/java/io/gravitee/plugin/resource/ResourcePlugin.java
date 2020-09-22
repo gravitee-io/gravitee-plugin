@@ -16,20 +16,21 @@
 package io.gravitee.plugin.resource;
 
 import io.gravitee.plugin.core.api.ConfigurablePlugin;
-import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.resource.api.Resource;
 import io.gravitee.resource.api.ResourceConfiguration;
 
 /**
- * @author David BRASSELY (david at gravitee.io)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ResourcePlugin<C extends ResourceConfiguration> extends ConfigurablePlugin<C> {
 
+    String PLUGIN_TYPE = "resource";
+
     Class<? extends Resource> resource();
 
     @Override
-    default PluginType type() {
-        return PluginType.RESOURCE;
+    default String type() {
+        return PLUGIN_TYPE;
     }
 }

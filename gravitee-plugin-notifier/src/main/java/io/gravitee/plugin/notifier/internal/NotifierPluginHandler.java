@@ -18,7 +18,6 @@ package io.gravitee.plugin.notifier.internal;
 import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.notifier.NotifierPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,7 +35,7 @@ public class NotifierPluginHandler extends AbstractSimplePluginHandler<NotifierP
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.NOTIFIER == plugin.type();
+        return NotifierPlugin.PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override
