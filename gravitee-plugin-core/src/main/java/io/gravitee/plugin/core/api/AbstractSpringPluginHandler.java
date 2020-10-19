@@ -18,8 +18,6 @@ package io.gravitee.plugin.core.api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
-import java.lang.reflect.ParameterizedType;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -29,18 +27,11 @@ public abstract class AbstractSpringPluginHandler<T> extends AbstractPluginHandl
     @Autowired
     private PluginContextFactory pluginContextFactory;
 
-    private final Class<T> pluginClass;
-
-    public AbstractSpringPluginHandler() {
-        this.pluginClass = (Class<T>) ((ParameterizedType) this.getClass().getGenericSuperclass())
-                .getActualTypeArguments()[0];
-    }
-
     @Override
     protected void handle(Plugin plugin, Class<?> pluginClass) {
         try {
             ApplicationContext context = pluginContextFactory.create(plugin);
-            T pluginInst = context.getBean(this.pluginClass);
+            T pluginInst = (T) context.getBean(pluginClass);
             register(pluginInst);
         } catch (Exception ex) {
             logger.error("Unexpected error while creating {}", plugin.id(), ex);

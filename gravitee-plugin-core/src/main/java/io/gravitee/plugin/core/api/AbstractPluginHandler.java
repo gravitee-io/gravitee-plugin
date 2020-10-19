@@ -54,7 +54,6 @@ public abstract class AbstractPluginHandler implements PluginHandler {
                 io.gravitee.plugin.api.annotations.Plugin ann = pluginClass.getAnnotation(io.gravitee.plugin.api.annotations.Plugin.class);
 
                 if (ann != null) {
-                    ann.deployment();
                     Class<? extends DeploymentLifecycle> deploymentClass = ann.deployment();
 
                     // Load deployment lifecycle implementation from plugin classloader

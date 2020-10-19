@@ -50,7 +50,7 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
     @Autowired
     private ApplicationContext containerContext;
 
-    private GenericApplicationContext pluginContext;
+    protected GenericApplicationContext pluginContext;
 
     private final Plugin plugin;
 
