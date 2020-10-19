@@ -22,7 +22,6 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginEvent;
 import io.gravitee.plugin.core.api.PluginHandler;
-import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -85,7 +85,12 @@ public class PluginEventListener extends AbstractService implements EventListene
 
     private void deployPlugins() {
         // Plugins loading should be re-ordered to manage inter-dependencies
-        plugins.values().stream().map(Plugin::type).distinct().forEach(this::deployPlugins);
+        Stream
+                .concat(
+                        Stream.of("repository"),
+                        plugins.values().stream().map(Plugin::type).distinct())
+                .distinct()
+                .forEach(this::deployPlugins);
     }
 
     private void deployPlugins(String pluginType) {
