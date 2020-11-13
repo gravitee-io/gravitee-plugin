@@ -41,6 +41,23 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
         return getFirstFile(pluginId, SCHEMAS_DIRECTORY);
     }
 
+    private String getMimeType(final Path file) {
+        if (file == null || file.getFileName() == null) {
+            return null;
+        }
+
+        final String fileName = file.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(".svg")) {
+            return "image/svg+xml";
+        } else if (fileName.endsWith(".png")) {
+            return "image/png";
+        } else if (fileName.endsWith(".jpeg") || fileName.endsWith(".jpg")) {
+            return "image/jpeg";
+        } else {
+            return "application/octet-stream";
+        }
+    }
+
     @Override
     public String getIcon(String pluginId) throws IOException {
         T plugin = get(pluginId);
@@ -49,8 +66,7 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
             String icon = properties.get(PluginManifestProperties.MANIFEST_ICON_PROPERTY);
             if (icon != null) {
                 Path iconFile = Paths.get(plugin.path().toString(), icon);
-                String mimeType = Files.probeContentType(iconFile);
-                return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(iconFile));
+                return "data:" + getMimeType(iconFile) + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(iconFile));
             }
         }
 
