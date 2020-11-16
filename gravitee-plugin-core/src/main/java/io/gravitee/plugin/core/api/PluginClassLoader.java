@@ -86,4 +86,12 @@ public final class PluginClassLoader extends ClassLoader {
     public void setPackageAssertionStatus(String packageName, boolean enabled) {
         classLoader.setPackageAssertionStatus(packageName, enabled);
     }
+
+    /**
+     * This is needed by ClassGraph
+     * @return
+     */
+    public URL[] getURLs() {
+        return classLoader.getURLs();
+    }
 }
