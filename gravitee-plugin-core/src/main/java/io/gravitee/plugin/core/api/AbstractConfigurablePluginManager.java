@@ -74,16 +74,20 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
 
     private String getFirstFile(String pluginId, String directory) throws IOException {
-        Path workspaceDir = get(pluginId).path();
+        final T plugin = get(pluginId);
 
-        File[] matches = workspaceDir.toFile().listFiles(
-            pathname -> pathname.isDirectory() && pathname.getName().equals(directory));
+        if (plugin != null) {
+            Path workspaceDir = plugin.path();
 
-        if (matches.length == 1) {
-            File dir = matches[0];
+            File[] matches = workspaceDir.toFile().listFiles(
+                pathname -> pathname.isDirectory() && pathname.getName().equals(directory));
 
-            if (dir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(dir.listFiles()[0].toPath()));
+            if (matches.length == 1) {
+                File dir = matches[0];
+
+                if (dir.listFiles().length > 0) {
+                    return new String(Files.readAllBytes(dir.listFiles()[0].toPath()));
+                }
             }
         }
 
