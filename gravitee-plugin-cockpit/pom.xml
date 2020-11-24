@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gravitee-plugin</artifactId>
         <groupId>io.gravitee.plugin</groupId>
-        <version>1.16.0</version>
+        <version>1.16.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-plugin-cockpit</artifactId>
