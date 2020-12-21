@@ -94,24 +94,26 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
             Scope[] scopes = repository.scopes();
 
             for (Scope scope : scopes) {
-                if (!repositories.containsKey(scope)) {
-                    boolean loaded = false;
-                    int tries = 0;
+                if (repository.type().equals(getRepositoryType(scope))) {
+                    if (!repositories.containsKey(scope)) {
+                        boolean loaded = false;
+                        int tries = 0;
 
-                    while (!loaded) {
-                        if (tries > 0) {
-                            // Wait some time before giving an other try.
-                            Thread.sleep(RETRY_DELAY_MS);
-                        }
-                        loaded = loadRepository(scope, repository, plugin);
-                        tries++;
+                        while (!loaded) {
+                            if (tries > 0) {
+                                // Wait some time before giving an other try.
+                                Thread.sleep(RETRY_DELAY_MS);
+                            }
+                            loaded = loadRepository(scope, repository, plugin);
+                            tries++;
 
-                        if (!loaded) {
-                            LOGGER.error("Unable to load repository {} for scope {}. Retry in {} ms...", plugin.id(), scope, RETRY_DELAY_MS);
+                            if (!loaded) {
+                                LOGGER.error("Unable to load repository {} for scope {}. Retry in {} ms...", plugin.id(), scope, RETRY_DELAY_MS);
+                            }
                         }
+                    } else {
+                        LOGGER.warn("Repository scope {} already loaded by {}", scope, repositories.get(scope));
                     }
-                } else {
-                    LOGGER.warn("Repository scope {} already loaded by {}", scope, repositories.get(scope));
                 }
             }
         } catch (Exception iae) {
@@ -171,13 +173,17 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
      */
     private void checkRepositoryConfig(Scope scope) throws IllegalStateException {
 
-        String repositoryType = environment.getProperty(scope.getName() + ".type");
+        String repositoryType = getRepositoryType(scope);
         LOGGER.info("Loading repository for scope {}: {}", scope, repositoryType);
 
         if (repositoryType == null || repositoryType.isEmpty()) {
             LOGGER.error("No repository type defined in configuration for {}", scope.getName());
             throw new IllegalStateException("No repository type defined in configuration for " + scope.getName());
         }
+    }
+
+    private String getRepositoryType(Scope scope) {
+        return environment.getProperty(scope.getName() + ".type");
     }
 
     private <T> T createInstance(Class<T> clazz) throws Exception {
