@@ -31,6 +31,9 @@ public class CockpitPluginHandler extends AbstractSpringPluginHandler<CockpitCon
     @Autowired
     private PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @Override
     public boolean canHandle(Plugin plugin) {
         return plugin.type().equalsIgnoreCase(type());
@@ -47,6 +50,7 @@ public class CockpitPluginHandler extends AbstractSpringPluginHandler<CockpitCon
         try {
             // Start the cockpit connector.
             connector.start();
+            registerBean(connector);
         } catch (Exception e) {
             logger.error("Unexpected error while starting cockpit controller", e);
         }
@@ -55,5 +59,13 @@ public class CockpitPluginHandler extends AbstractSpringPluginHandler<CockpitCon
     @Override
     protected ClassLoader getClassLoader(Plugin plugin) throws Exception {
         return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    }
+
+    private void registerBean(CockpitConnector connector){
+        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) (
+            (ConfigurableApplicationContext) applicationContext
+        ).getBeanFactory();
+
+        beanFactory.registerSingleton(CockpitConnector.class.getName(), connector);
     }
 }
