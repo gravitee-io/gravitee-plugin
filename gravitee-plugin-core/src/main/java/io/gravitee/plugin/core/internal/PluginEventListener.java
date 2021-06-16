@@ -27,9 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -39,6 +37,11 @@ import java.util.stream.Stream;
 public class PluginEventListener extends AbstractService implements EventListener<PluginEvent, Plugin> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(PluginEventListener.class);
+
+    /**
+     * Allows to define priority between the different plugin types.
+     */
+    private final static List<String> pluginPriority = Arrays.asList("repository", "alert", "cockpit");
 
     @Value("${plugins.failOnDuplicate:true}")
     private boolean failOnDuplicate;
@@ -90,6 +93,7 @@ public class PluginEventListener extends AbstractService implements EventListene
                         Stream.of("repository"),
                         plugins.values().stream().map(Plugin::type).distinct())
                 .distinct()
+                .sorted(new PluginTypeComparator())
                 .forEach(this::deployPlugins);
     }
 
@@ -142,6 +146,33 @@ public class PluginEventListener extends AbstractService implements EventListene
             int result = id.hashCode();
             result = 31 * result + type.hashCode();
             return result;
+        }
+    }
+
+    private static class PluginTypeComparator implements Comparator<String> {
+        @Override
+        public int compare(String o1, String o2) {
+            Integer pos1 = pluginPriority.indexOf(o1);
+            Integer pos2 = pluginPriority.indexOf(o2);
+
+            if (pos1 >= 0) {
+                if (pos2 >= 0) {
+                    // The plugin are both defined in the priority list. Respect the order defined.
+                    return pos1.compareTo(pos2);
+                }
+
+                // The second plugin is not defined in the priority list, plugin 1 takes precedence.
+                return -1;
+            }
+
+            if (pos2 >= 0) {
+                // First plugin is not defined in the priority list, plugin 2 takes precedence.
+                return 1;
+            }
+
+            // Both plugins are not in the priority list, keep the order unchanged.
+            return 0;
+
         }
     }
 }
