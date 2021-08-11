@@ -15,35 +15,15 @@
  */
 package io.gravitee.plugin.core.api;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PluginManifest {
+public interface PluginDependency {
 
     String id();
 
-    String name();
-
-    String description();
-
-    String category();
-
-    String version();
-
-    String plugin();
-
     String type();
 
-    default int priority() { return 1000; };
-
-    default List<PluginDependency> dependencies() { return Collections.emptyList(); };
-
-    default Map<String, String> properties() {
-        return null;
-    }
+    boolean matches(Plugin plugin);
 }

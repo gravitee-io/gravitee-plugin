@@ -28,7 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,7 +53,7 @@ public class PluginEventListener extends AbstractService implements EventListene
     @Autowired
     private EventManager eventManager;
 
-    private final Map<PluginKey, Plugin> plugins = new HashMap<>();
+    private final Map<PluginKey, Plugin> plugins = new ConcurrentHashMap<>();
 
     @Override
     public void onEvent(Event<PluginEvent, Plugin> event) {
@@ -87,27 +88,48 @@ public class PluginEventListener extends AbstractService implements EventListene
     }
 
     private void deployPlugins() {
-        // Plugins loading should be re-ordered to manage inter-dependencies
-        Stream
-                .concat(
-                        Stream.of("repository"),
-                        plugins.values().stream().map(Plugin::type).distinct())
-                .distinct()
-                .sorted(new PluginTypeComparator())
-                .forEach(this::deployPlugins);
+
+        Map<String, List<Plugin>> resolvedDependencies = new HashMap<>();
+
+        final List<Plugin> sortedByPriority = this.plugins.values().stream()
+                .sorted(Comparator.<Plugin>comparingInt(o -> o.manifest().priority())
+                        .thenComparing(new PluginComparator()))
+                .collect(Collectors.toList());
+
+        plugins.values().forEach(p -> {
+            plugins.values().forEach(other -> {
+                if (p.manifest().dependencies().stream().anyMatch(d -> d.matches(other))) {
+                    resolvedDependencies.computeIfAbsent(p.type() + p.id(), s -> new ArrayList<>()).add(other);
+                }
+            });
+        });
+
+        List<Plugin> deployedPlugins = new ArrayList<>(this.plugins.size());
+
+        sortedByPriority.forEach(plugin -> {
+            deployPlugin(plugin, resolvedDependencies, deployedPlugins);
+        });
     }
 
-    private void deployPlugins(String pluginType) {
-        LOGGER.info("Installing {} plugins...", pluginType);
-        plugins.values().stream()
-                .filter(plugin -> pluginType.equalsIgnoreCase(plugin.type()))
-                .forEach(plugin ->
-                        pluginHandlers.stream()
-                                .filter(pluginHandler -> pluginHandler.canHandle(plugin))
-                                .forEach(pluginHandler -> {
-                                    LOGGER.debug("Plugin {} has been managed by {}", plugin.id(), pluginHandler.getClass());
-                                    pluginHandler.handle(plugin);
-                                }));
+    private void deployPlugin(Plugin plugin, Map<String, List<Plugin>> resolvedDependencies, List<Plugin> deployedPlugins) {
+
+        if (deployedPlugins.contains(plugin)) {
+            return;
+        }
+
+        // Deploy all plugins the plugin depends on.
+        resolvedDependencies.getOrDefault(plugin.type() + plugin.id(), Collections.emptyList())
+                .forEach(dependencyPlugin -> deployPlugin(dependencyPlugin, resolvedDependencies, deployedPlugins));
+
+        LOGGER.info("Installing {} plugins...", plugin.id());
+        pluginHandlers.stream()
+                .filter(pluginHandler -> pluginHandler.canHandle(plugin))
+                .forEach(pluginHandler -> {
+                    LOGGER.debug("Plugin {} has been managed by {}", plugin.id(), pluginHandler.getClass());
+                    pluginHandler.handle(plugin);
+                });
+
+        deployedPlugins.add(plugin);
     }
 
     @Override
@@ -149,11 +171,12 @@ public class PluginEventListener extends AbstractService implements EventListene
         }
     }
 
-    private static class PluginTypeComparator implements Comparator<String> {
+    private static class PluginComparator implements Comparator<Plugin> {
         @Override
-        public int compare(String o1, String o2) {
-            Integer pos1 = pluginPriority.indexOf(o1);
-            Integer pos2 = pluginPriority.indexOf(o2);
+        public int compare(Plugin o1, Plugin o2) {
+
+            Integer pos1 = pluginPriority.indexOf(o1.type());
+            Integer pos2 = pluginPriority.indexOf(o2.type());
 
             if (pos1 >= 0) {
                 if (pos2 >= 0) {
