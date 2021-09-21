@@ -46,6 +46,7 @@
         <reflections.version>0.9.11</reflections.version>
         <gravitee-identityprovider-api.version>1.0.0</gravitee-identityprovider-api.version>
         <gravitee-cockpit-api.version>1.0.0</gravitee-cockpit-api.version>
+        <gravitee-connector-api.version>1.0.0-SNAPSHOT</gravitee-connector-api.version>
     </properties>
 
     <modules>
@@ -60,6 +61,7 @@
         <module>gravitee-plugin-repository</module>
         <module>gravitee-plugin-identityprovider</module>
         <module>gravitee-plugin-cockpit</module>
+        <module>gravitee-plugin-connector</module>
     </modules>
 
     <dependencyManagement>
@@ -78,6 +80,11 @@
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
                 <artifactId>gravitee-plugin-policy</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-connector</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -186,6 +193,12 @@
                 <groupId>io.gravitee.cockpit</groupId>
                 <artifactId>gravitee-cockpit-api</artifactId>
                 <version>${gravitee-cockpit-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.connector</groupId>
+                <artifactId>gravitee-connector-api</artifactId>
+                <version>${gravitee-connector-api.version}</version>
             </dependency>
 
             <!-- Reflection utils -->
