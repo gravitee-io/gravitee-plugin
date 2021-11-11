@@ -80,7 +80,7 @@ public class PluginImpl implements Plugin {
 
         PluginImpl plugin = (PluginImpl) o;
 
-        return manifest.id().equals(plugin.id());
+        return manifest.id().equals(plugin.id()) && manifest.type().equals(plugin.type());
     }
 
     @Override
