@@ -23,6 +23,7 @@ import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -31,7 +32,12 @@ import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.concurrent.CompletableFuture.runAsync;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,6 +58,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     @Autowired
     private PluginRegistryConfiguration configuration;
 
+    @Autowired
+    @Qualifier("corePluginExecutor")
+    private ExecutorService executor;
+
     private boolean init = false;
 
     private List<Plugin> plugins = new ArrayList<>();
@@ -59,7 +69,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     @Autowired
     private EventManager eventManager;
 
-    private String [] workspacesPath;
+    private String[] workspacesPath;
 
     /**
      * Empty constructor is used to use a workspace directory defined from @Value annotation
@@ -69,7 +79,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     public PluginRegistryImpl(String workspacePath) {
-        this.workspacesPath = new String []{ workspacePath };
+        this.workspacesPath = new String[]{workspacePath};
     }
 
     @Override
@@ -86,7 +96,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     public void init() throws Exception {
-        String [] pluginsPath = configuration.getPluginsPath();
+        String[] pluginsPath = configuration.getPluginsPath();
         if ((pluginsPath == null || pluginsPath.length == 0) && workspacesPath == null) {
             LOGGER.error("No plugin registry configured.");
             throw new RuntimeException("No plugin registry configured.");
@@ -109,7 +119,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         File registryDir = new File(registryPath);
 
         // Quick sanity check on the install root
-        if (! registryDir.isDirectory()) {
+        if (!registryDir.isDirectory()) {
             LOGGER.error("Invalid registry directory, {} is not a directory.", registryDir.getAbsolutePath());
             throw new RuntimeException("Invalid registry directory. Not a directory: "
                     + registryDir.getAbsolutePath());
@@ -120,18 +130,22 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private void loadPlugins(File registryDir) throws Exception {
         Path registryPath = registryDir.toPath();
-        LOGGER.info("Loading plugins from {}",registryDir);
+        LOGGER.info("Loading plugins from {}", registryDir);
 
-        try (DirectoryStream<Path> stream = FileUtils.newDirectoryStream(registryPath, ZIP_GLOB)){
+        try (DirectoryStream<Path> stream = FileUtils.newDirectoryStream(registryPath, ZIP_GLOB)) {
+            List<CompletableFuture<?>> futures = new ArrayList<>();
             Iterator<Path> archiveIte = stream.iterator();
 
             if (archiveIte.hasNext()) {
                 while (archiveIte.hasNext()) {
-                    loadPlugin(registryDir, archiveIte.next());
+                    final Path path = archiveIte.next();
+                    futures.add(runAsync(() -> loadPlugin(registryDir, path), executor));
                 }
             } else {
                 LOGGER.warn("No plugin has been found in {}", registryDir);
             }
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
 
             init = true;
         } catch (IOException ioe) {
@@ -166,18 +180,18 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
      * @param pluginArchivePath The directory containing the plugin definition
      */
     private void loadPlugin(File registryDir, Path pluginArchivePath) {
-        LOGGER.info("Loading plugin from {}", pluginArchivePath);
+        LOGGER.debug("Loading plugin from {}", pluginArchivePath);
 
         try {
             // 1_ Extract plugin into a temporary working folder
             String sPluginFile = pluginArchivePath.toFile().getName();
             sPluginFile = sPluginFile.substring(0, sPluginFile.lastIndexOf(".zip"));
             Path workDir = FileSystems.getDefault().getPath(registryDir.getAbsolutePath(), ".work", sPluginFile);
-            if ( StringUtils.hasText(configuration.getPluginWorkDir()) ) {
+            if (StringUtils.hasText(configuration.getPluginWorkDir())) {
                 // use specified workDir if specified in environment
                 workDir = FileSystems.getDefault().getPath(configuration.getPluginWorkDir(), sPluginFile);
                 // make sure the work dir exists
-                if ( !workDir.toFile().getParentFile().exists() ) {
+                if (!workDir.toFile().getParentFile().exists()) {
                     workDir.toFile().getParentFile().mkdirs();
                 }
             }
@@ -257,9 +271,9 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
      * @return
      */
     private PluginManifest readPluginManifest(Path pluginPath) {
-        try (DirectoryStream stream = FileUtils.newDirectoryStream(pluginPath, JAR_GLOB)){
+        try (DirectoryStream stream = FileUtils.newDirectoryStream(pluginPath, JAR_GLOB)) {
             Iterator iterator = stream.iterator();
-            if (! iterator.hasNext()) {
+            if (!iterator.hasNext()) {
                 LOGGER.debug("Unable to find a jar in the root directory: {}", pluginPath);
                 return null;
             }
@@ -273,10 +287,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                 return null;
             }
 
-            LOGGER.info("A plugin manifest has been loaded from: {}", pluginJarPath);
+            LOGGER.debug("A plugin manifest has been loaded from: {}", pluginJarPath);
 
             PluginManifestValidator validator = new PropertiesBasedPluginManifestValidator(pluginManifestProperties);
-            if (! validator.validate()) {
+            if (!validator.validate()) {
                 LOGGER.error("Plugin manifest not valid, skipping plugin registration.");
                 return null;
             }
@@ -289,7 +303,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     private Properties loadPluginManifest(String pluginPath) {
-        try (FileSystem zipFileSystem = FileUtils.createZipFileSystem(pluginPath, false)){
+        try (FileSystem zipFileSystem = FileUtils.createZipFileSystem(pluginPath, false)) {
             final Path root = zipFileSystem.getPath("/");
 
             // Walk the jar file tree and search for plugin.properties file
@@ -311,13 +325,14 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     private URL[] listToArray(List<Path> paths) {
-        URL [] urls = new URL[paths.size()];
+        URL[] urls = new URL[paths.size()];
         int idx = 0;
 
-        for(Path path: paths) {
+        for (Path path : paths) {
             try {
                 urls[idx++] = path.toUri().toURL();
-            } catch (IOException ioe) {}
+            } catch (IOException ioe) {
+            }
         }
 
         return urls;
@@ -337,11 +352,23 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         final String version = properties.getProperty(PluginManifestProperties.MANIFEST_VERSION_PROPERTY);
         final String type = properties.getProperty(PluginManifestProperties.MANIFEST_TYPE_PROPERTY);
         final String category = properties.getProperty(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
+        final int priority = Integer.parseInt(properties.getProperty(PluginManifestProperties.MANIFEST_PRIORITY_PROPERTY, "1000"));
+        final List<io.gravitee.plugin.core.api.PluginDependency> dependencies = Stream.of(properties.getProperty(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, "").split(","))
+                .filter(s -> !"".equals(s))
+                .map(dependencyStr -> {
+                    final String[] split = dependencyStr.split(":");
+
+                    if (split.length == 1) {
+                        return new PluginDependencyImpl(split[0], "*");
+                    } else {
+                        return new PluginDependencyImpl(split[0], split[1]);
+                    }
+                }).collect(Collectors.toList());
 
         final Map<String, String> propertiesMap = new HashMap<>();
         properties.forEach((o, o2) -> {
             String key = o.toString();
-            if (! PluginManifestProperties.MANIFEST_PROPERTIES.contains(key)) {
+            if (!PluginManifestProperties.MANIFEST_PROPERTIES.contains(key)) {
                 propertiesMap.put(o.toString(), o2.toString());
             }
         });
@@ -380,6 +407,14 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             @Override
             public String type() {
                 return type;
+            }
+
+            @Override
+            public int priority() { return priority; }
+
+            @Override
+            public List<io.gravitee.plugin.core.api.PluginDependency> dependencies() {
+                return dependencies;
             }
 
             @Override
@@ -439,6 +474,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         public Path getPluginManifest() {
             return pluginManifest;
         }
+    }
+
+    public void setExecutor(ExecutorService executor) {
+        this.executor = executor;
     }
 
     public void setConfiguration(PluginRegistryConfiguration configuration) {

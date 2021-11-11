@@ -33,6 +33,8 @@ public interface PluginManifestProperties {
     String MANIFEST_TYPE_PROPERTY = "type";
     String MANIFEST_ICON_PROPERTY = "icon";
     String MANIFEST_CATEGORY_PROPERTY = "category";
+    String MANIFEST_PRIORITY_PROPERTY = "priority";
+    String MANIFEST_DEPENDENCIES_PROPERTY = "dependencies";
 
     Set<String> MANIFEST_PROPERTIES = new HashSet<>(Arrays.asList(
        MANIFEST_ID_PROPERTY, MANIFEST_NAME_PROPERTY, MANIFEST_VERSION_PROPERTY, MANIFEST_DESCRIPTION_PROPERTY,
