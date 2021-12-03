@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderPluginHandler implements PluginHandler {
+public class IdentityProviderPluginHandler extends AbstractPluginHandler implements PluginHandler {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
 
@@ -48,18 +48,25 @@ public class IdentityProviderPluginHandler implements PluginHandler {
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        try {
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    protected String type() {
+        return PluginType.IDENTITY_PROVIDER.name().toLowerCase();
+    }
 
-            final Class<?> identityProviderClass = classloader.loadClass(plugin.clazz());
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    }
+
+    @Override
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
+        try {
             LOGGER.info("Register a new identity provider plugin: {} [{}]", plugin.id(), plugin.clazz());
 
-            Assert.isAssignable(IdentityProvider.class, identityProviderClass);
+            Assert.isAssignable(IdentityProvider.class, pluginClass);
 
             ApplicationContext repoApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin));
 
-            IdentityProvider idpClassInstance = repoApplicationContext.getBean((Class<IdentityProvider>) identityProviderClass);
+            IdentityProvider idpClassInstance = repoApplicationContext.getBean((Class<IdentityProvider>) pluginClass);
 
             identityProviderManager.put(idpClassInstance.getSource(), idpClassInstance);
         } catch (Exception iae) {
