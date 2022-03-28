@@ -20,6 +20,5 @@ package io.gravitee.plugin.api;
  * @author GraviteeSource Team
  */
 public interface DeploymentContextFactory<T extends DeploymentContext> {
-
     T create();
 }

@@ -18,10 +18,9 @@ package io.gravitee.plugin.core.internal;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoader;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import java.net.URLClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URLClassLoader;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
@@ -38,8 +37,7 @@ public class PluginClassLoaderFactoryImpl<T extends Plugin> implements PluginCla
         try {
             cl = new PluginClassLoader(URLClassLoader.newInstance(plugin.dependencies(), parent));
 
-            LOGGER.debug("Created plugin classLoader for {} with classpath {}",
-                    plugin.id(), plugin.dependencies());
+            LOGGER.debug("Created plugin classLoader for {} with classpath {}", plugin.id(), plugin.dependencies());
 
             return cl;
         } catch (Throwable t) {

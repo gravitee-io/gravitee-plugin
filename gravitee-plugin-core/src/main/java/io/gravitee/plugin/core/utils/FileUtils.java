@@ -27,8 +27,7 @@ import java.util.Map;
  */
 public class FileUtils {
 
-    private FileUtils() {
-    }
+    private FileUtils() {}
 
     public static DirectoryStream newDirectoryStream(Path dir, String glob) throws IOException {
         // create a matcher and return a filter that uses it.
@@ -45,9 +44,7 @@ public class FileUtils {
      * @return a zip file system
      * @throws IOException
      */
-    public static FileSystem createZipFileSystem(String zipFilename,
-                                                 boolean create)
-            throws IOException {
+    public static FileSystem createZipFileSystem(String zipFilename, boolean create) throws IOException {
         // convert the filename to a URI
         final Path path = Paths.get(zipFilename);
         final URI uri = URI.create("jar:file:" + path.toUri().getPath());
@@ -66,8 +63,7 @@ public class FileUtils {
      * @param destDirname the directory to unzip to
      * @throws IOException
      */
-    public static void unzip(String zipFilename, Path destDirname)
-            throws IOException {
+    public static void unzip(String zipFilename, Path destDirname) throws IOException {
         final Path destDir = destDirname;
 
         //if the destination doesn't exist, create it
@@ -79,53 +75,51 @@ public class FileUtils {
             final Path root = zipFileSystem.getPath("/");
 
             //walk the zip file tree and copy files to the destination
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs) throws IOException {
-                    final Path destFile = Paths.get(destDir.toString(),
-                            file.toString());
-                    Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir,
-                                                         BasicFileAttributes attrs) throws IOException {
-                    final Path dirToCreate = Paths.get(destDir.toString(),
-                            dir.toString());
-                    if (Files.notExists(dirToCreate)) {
-                        Files.createDirectory(dirToCreate);
+            Files.walkFileTree(
+                root,
+                new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        final Path destFile = Paths.get(destDir.toString(), file.toString());
+                        Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
+                        return FileVisitResult.CONTINUE;
                     }
-                    return FileVisitResult.CONTINUE;
+
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        final Path dirToCreate = Paths.get(destDir.toString(), dir.toString());
+                        if (Files.notExists(dirToCreate)) {
+                            Files.createDirectory(dirToCreate);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
                 }
-            });
+            );
         }
     }
 
     public static void delete(Path directory) throws IOException {
         if (Files.exists(directory)) {
-            Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
-
-                @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir,
-                                                          IOException exc) throws IOException {
-                    if (exc == null) {
-                        Files.delete(dir);
+            Files.walkFileTree(
+                directory,
+                new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Files.delete(file);
                         return FileVisitResult.CONTINUE;
-                    } else {
-                        throw exc;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
                     }
                 }
-
-            });
+            );
 
             Files.deleteIfExists(directory);
         }

@@ -24,7 +24,4 @@ import io.gravitee.plugin.notifier.NotifierPlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NotifierClassLoaderFactoryImpl extends CachedPluginClassLoaderFactory<NotifierPlugin>
-        implements NotifierClassLoaderFactory {
-
-}
+public class NotifierClassLoaderFactoryImpl extends CachedPluginClassLoaderFactory<NotifierPlugin> implements NotifierClassLoaderFactory {}

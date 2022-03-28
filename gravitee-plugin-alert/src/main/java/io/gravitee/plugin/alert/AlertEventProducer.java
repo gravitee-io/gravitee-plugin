@@ -22,6 +22,5 @@ import io.gravitee.alert.api.event.EventProducer;
  * @author GraviteeSource Team
  */
 public interface AlertEventProducer extends EventProducer {
-
     boolean isEmpty();
 }

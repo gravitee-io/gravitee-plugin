@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
  * @author GraviteeSource Team
  */
 public interface FetcherClassLoaderFactory extends PluginClassLoaderFactory<FetcherPlugin> {
-
     @Override
     default PluginClassLoader getOrCreateClassLoader(FetcherPlugin fetcherPlugin) {
         return getOrCreateClassLoader(fetcherPlugin, fetcherPlugin.getClass().getClassLoader());

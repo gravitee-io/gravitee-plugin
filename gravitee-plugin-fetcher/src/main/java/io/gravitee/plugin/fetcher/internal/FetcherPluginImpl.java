@@ -19,7 +19,6 @@ import io.gravitee.fetcher.api.FetcherConfiguration;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.fetcher.FetcherPlugin;
-
 import java.net.URL;
 import java.nio.file.Path;
 

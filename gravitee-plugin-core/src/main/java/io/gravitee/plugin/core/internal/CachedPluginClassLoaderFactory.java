@@ -17,11 +17,10 @@ package io.gravitee.plugin.core.internal;
 
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
@@ -39,17 +38,15 @@ public class CachedPluginClassLoaderFactory<T extends Plugin> extends PluginClas
 
         try {
             cl = pluginClassLoaderCache.get(plugin.id());
-            if (null == cl)  {
+            if (null == cl) {
                 cl = super.getOrCreateClassLoader(plugin, parent);
                 pluginClassLoaderCache.put(plugin.id(), cl);
             }
 
-            LOGGER.debug("Created plugin ClassLoader for {} with classpath {}",
-                    plugin.id(), plugin.dependencies());
+            LOGGER.debug("Created plugin ClassLoader for {} with classpath {}", plugin.id(), plugin.dependencies());
 
             return cl;
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             LOGGER.error("Unexpected error while creating plugin classloader", t);
             return null;
         }

@@ -41,12 +41,11 @@ public class CockpitPluginHandler extends AbstractSpringPluginHandler<CockpitCon
 
     @Override
     protected String type() {
-        return  PluginType.COCKPIT.name();
+        return PluginType.COCKPIT.name();
     }
 
     @Override
     protected void register(CockpitConnector connector) {
-
         try {
             // Start the cockpit connector.
             connector.start();
@@ -61,7 +60,7 @@ public class CockpitPluginHandler extends AbstractSpringPluginHandler<CockpitCon
         return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
     }
 
-    private void registerBean(CockpitConnector connector){
+    private void registerBean(CockpitConnector connector) {
         DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) (
             (ConfigurableApplicationContext) applicationContext
         ).getBeanFactory();

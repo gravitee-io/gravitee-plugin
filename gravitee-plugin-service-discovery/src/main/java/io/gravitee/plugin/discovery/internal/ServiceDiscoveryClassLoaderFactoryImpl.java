@@ -23,7 +23,6 @@ import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ServiceDiscoveryClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<ServiceDiscoveryPlugin>
-        implements ServiceDiscoveryClassLoaderFactory {
-
-}
+public class ServiceDiscoveryClassLoaderFactoryImpl
+    extends PluginClassLoaderFactoryImpl<ServiceDiscoveryPlugin>
+    implements ServiceDiscoveryClassLoaderFactory {}

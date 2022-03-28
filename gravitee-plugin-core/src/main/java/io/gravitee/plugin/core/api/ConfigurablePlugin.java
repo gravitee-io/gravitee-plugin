@@ -20,6 +20,5 @@ package io.gravitee.plugin.core.api;
  * @author GraviteeSource Team
  */
 public interface ConfigurablePlugin<T> extends Plugin {
-
     Class<T> configuration();
 }

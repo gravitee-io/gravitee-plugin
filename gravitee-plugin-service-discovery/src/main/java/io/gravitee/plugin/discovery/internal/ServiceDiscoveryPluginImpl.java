@@ -19,7 +19,6 @@ import io.gravitee.discovery.api.ServiceDiscoveryConfiguration;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
-
 import java.net.URL;
 import java.nio.file.Path;
 

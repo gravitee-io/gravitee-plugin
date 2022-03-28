@@ -22,6 +22,4 @@ import io.gravitee.plugin.fetcher.FetcherPlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FetcherPluginManagerImpl extends AbstractConfigurablePluginManager<FetcherPlugin> {
-
-}
+public class FetcherPluginManagerImpl extends AbstractConfigurablePluginManager<FetcherPlugin> {}

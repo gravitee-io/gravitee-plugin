@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
  * @author GraviteeSource Team
  */
 public interface ServiceDiscoveryClassLoaderFactory extends PluginClassLoaderFactory<ServiceDiscoveryPlugin> {
-
     @Override
     default PluginClassLoader getOrCreateClassLoader(ServiceDiscoveryPlugin serviceDiscoveryPlugin) {
         return getOrCreateClassLoader(serviceDiscoveryPlugin, serviceDiscoveryPlugin.getClass().getClassLoader());

@@ -24,7 +24,6 @@ import io.gravitee.plugin.core.api.ConfigurablePlugin;
  * @author GraviteeSource Team
  */
 public interface ServiceDiscoveryPlugin<C extends ServiceDiscoveryConfiguration> extends ConfigurablePlugin<C> {
-
     String PLUGIN_TYPE = "service_discovery";
 
     Class<? extends ServiceDiscovery> serviceDiscovery();

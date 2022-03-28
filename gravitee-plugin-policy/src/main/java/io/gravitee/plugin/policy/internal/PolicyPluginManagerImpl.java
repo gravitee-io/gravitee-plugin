@@ -22,6 +22,4 @@ import io.gravitee.plugin.policy.PolicyPlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PolicyPluginManagerImpl extends AbstractConfigurablePluginManager<PolicyPlugin> {
-
-}
+public class PolicyPluginManagerImpl extends AbstractConfigurablePluginManager<PolicyPlugin> {}

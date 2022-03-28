@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.api.ConfigurablePlugin;
  * @author GraviteeSource Team
  */
 public interface ConnectorPlugin<C extends ConnectorConfiguration> extends ConfigurablePlugin<C> {
-
     String PLUGIN_TYPE = "connector";
 
     Class<?> connector();
@@ -32,5 +31,4 @@ public interface ConnectorPlugin<C extends ConnectorConfiguration> extends Confi
     default String type() {
         return PLUGIN_TYPE;
     }
-
 }

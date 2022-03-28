@@ -18,11 +18,10 @@ package io.gravitee.plugin.alert.internal;
 import io.gravitee.alert.api.event.EventProducer;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
@@ -65,7 +64,7 @@ public class AlertEventProducerManagerImpl extends AbstractService implements Al
     protected void doStop() throws Exception {
         super.doStop();
 
-        for(final EventProducer producer : eventProducers) {
+        for (final EventProducer producer : eventProducers) {
             try {
                 producer.stop();
             } catch (Exception ex) {

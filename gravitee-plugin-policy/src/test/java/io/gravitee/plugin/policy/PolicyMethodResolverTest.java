@@ -21,10 +21,9 @@ import io.gravitee.plugin.policy.internal.PolicyMethodResolver;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnResponse;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -51,9 +50,7 @@ public class PolicyMethodResolverTest {
         Assert.assertEquals(2, methods.size());
     }
 
-    class DummyPolicy01 {
-
-    }
+    class DummyPolicy01 {}
 
     class DummyPolicy02 {
 

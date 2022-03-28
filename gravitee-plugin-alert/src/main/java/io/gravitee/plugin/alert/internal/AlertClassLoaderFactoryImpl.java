@@ -23,7 +23,4 @@ import io.gravitee.plugin.core.internal.PluginClassLoaderFactoryImpl;
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AlertClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<AlertPlugin>
-        implements AlertClassLoaderFactory {
-
-}
+public class AlertClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<AlertPlugin> implements AlertClassLoaderFactory {}

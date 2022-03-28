@@ -22,7 +22,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface SubTypesFinder<T> {
-
     Collection<Class<? extends T>> lookup(Class<?> clazz, ClassLoader classLoader);
 
     default Collection<Class<? extends T>> lookup(Class<?> clazz) {
