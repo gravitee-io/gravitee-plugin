@@ -1,6 +1,19 @@
-= Gravitee.io - Plugin Core
 
-ifdef::env-github[]
-image:https://ci.gravitee.io/buildStatus/icon?job=gravitee-io/gravitee-plugin-core/master["Build status", link="https://ci.gravitee.io/job/gravitee-io/job/gravitee-plugin-core/"]
+= Gravitee-io - Plugin system
+
+image:https://img.shields.io/badge/License-Apache%202.0-blue.svg["License", link="https://github.com/gravitee-io/gravitee-plugin/blob/master/LICENSE.txt"]
+image:https://img.shields.io/badge/semantic--release-conventional%20commits-e10079?logo=semantic-release["Releases", link="https://github.com/gravitee-io/gravitee-plugin/releases"]
+image:https://circleci.com/gh/gravitee-io/gravitee-plugin.svg?style=svg["CircleCI", link="https://circleci.com/gh/gravitee-io/gravitee-plugin"]
 image:https://f.hubspotusercontent40.net/hubfs/7600448/gravitee-github-button.jpg["Join the community forum", link="https://community.gravitee.io?utm_source=readme", height=20]
-endif::[]
+
+
+== Description
+The Gravitee.io plugin project contains a set of classes that are used in Gravitee.io products (APIM, AM, ...) to load and manage plugins. Several type of plugins are supported:
+
+* Repositories
+* Services
+* Policies
+* Identity Providers
+* Notifiers
+* Reporters
+* ...
