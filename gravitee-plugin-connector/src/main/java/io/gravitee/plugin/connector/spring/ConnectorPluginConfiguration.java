@@ -31,7 +31,9 @@ import org.springframework.context.annotation.Configuration;
 public class ConnectorPluginConfiguration {
 
     @Bean
-    public ConfigurablePluginManager<ConnectorPlugin> connectorPluginManager(final ConnectorClassLoaderFactory connectorClassLoaderFactory) {
+    public ConfigurablePluginManager<ConnectorPlugin> connectorPluginManager(
+        final ConnectorClassLoaderFactory connectorClassLoaderFactory
+    ) {
         return new ConnectorPluginManagerImpl(connectorClassLoaderFactory);
     }
 

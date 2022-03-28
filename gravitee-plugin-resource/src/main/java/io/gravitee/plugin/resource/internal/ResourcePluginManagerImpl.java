@@ -22,6 +22,4 @@ import io.gravitee.plugin.resource.ResourcePlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginManagerImpl extends AbstractConfigurablePluginManager<ResourcePlugin> {
-
-}
+public class ResourcePluginManagerImpl extends AbstractConfigurablePluginManager<ResourcePlugin> {}

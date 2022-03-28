@@ -16,6 +16,8 @@
 package io.gravitee.plugin.core.spring;
 
 import io.gravitee.plugin.core.api.PluginHandler;
+import java.util.HashSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -26,9 +28,6 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -43,7 +42,8 @@ public class PluginHandlerBeanFactoryPostProcessor implements BeanFactoryPostPro
         LOGGER.info("Loading plugin handlers");
 
         Set<String> pluginHandlers = new HashSet<>(
-                SpringFactoriesLoader.loadFactoryNames(PluginHandler.class, beanFactory.getBeanClassLoader()));
+            SpringFactoriesLoader.loadFactoryNames(PluginHandler.class, beanFactory.getBeanClassLoader())
+        );
 
         LOGGER.info("Find {} plugin handler(s):", pluginHandlers.size());
 
@@ -55,8 +55,10 @@ public class PluginHandlerBeanFactoryPostProcessor implements BeanFactoryPostPro
                 Assert.isAssignable(PluginHandler.class, instanceClass);
 
                 PluginHandler pluginHandler = createInstance((Class<PluginHandler>) instanceClass);
-                defaultListableBeanFactory.registerBeanDefinition(pluginHandler.getClass().getName(),
-                        new RootBeanDefinition(pluginHandler.getClass().getName()));
+                defaultListableBeanFactory.registerBeanDefinition(
+                    pluginHandler.getClass().getName(),
+                    new RootBeanDefinition(pluginHandler.getClass().getName())
+                );
 
                 LOGGER.info("\t{}", pluginHandler.getClass().getName());
             } catch (Exception ex) {

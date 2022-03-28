@@ -24,7 +24,6 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface PluginManifest {
-
     String id();
 
     String name();
@@ -39,10 +38,13 @@ public interface PluginManifest {
 
     String type();
 
+    default int priority() {
+        return 1000;
+    }
 
-    default int priority() { return 1000; }
-
-    default List<PluginDependency> dependencies() { return Collections.emptyList(); }
+    default List<PluginDependency> dependencies() {
+        return Collections.emptyList();
+    }
 
     default Map<String, String> properties() {
         return null;

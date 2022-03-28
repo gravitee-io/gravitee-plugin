@@ -17,10 +17,9 @@ package io.gravitee.plugin.fetcher.internal;
 
 import io.gravitee.fetcher.api.FetcherConfiguration;
 import io.gravitee.plugin.core.api.AbstractSingleSubTypesFinder;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -36,8 +35,7 @@ class FetcherConfigurationClassFinder extends AbstractSingleSubTypesFinder<Fetch
 
     @Override
     public Collection<Class<? extends FetcherConfiguration>> lookup(Class clazz, ClassLoader classLoader) {
-        LOGGER.debug("Looking for a configuration class for fetcher {} in package {}",
-                clazz.getName(), clazz.getPackage().getName());
+        LOGGER.debug("Looking for a configuration class for fetcher {} in package {}", clazz.getName(), clazz.getPackage().getName());
         Collection<Class<? extends FetcherConfiguration>> configurations = super.lookup(clazz, classLoader);
 
         if (configurations.isEmpty()) {

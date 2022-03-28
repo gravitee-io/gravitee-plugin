@@ -16,14 +16,11 @@
 package io.gravitee.plugin.policy.internal;
 
 import io.gravitee.plugin.core.internal.PluginClassLoaderFactoryImpl;
-import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.plugin.policy.PolicyClassLoaderFactory;
+import io.gravitee.plugin.policy.PolicyPlugin;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
  * @author GraviteeSource Team
  */
-public class PolicyClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<PolicyPlugin>
-        implements PolicyClassLoaderFactory {
-
-}
+public class PolicyClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<PolicyPlugin> implements PolicyClassLoaderFactory {}

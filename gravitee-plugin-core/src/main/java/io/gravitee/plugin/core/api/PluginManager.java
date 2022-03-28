@@ -23,7 +23,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface PluginManager<T extends Plugin> {
-
     void register(T plugin);
 
     Collection<T> findAll();

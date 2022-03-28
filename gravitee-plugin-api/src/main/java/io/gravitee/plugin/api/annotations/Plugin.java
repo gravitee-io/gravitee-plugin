@@ -17,7 +17,6 @@ package io.gravitee.plugin.api.annotations;
 
 import io.gravitee.plugin.api.DeploymentContext;
 import io.gravitee.plugin.api.DeploymentLifecycle;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -30,13 +29,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Plugin {
-
     Class<? extends DeploymentLifecycle> deployment() default DefaultDeploymentLifecycle.class;
 
     final class DefaultDeploymentLifecycle implements DeploymentLifecycle {
-        @Override
-        public void onDeploy(DeploymentContext context) {
 
-        }
+        @Override
+        public void onDeploy(DeploymentContext context) {}
     }
 }

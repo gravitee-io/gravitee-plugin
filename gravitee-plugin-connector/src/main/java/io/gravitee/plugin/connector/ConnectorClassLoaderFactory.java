@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
  * @author GraviteeSource Team
  */
 public interface ConnectorClassLoaderFactory extends PluginClassLoaderFactory<ConnectorPlugin> {
-
     @Override
     default PluginClassLoader getOrCreateClassLoader(ConnectorPlugin connectorPlugin) {
         return getOrCreateClassLoader(connectorPlugin, connectorPlugin.getClass().getClassLoader());

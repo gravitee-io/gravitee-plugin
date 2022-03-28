@@ -24,7 +24,6 @@ import io.gravitee.resource.api.ResourceConfiguration;
  * @author GraviteeSource Team
  */
 public interface ResourcePlugin<C extends ResourceConfiguration> extends ConfigurablePlugin<C> {
-
     String PLUGIN_TYPE = "resource";
 
     Class<? extends Resource> resource();

@@ -15,13 +15,12 @@
  */
 package io.gravitee.plugin.core.internal;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -31,12 +30,12 @@ public class PluginRegistryConfiguration implements InitializingBean {
 
     private static final String PLUGIN_WORK_DIR_PROPERTY = "plugins.workDir";
 
-    private final static String PLUGIN_PATH_PROPERTY = "plugins.path[%s]";
+    private static final String PLUGIN_PATH_PROPERTY = "plugins.path[%s]";
 
     @Value("${plugins.path:${gravitee.home}/plugins}")
     private String defaultPluginPath;
 
-    private String [] pluginsPath;
+    private String[] pluginsPath;
 
     @Autowired
     private Environment environment;
@@ -55,11 +54,11 @@ public class PluginRegistryConfiguration implements InitializingBean {
         }
 
         // Use default host if required
-        if(paths.isEmpty()){
+        if (paths.isEmpty()) {
             paths.add(defaultPluginPath);
         }
 
-        pluginsPath = paths.toArray(new String []{});
+        pluginsPath = paths.toArray(new String[] {});
 
         pluginWorkDir = environment.getProperty(PLUGIN_WORK_DIR_PROPERTY);
     }
@@ -73,11 +72,10 @@ public class PluginRegistryConfiguration implements InitializingBean {
     }
 
     public String getPluginWorkDir() {
-      return pluginWorkDir;
+        return pluginWorkDir;
     }
 
     public void setPluginWorkDir(String pluginWorkDir) {
-      this.pluginWorkDir = pluginWorkDir;
+        this.pluginWorkDir = pluginWorkDir;
     }
-
 }

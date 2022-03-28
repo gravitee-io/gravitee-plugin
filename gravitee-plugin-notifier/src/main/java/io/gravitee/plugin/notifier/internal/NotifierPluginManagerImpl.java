@@ -22,6 +22,4 @@ import io.gravitee.plugin.notifier.NotifierPlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NotifierPluginManagerImpl extends AbstractConfigurablePluginManager<NotifierPlugin> {
-
-}
+public class NotifierPluginManagerImpl extends AbstractConfigurablePluginManager<NotifierPlugin> {}

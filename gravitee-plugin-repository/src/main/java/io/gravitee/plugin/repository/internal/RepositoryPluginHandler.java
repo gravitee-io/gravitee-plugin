@@ -23,6 +23,10 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -33,11 +37,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -45,10 +44,10 @@ import java.util.Set;
  */
 public class RepositoryPluginHandler implements PluginHandler, InitializingBean {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(RepositoryPluginHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryPluginHandler.class);
     public static final int RETRY_DELAY_MS = 5000;
 
-    private final static String PLUGIN_TYPE = "repository";
+    private static final String PLUGIN_TYPE = "repository";
 
     @Autowired
     private Environment environment;
@@ -66,7 +65,6 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
 
     @Override
     public void afterPropertiesSet() {
-
         RepositoryScopeProvider scopeProvider = applicationContext.getBean(RepositoryScopeProvider.class);
 
         // Get all the scope handled by the plugin and check there is an associated configuration.
@@ -108,7 +106,12 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
                             tries++;
 
                             if (!loaded) {
-                                LOGGER.error("Unable to load repository {} for scope {}. Retry in {} ms...", plugin.id(), scope, RETRY_DELAY_MS);
+                                LOGGER.error(
+                                    "Unable to load repository {} for scope {}. Retry in {} ms...",
+                                    plugin.id(),
+                                    scope,
+                                    RETRY_DELAY_MS
+                                );
                             }
                         }
                     } else {
@@ -122,18 +125,18 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
     }
 
     private boolean loadRepository(Scope scope, RepositoryProvider repository, Plugin plugin) {
-
         LOGGER.info("Repository [{}] loaded by {}", scope, repository.type());
 
         // Not yet loaded, let's mount the repository in application context
         try {
             ApplicationContext repoApplicationContext = pluginContextFactory.create(
-                    new AnnotationBasedPluginContextConfigurer(plugin) {
-                        @Override
-                        public Set<Class<?>> configurations() {
-                            return Collections.singleton(repository.configuration(scope));
-                        }
-                    });
+                new AnnotationBasedPluginContextConfigurer(plugin) {
+                    @Override
+                    public Set<Class<?>> configurations() {
+                        return Collections.singleton(repository.configuration(scope));
+                    }
+                }
+            );
 
             registerRepositoryDefinitions(repository, repoApplicationContext);
             repositories.put(scope, repository);
@@ -147,17 +150,21 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
     }
 
     private void registerRepositoryDefinitions(RepositoryProvider repository, ApplicationContext repoApplicationContext) {
-
-        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory)
-                ((ConfigurableApplicationContext) applicationContext).getBeanFactory();
+        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) (
+            (ConfigurableApplicationContext) applicationContext
+        ).getBeanFactory();
 
         String[] beanNames = repoApplicationContext.getBeanDefinitionNames();
         for (String beanName : beanNames) {
             Object repositoryClassInstance = repoApplicationContext.getBean(beanName);
             Class<?> repositoryObjectClass = repositoryClassInstance.getClass();
-            if ((beanName.endsWith("Repository") ||
-                    beanName.endsWith("TransactionManager")
-                            && !repository.getClass().equals(repositoryClassInstance.getClass()))) {
+            if (
+                (
+                    beanName.endsWith("Repository") ||
+                    beanName.endsWith("TransactionManager") &&
+                    !repository.getClass().equals(repositoryClassInstance.getClass())
+                )
+            ) {
                 if (repositoryObjectClass.getInterfaces().length > 0) {
                     beanFactory.registerSingleton(beanName, repositoryClassInstance);
                 }
@@ -172,7 +179,6 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
      * @throws IllegalStateException thrown if no repository configuration has been found for the scope.
      */
     private void checkRepositoryConfig(Scope scope) throws IllegalStateException {
-
         String repositoryType = getRepositoryType(scope);
         LOGGER.info("Loading repository for scope {}: {}", scope, repositoryType);
 

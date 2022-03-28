@@ -20,6 +20,5 @@ package io.gravitee.plugin.api;
  * @author GraviteeSource Team
  */
 public interface DeploymentLifecycle<T extends DeploymentContext> {
-
     void onDeploy(T context);
 }

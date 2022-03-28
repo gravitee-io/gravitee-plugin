@@ -19,6 +19,8 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import io.gravitee.plugin.core.api.PluginContextConfigurer;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +31,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -83,8 +82,11 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
             configApplicationContext.setParent(containerContext);
 
             Set<Class<?>> configurations = configurations();
-            LOGGER.debug("Registering following @Configuration classes for {}: {}", plugin.id(),
-                    configurations.stream().map(Class::getName).collect(Collectors.joining(", ")));
+            LOGGER.debug(
+                "Registering following @Configuration classes for {}: {}",
+                plugin.id(),
+                configurations.stream().map(Class::getName).collect(Collectors.joining(", "))
+            );
 
             configurations.forEach(configApplicationContext::register);
             pluginContext = configApplicationContext;
@@ -102,9 +104,11 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
     public void registerBeans() {
         // This specific case should be handle by the plugin handler while creating the plugin context
         // TODO: find a way to handle this properly
-        if (! plugin.type().equalsIgnoreCase("policy")) {
-            pluginContext.registerBeanDefinition(plugin.clazz(),
-                    BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition());
+        if (!plugin.type().equalsIgnoreCase("policy")) {
+            pluginContext.registerBeanDefinition(
+                plugin.clazz(),
+                BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition()
+            );
         }
     }
 

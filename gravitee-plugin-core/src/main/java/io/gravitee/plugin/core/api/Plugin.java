@@ -23,7 +23,6 @@ import java.nio.file.Path;
  * @author GraviteeSource Team
  */
 public interface Plugin {
-
     /**
      * Plugin ID.
      */

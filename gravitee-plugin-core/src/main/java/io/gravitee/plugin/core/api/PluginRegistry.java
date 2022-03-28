@@ -16,7 +16,6 @@
 package io.gravitee.plugin.core.api;
 
 import io.gravitee.common.service.Service;
-
 import java.util.Collection;
 
 /**
@@ -24,7 +23,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface PluginRegistry extends Service {
-
     Collection<Plugin> plugins();
 
     Collection<Plugin> plugins(String type);

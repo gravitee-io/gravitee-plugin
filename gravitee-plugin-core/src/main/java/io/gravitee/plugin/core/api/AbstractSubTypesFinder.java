@@ -15,14 +15,13 @@
  */
 package io.gravitee.plugin.core.api;
 
+import java.util.Collection;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
-
-import java.util.Collection;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -38,12 +37,14 @@ public abstract class AbstractSubTypesFinder<T> implements SubTypesFinder<T> {
 
     @Override
     public Collection<Class<? extends T>> lookup(Class<?> clazz, ClassLoader classLoader) {
-        Reflections reflections = new Reflections(new ConfigurationBuilder()
+        Reflections reflections = new Reflections(
+            new ConfigurationBuilder()
                 .addClassLoader(classLoader)
                 .setExpandSuperTypes(false)
                 .setUrls(ClasspathHelper.forClass(clazz, classLoader))
                 .setScanners(new SubTypesScanner(true), new TypeAnnotationsScanner())
-                .filterInputsBy(new FilterBuilder().includePackage(clazz.getPackage().getName())));
+                .filterInputsBy(new FilterBuilder().includePackage(clazz.getPackage().getName()))
+        );
 
         return reflections.getSubTypesOf(subType);
     }

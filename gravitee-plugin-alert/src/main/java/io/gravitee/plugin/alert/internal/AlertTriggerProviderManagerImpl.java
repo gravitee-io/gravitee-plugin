@@ -18,12 +18,11 @@ package io.gravitee.plugin.alert.internal;
 import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
@@ -75,7 +74,7 @@ public class AlertTriggerProviderManagerImpl extends AbstractService implements 
     protected void doStop() throws Exception {
         super.doStop();
 
-        for(final TriggerProvider provider : triggerProviders) {
+        for (final TriggerProvider provider : triggerProviders) {
             try {
                 provider.stop();
             } catch (Exception ex) {

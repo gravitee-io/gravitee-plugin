@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
  * @author GraviteeSource Team
  */
 public interface NotifierClassLoaderFactory extends PluginClassLoaderFactory<NotifierPlugin> {
-
     @Override
     default PluginClassLoader getOrCreateClassLoader(NotifierPlugin notifierPlugin) {
         return getOrCreateClassLoader(notifierPlugin, notifierPlugin.getClass().getClassLoader());

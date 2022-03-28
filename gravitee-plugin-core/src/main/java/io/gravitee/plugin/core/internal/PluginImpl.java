@@ -17,7 +17,6 @@ package io.gravitee.plugin.core.internal;
 
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
-
 import java.net.URL;
 import java.nio.file.Path;
 

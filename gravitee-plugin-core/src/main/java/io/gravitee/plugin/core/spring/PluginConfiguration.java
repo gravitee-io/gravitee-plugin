@@ -20,13 +20,12 @@ import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.api.PluginRegistry;
 import io.gravitee.plugin.core.internal.*;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -74,16 +73,21 @@ public class PluginConfiguration {
 
     @Bean("corePluginExecutor")
     public ThreadPoolExecutor syncExecutor() {
-        final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(PARALLELISM, PARALLELISM, 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
-                new ThreadFactory() {
-                    private int counter = 0;
+        final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+            PARALLELISM,
+            PARALLELISM,
+            60L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(),
+            new ThreadFactory() {
+                private int counter = 0;
 
-                    @Override
-                    public Thread newThread(Runnable r) {
-                        return new Thread(r, "gio.core-plugin-" + counter++);
-                    }
-                });
+                @Override
+                public Thread newThread(Runnable r) {
+                    return new Thread(r, "gio.core-plugin-" + counter++);
+                }
+            }
+        );
 
         threadPoolExecutor.allowCoreThreadTimeOut(true);
 

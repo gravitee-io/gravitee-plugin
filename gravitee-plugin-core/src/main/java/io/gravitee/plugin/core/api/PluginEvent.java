@@ -19,6 +19,7 @@ package io.gravitee.plugin.core.api;
  * @author David BRASSELY (brasseld at gmail.com)
  */
 public enum PluginEvent {
-
-    DEPLOYED, UNDEPLOYED, ENDED;
+    DEPLOYED,
+    UNDEPLOYED,
+    ENDED,
 }

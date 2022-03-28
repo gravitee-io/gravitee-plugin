@@ -19,7 +19,6 @@ import io.gravitee.connector.api.ConnectorConfiguration;
 import io.gravitee.plugin.connector.ConnectorPlugin;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
-
 import java.net.URL;
 import java.nio.file.Path;
 

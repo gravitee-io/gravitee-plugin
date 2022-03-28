@@ -20,10 +20,9 @@ package io.gravitee.plugin.core.api;
  * @author GraviteeSource Team
  */
 public interface PluginClassLoaderFactory<T extends Plugin> {
-
     PluginClassLoader getOrCreateClassLoader(T plugin, ClassLoader parent);
 
     default PluginClassLoader getOrCreateClassLoader(T plugin) {
-      return getOrCreateClassLoader(plugin, PluginClassLoaderFactory.class.getClassLoader());
+        return getOrCreateClassLoader(plugin, PluginClassLoaderFactory.class.getClassLoader());
     }
 }

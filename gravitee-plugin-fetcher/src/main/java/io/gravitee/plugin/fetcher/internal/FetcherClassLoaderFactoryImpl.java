@@ -23,7 +23,4 @@ import io.gravitee.plugin.fetcher.FetcherPlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FetcherClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<FetcherPlugin>
-        implements FetcherClassLoaderFactory {
-
-}
+public class FetcherClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<FetcherPlugin> implements FetcherClassLoaderFactory {}
