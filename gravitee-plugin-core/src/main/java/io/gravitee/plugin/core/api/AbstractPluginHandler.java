@@ -15,8 +15,8 @@
  */
 package io.gravitee.plugin.core.api;
 
-import io.gravitee.plugin.api.DeploymentContextFactory;
-import io.gravitee.plugin.api.DeploymentLifecycle;
+import io.gravitee.plugin.api.PluginDeploymentContextFactory;
+import io.gravitee.plugin.api.PluginDeploymentLifecycle;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public abstract class AbstractPluginHandler implements PluginHandler {
     private Environment environment;
 
     @Autowired
-    private DeploymentContextFactory deploymentContextFactory;
+    private PluginDeploymentContextFactory pluginDeploymentContextFactory;
 
     @Override
     public void handle(Plugin plugin) {
@@ -53,15 +53,18 @@ public abstract class AbstractPluginHandler implements PluginHandler {
                 io.gravitee.plugin.api.annotations.Plugin ann = pluginClass.getAnnotation(io.gravitee.plugin.api.annotations.Plugin.class);
 
                 if (ann != null) {
-                    Class<? extends DeploymentLifecycle> deploymentClass = ann.deployment();
+                    Class<? extends PluginDeploymentLifecycle> deploymentClass = ann.deployment();
 
                     // Load deployment lifecycle implementation from plugin classloader
-                    DeploymentLifecycle deploymentLifecycle = deploymentClass.newInstance();
+                    PluginDeploymentLifecycle pluginDeploymentLifecycle = deploymentClass.getDeclaredConstructor().newInstance();
 
-                    deploymentLifecycle.onDeploy(deploymentContextFactory.create());
+                    if (pluginDeploymentLifecycle.isDeployable(pluginDeploymentContextFactory.create())) {
+                        handle(plugin, pluginClass);
+                    }
+                } else {
+                    // Not all plugins have io.gravitee.plugin.api.annotations.Plugin annotation
+                    handle(plugin, pluginClass);
                 }
-
-                handle(plugin, pluginClass);
             } catch (Throwable t) {
                 logger.error("An error occurs while installing plugin: {} [{}]", plugin.id(), plugin.clazz(), t);
                 if (classloader instanceof URLClassLoader) {

@@ -19,4 +19,6 @@ package io.gravitee.plugin.api;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeploymentContext {}
+public interface PluginDeploymentContextFactory<T extends PluginDeploymentContext> {
+    T create();
+}

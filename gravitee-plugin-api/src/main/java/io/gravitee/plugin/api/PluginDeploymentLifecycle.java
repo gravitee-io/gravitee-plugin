@@ -19,6 +19,11 @@ package io.gravitee.plugin.api;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeploymentLifecycle<T extends DeploymentContext> {
-    void onDeploy(T context);
+public interface PluginDeploymentLifecycle<T extends PluginDeploymentContext> {
+    /**
+     * determines if a plugin should be deployed at the application startup of not
+     * @param context provides the PluginDeploymentContext
+     * @return true is the plugin is deployable
+     */
+    boolean isDeployable(T context);
 }
