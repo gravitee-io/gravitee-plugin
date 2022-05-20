@@ -60,6 +60,8 @@ public abstract class AbstractPluginHandler implements PluginHandler {
 
                     if (pluginDeploymentLifecycle.isDeployable(pluginDeploymentContextFactory.create())) {
                         handle(plugin, pluginClass);
+                    } else {
+                        logger.warn("Plugin {} can't be deployed", plugin.id());
                     }
                 } else {
                     // Not all plugins have io.gravitee.plugin.api.annotations.Plugin annotation
