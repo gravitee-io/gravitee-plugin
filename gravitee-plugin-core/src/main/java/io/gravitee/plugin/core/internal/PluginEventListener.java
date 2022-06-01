@@ -22,14 +22,13 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginEvent;
 import io.gravitee.plugin.core.api.PluginHandler;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -37,12 +36,12 @@ import java.util.stream.Collectors;
  */
 public class PluginEventListener extends AbstractService implements EventListener<PluginEvent, Plugin> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(PluginEventListener.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PluginEventListener.class);
 
     /**
      * Allows to define priority between the different plugin types.
      */
-    private final static List<String> pluginPriority = Arrays.asList("repository", "alert", "cockpit");
+    private static final List<String> pluginPriority = Arrays.asList("repository", "alert", "cockpit");
 
     @Value("${plugins.failOnDuplicate:true}")
     private boolean failOnDuplicate;
@@ -76,11 +75,20 @@ public class PluginEventListener extends AbstractService implements EventListene
             Plugin installed = plugins.get(pluginKey);
             if (failOnDuplicate) {
                 throw new IllegalStateException(
-                        String.format("Plugin '%s' [%s] is already loaded [%s]", plugin.id(),
-                                plugin.manifest().version(), installed.manifest().version()));
+                    String.format(
+                        "Plugin '%s' [%s] is already loaded [%s]",
+                        plugin.id(),
+                        plugin.manifest().version(),
+                        installed.manifest().version()
+                    )
+                );
             } else {
-                LOGGER.warn("Plugin '{}' [{}] is already loaded [{}]", plugin.id(),
-                        plugin.manifest().version(), installed.manifest().version());
+                LOGGER.warn(
+                    "Plugin '{}' [{}] is already loaded [{}]",
+                    plugin.id(),
+                    plugin.manifest().version(),
+                    installed.manifest().version()
+                );
             }
         } else {
             plugins.put(pluginKey, plugin);
@@ -90,18 +98,23 @@ public class PluginEventListener extends AbstractService implements EventListene
     private void deployPlugins() {
         Map<String, List<Plugin>> resolvedDependencies = new HashMap<>();
 
-        final List<Plugin> sortedByPriority = this.plugins.values().stream()
-                .sorted(Comparator.<Plugin>comparingInt(o -> o.manifest().priority())
-                .thenComparing(new PluginComparator()))
+        final List<Plugin> sortedByPriority =
+            this.plugins.values()
+                .stream()
+                .sorted(Comparator.<Plugin>comparingInt(o -> o.manifest().priority()).thenComparing(new PluginComparator()))
                 .collect(Collectors.toList());
 
-        plugins.values().forEach(p -> {
-            plugins.values().forEach(other -> {
-                if (p.manifest().dependencies().stream().anyMatch(d -> d.matches(other))) {
-                    resolvedDependencies.computeIfAbsent(p.type() + p.id(), s -> new ArrayList<>()).add(other);
-                }
+        plugins
+            .values()
+            .forEach(p -> {
+                plugins
+                    .values()
+                    .forEach(other -> {
+                        if (p.manifest().dependencies().stream().anyMatch(d -> d.matches(other))) {
+                            resolvedDependencies.computeIfAbsent(p.type() + p.id(), s -> new ArrayList<>()).add(other);
+                        }
+                    });
             });
-        });
 
         List<Plugin> deployedPlugins = new ArrayList<>(this.plugins.size());
 
@@ -114,16 +127,18 @@ public class PluginEventListener extends AbstractService implements EventListene
         }
 
         // Deploy all plugins the plugin depends on.
-        resolvedDependencies.getOrDefault(plugin.type() + plugin.id(), Collections.emptyList())
-                .forEach(dependencyPlugin -> deployPlugin(dependencyPlugin, resolvedDependencies, deployedPlugins));
+        resolvedDependencies
+            .getOrDefault(plugin.type() + plugin.id(), Collections.emptyList())
+            .forEach(dependencyPlugin -> deployPlugin(dependencyPlugin, resolvedDependencies, deployedPlugins));
 
         LOGGER.debug("Installing {} plugins...", plugin.id());
-        pluginHandlers.stream()
-                .filter(pluginHandler -> pluginHandler.canHandle(plugin))
-                .forEach(pluginHandler -> {
-                    LOGGER.debug("Plugin {} has been managed by {}", plugin.id(), pluginHandler.getClass());
-                    pluginHandler.handle(plugin);
-                });
+        pluginHandlers
+            .stream()
+            .filter(pluginHandler -> pluginHandler.canHandle(plugin))
+            .forEach(pluginHandler -> {
+                LOGGER.debug("Plugin {} has been managed by {}", plugin.id(), pluginHandler.getClass());
+                pluginHandler.handle(plugin);
+            });
 
         deployedPlugins.add(plugin);
     }
@@ -140,6 +155,7 @@ public class PluginEventListener extends AbstractService implements EventListene
     }
 
     private static class PluginKey {
+
         private final String id;
         private final String type;
 
@@ -168,6 +184,7 @@ public class PluginEventListener extends AbstractService implements EventListene
     }
 
     private static class PluginComparator implements Comparator<Plugin> {
+
         @Override
         public int compare(Plugin o1, Plugin o2) {
             Integer pos1 = pluginPriority.indexOf(o1.type());
@@ -190,7 +207,6 @@ public class PluginEventListener extends AbstractService implements EventListene
 
             // Both plugins are not in the priority list, keep the order unchanged.
             return 0;
-
         }
     }
 }

@@ -16,7 +16,6 @@
 package io.gravitee.plugin.core.api;
 
 import io.gravitee.plugin.core.internal.PluginManifestProperties;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,11 +29,12 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePlugin>
-    extends AbstractPluginManager<T> implements ConfigurablePluginManager<T> {
+    extends AbstractPluginManager<T>
+    implements ConfigurablePluginManager<T> {
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
+    private static final String SCHEMAS_DIRECTORY = "schemas";
 
-    private final static String DOCS_DIRECTORY = "docs";
+    private static final String DOCS_DIRECTORY = "docs";
 
     @Override
     public String getSchema(String pluginId) throws IOException {
@@ -72,15 +72,13 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
         return null;
     }
 
-
     private String getFirstFile(String pluginId, String directory) throws IOException {
         final T plugin = get(pluginId);
 
         if (plugin != null) {
             Path workspaceDir = plugin.path();
 
-            File[] matches = workspaceDir.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(directory));
+            File[] matches = workspaceDir.toFile().listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(directory));
 
             if (matches.length == 1) {
                 File dir = matches[0];

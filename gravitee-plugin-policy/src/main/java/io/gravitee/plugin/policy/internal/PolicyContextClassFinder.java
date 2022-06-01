@@ -17,10 +17,9 @@ package io.gravitee.plugin.policy.internal;
 
 import io.gravitee.plugin.core.api.AbstractSingleSubTypesFinder;
 import io.gravitee.policy.api.PolicyContext;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
 
 /**
  * @author David BRASSELY (david at graviteesource.com)
@@ -37,8 +36,7 @@ public class PolicyContextClassFinder extends AbstractSingleSubTypesFinder<Polic
 
     @Override
     public Collection<Class<? extends PolicyContext>> lookup(Class clazz, ClassLoader classLoader) {
-        LOGGER.debug("Looking for a context class for policy {} in package {}",
-                clazz.getName(), clazz.getPackage().getName());
+        LOGGER.debug("Looking for a context class for policy {} in package {}", clazz.getName(), clazz.getPackage().getName());
         Collection<Class<? extends PolicyContext>> classes = super.lookup(clazz, classLoader);
 
         if (classes.isEmpty()) {

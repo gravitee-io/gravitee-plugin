@@ -21,7 +21,6 @@ import org.springframework.context.ApplicationContext;
  * @author David BRASSELY (brasseld at gmail.com)
  */
 public interface PluginContextFactory {
-
     ApplicationContext create(PluginContextConfigurer pluginContextConfigurer);
 
     ApplicationContext create(Plugin plugin);

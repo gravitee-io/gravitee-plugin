@@ -15,17 +15,13 @@
  */
 package io.gravitee.plugin.core.internal;
 
+import static java.util.concurrent.CompletableFuture.runAsync;
+
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.*;
 import io.gravitee.plugin.core.utils.FileUtils;
 import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.util.StringUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -36,8 +32,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.util.concurrent.CompletableFuture.runAsync;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.util.StringUtils;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -47,13 +46,13 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private final Logger LOGGER = LoggerFactory.getLogger(PluginRegistryImpl.class);
 
-    private final static String JAR_EXTENSION = ".jar";
-    private final static String JAR_GLOB = '*' + JAR_EXTENSION;
+    private static final String JAR_EXTENSION = ".jar";
+    private static final String JAR_GLOB = '*' + JAR_EXTENSION;
 
-    private final static String ZIP_EXTENSION = ".zip";
-    private final static String ZIP_GLOB = '*' + ZIP_EXTENSION;
+    private static final String ZIP_EXTENSION = ".zip";
+    private static final String ZIP_GLOB = '*' + ZIP_EXTENSION;
 
-    private final static String PLUGIN_MANIFEST_FILE = "plugin.properties";
+    private static final String PLUGIN_MANIFEST_FILE = "plugin.properties";
 
     @Autowired
     private PluginRegistryConfiguration configuration;
@@ -75,11 +74,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
      * Empty constructor is used to use a workspace directory defined from @Value annotation
      * on workspacePath field.
      */
-    public PluginRegistryImpl() {
-    }
+    public PluginRegistryImpl() {}
 
     public PluginRegistryImpl(String workspacePath) {
-        this.workspacesPath = new String[]{workspacePath};
+        this.workspacesPath = new String[] { workspacePath };
     }
 
     @Override
@@ -121,8 +119,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         // Quick sanity check on the install root
         if (!registryDir.isDirectory()) {
             LOGGER.error("Invalid registry directory, {} is not a directory.", registryDir.getAbsolutePath());
-            throw new RuntimeException("Invalid registry directory. Not a directory: "
-                    + registryDir.getAbsolutePath());
+            throw new RuntimeException("Invalid registry directory. Not a directory: " + registryDir.getAbsolutePath());
         }
 
         loadPlugins(registryDir);
@@ -160,10 +157,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private void printPluginByType(String pluginType) {
         LOGGER.info("List of available {}: ", pluginType.toLowerCase());
-        plugins.stream()
-                .filter(plugin -> pluginType.equalsIgnoreCase(plugin.type()))
-                .forEach(plugin -> LOGGER.info("\t> {} [{}] has been loaded",
-                        plugin.id(), plugin.manifest().version()));
+        plugins
+            .stream()
+            .filter(plugin -> pluginType.equalsIgnoreCase(plugin.type()))
+            .forEach(plugin -> LOGGER.info("\t> {} [{}] has been loaded", plugin.id(), plugin.manifest().version()));
     }
 
     /**
@@ -331,8 +328,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         for (Path path : paths) {
             try {
                 urls[idx++] = path.toUri().toURL();
-            } catch (IOException ioe) {
-            }
+            } catch (IOException ioe) {}
         }
 
         return urls;
@@ -353,17 +349,19 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         final String type = properties.getProperty(PluginManifestProperties.MANIFEST_TYPE_PROPERTY);
         final String category = properties.getProperty(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
         final int priority = Integer.parseInt(properties.getProperty(PluginManifestProperties.MANIFEST_PRIORITY_PROPERTY, "1000"));
-        final List<io.gravitee.plugin.core.api.PluginDependency> dependencies = Stream.of(properties.getProperty(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, "").split(","))
-                .filter(s -> !"".equals(s))
-                .map(dependencyStr -> {
-                    final String[] split = dependencyStr.split(":");
+        final List<io.gravitee.plugin.core.api.PluginDependency> dependencies = Stream
+            .of(properties.getProperty(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, "").split(","))
+            .filter(s -> !"".equals(s))
+            .map(dependencyStr -> {
+                final String[] split = dependencyStr.split(":");
 
-                    if (split.length == 1) {
-                        return new PluginDependencyImpl(split[0], "*");
-                    } else {
-                        return new PluginDependencyImpl(split[0], split[1]);
-                    }
-                }).collect(Collectors.toList());
+                if (split.length == 1) {
+                    return new PluginDependencyImpl(split[0], "*");
+                } else {
+                    return new PluginDependencyImpl(split[0], split[1]);
+                }
+            })
+            .collect(Collectors.toList());
 
         final Map<String, String> propertiesMap = new HashMap<>();
         properties.forEach((o, o2) -> {
@@ -410,7 +408,9 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             }
 
             @Override
-            public int priority() { return priority; }
+            public int priority() {
+                return priority;
+            }
 
             @Override
             public List<io.gravitee.plugin.core.api.PluginDependency> dependencies() {
@@ -429,8 +429,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
         List<File> files = new ArrayList<>();
         Path dir = FileSystems.getDefault().getPath(directory);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir,
-                filter)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filter)) {
             for (Path path : stream) {
                 files.add(path.toFile());
             }
@@ -448,9 +447,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     @Override
     public Collection<Plugin> plugins(String type) {
-        return plugins.stream()
-                .filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type()))
-                .collect(Collectors.toSet());
+        return plugins.stream().filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type())).collect(Collectors.toSet());
     }
 
     public void setEventManager(EventManager eventManager) {
@@ -458,11 +455,11 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
     }
 
     class PluginManifestVisitor extends SimpleFileVisitor<Path> {
+
         private Path pluginManifest = null;
 
         @Override
-        public FileVisitResult visitFile(Path file,
-                                         BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             if (file.getFileName().toString().equals(PLUGIN_MANIFEST_FILE)) {
                 pluginManifest = file;
                 return FileVisitResult.TERMINATE;

@@ -19,6 +19,5 @@ package io.gravitee.plugin.core.api;
  * @author David BRASSELY (brasseld at gmail.com)
  */
 public interface PluginManifestValidator {
-
     boolean validate();
 }

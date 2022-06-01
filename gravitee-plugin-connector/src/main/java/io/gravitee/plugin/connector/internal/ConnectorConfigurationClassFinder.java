@@ -17,10 +17,9 @@ package io.gravitee.plugin.connector.internal;
 
 import io.gravitee.connector.api.ConnectorConfiguration;
 import io.gravitee.plugin.core.api.AbstractSingleSubTypesFinder;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -36,8 +35,7 @@ public class ConnectorConfigurationClassFinder extends AbstractSingleSubTypesFin
 
     @Override
     public Collection<Class<? extends ConnectorConfiguration>> lookup(Class clazz, ClassLoader classLoader) {
-        LOGGER.debug("Looking for a configuration class for connector {} in package {}",
-                clazz.getName(), clazz.getPackage().getName());
+        LOGGER.debug("Looking for a configuration class for connector {} in package {}", clazz.getName(), clazz.getPackage().getName());
         Collection<Class<? extends ConnectorConfiguration>> configurations = super.lookup(clazz, classLoader);
 
         if (configurations.isEmpty()) {

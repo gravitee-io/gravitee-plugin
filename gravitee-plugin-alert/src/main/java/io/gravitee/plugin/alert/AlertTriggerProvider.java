@@ -17,6 +17,4 @@ package io.gravitee.plugin.alert;
 
 import io.gravitee.alert.api.trigger.TriggerProvider;
 
-public interface AlertTriggerProvider extends TriggerProvider {
-
-}
+public interface AlertTriggerProvider extends TriggerProvider {}

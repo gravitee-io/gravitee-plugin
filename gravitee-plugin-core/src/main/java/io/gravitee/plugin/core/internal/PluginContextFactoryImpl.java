@@ -18,15 +18,14 @@ package io.gravitee.plugin.core.internal;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextConfigurer;
 import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author David BRASSELY (david at gravitee.io)

@@ -15,6 +15,10 @@
  */
 package io.gravitee.plugin.core;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.common.event.Event;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginEvent;
@@ -22,22 +26,17 @@ import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.core.internal.PluginDependencyImpl;
 import io.gravitee.plugin.core.internal.PluginEventListener;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.stream.Stream;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.stream.Stream;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -58,23 +57,24 @@ public class PluginEventListenerTest {
     @Mock
     private Collection<PluginHandler> pluginHandlers;
 
-
     @Test
     public void shouldLoadSinglePlugin() {
         when(plugin.id()).thenReturn("policy");
         when(plugin.type()).thenReturn("policy");
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
     }
 
     @Test(expected = IllegalStateException.class)
@@ -86,29 +86,33 @@ public class PluginEventListenerTest {
         when(plugin.type()).thenReturn("policy");
         when(pluginManifest.version()).thenReturn("1.0.0-SNAPSHOT");
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
     }
 
     @Test
@@ -118,32 +122,36 @@ public class PluginEventListenerTest {
         when(plugin.id()).thenReturn("policy");
         when(plugin.type()).thenReturn("policy");
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
 
         when(plugin2.id()).thenReturn("policy");
         when(plugin2.type()).thenReturn("resource");
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin2;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin2;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
     }
 
     @Test
@@ -155,31 +163,34 @@ public class PluginEventListenerTest {
         when(plugin.type()).thenReturn("policy");
         when(pluginManifest.version()).thenReturn("1.0.0-SNAPSHOT");
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
     }
-
 
     @Test
     public void shouldLoadWithDependencyOrder() {
@@ -209,61 +220,65 @@ public class PluginEventListenerTest {
         when(plugin3.type()).thenReturn("policy");
         when(pluginManifest3.dependencies()).thenReturn(Collections.emptyList());
 
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin;
+                }
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
+        );
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin2;
+                }
+
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-        });
+        );
 
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return plugin3;
+                }
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin2;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.DEPLOYED;
+                }
             }
-
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
-            }
-        });
-
-
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return plugin3;
-            }
-
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.DEPLOYED;
-            }
-        });
-
+        );
 
         final PluginHandler pluginHandler = mock(PluginHandler.class);
         when(pluginHandlers.stream()).thenAnswer(i -> Stream.of(pluginHandler));
         when(pluginHandler.canHandle(any(Plugin.class))).thenReturn(true);
 
-        eventListener.onEvent(new Event<PluginEvent, Plugin>() {
-            @Override
-            public Plugin content() {
-                return null;
-            }
+        eventListener.onEvent(
+            new Event<PluginEvent, Plugin>() {
+                @Override
+                public Plugin content() {
+                    return null;
+                }
 
-            @Override
-            public PluginEvent type() {
-                return PluginEvent.ENDED;
+                @Override
+                public PluginEvent type() {
+                    return PluginEvent.ENDED;
+                }
             }
-        });
+        );
 
         ArgumentCaptor<Plugin> pluginCaptor = ArgumentCaptor.forClass(Plugin.class);
 

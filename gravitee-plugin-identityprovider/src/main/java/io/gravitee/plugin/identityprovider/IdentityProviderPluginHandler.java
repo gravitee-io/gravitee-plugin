@@ -31,7 +31,7 @@ import org.springframework.util.Assert;
  */
 public class IdentityProviderPluginHandler extends AbstractPluginHandler implements PluginHandler {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
 
     @Autowired
     private PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;

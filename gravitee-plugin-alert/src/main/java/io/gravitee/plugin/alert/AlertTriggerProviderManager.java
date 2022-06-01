@@ -17,7 +17,6 @@ package io.gravitee.plugin.alert;
 
 import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.common.service.Service;
-
 import java.util.Collection;
 
 /**
@@ -25,7 +24,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface AlertTriggerProviderManager extends Service {
-
     void register(TriggerProvider trigger);
 
     Collection<TriggerProvider> findAll();

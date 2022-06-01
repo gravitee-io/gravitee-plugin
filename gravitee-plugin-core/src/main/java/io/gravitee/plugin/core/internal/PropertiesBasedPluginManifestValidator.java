@@ -16,10 +16,9 @@
 package io.gravitee.plugin.core.internal;
 
 import io.gravitee.plugin.core.api.PluginManifestValidator;
+import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Properties;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -30,13 +29,13 @@ public class PropertiesBasedPluginManifestValidator implements PluginManifestVal
 
     private final Properties properties;
 
-    private final static String [] DESCRIPTOR_PROPERTIES = new String [] {
-            PluginManifestProperties.MANIFEST_ID_PROPERTY,
-            PluginManifestProperties.MANIFEST_DESCRIPTION_PROPERTY,
-            PluginManifestProperties.MANIFEST_CLASS_PROPERTY,
-            PluginManifestProperties.MANIFEST_NAME_PROPERTY,
-            PluginManifestProperties.MANIFEST_VERSION_PROPERTY,
-            PluginManifestProperties.MANIFEST_TYPE_PROPERTY
+    private static final String[] DESCRIPTOR_PROPERTIES = new String[] {
+        PluginManifestProperties.MANIFEST_ID_PROPERTY,
+        PluginManifestProperties.MANIFEST_DESCRIPTION_PROPERTY,
+        PluginManifestProperties.MANIFEST_CLASS_PROPERTY,
+        PluginManifestProperties.MANIFEST_NAME_PROPERTY,
+        PluginManifestProperties.MANIFEST_VERSION_PROPERTY,
+        PluginManifestProperties.MANIFEST_TYPE_PROPERTY,
     };
 
     public PropertiesBasedPluginManifestValidator(Properties properties) {
@@ -45,8 +44,8 @@ public class PropertiesBasedPluginManifestValidator implements PluginManifestVal
 
     @Override
     public boolean validate() {
-        for(String key: DESCRIPTOR_PROPERTIES) {
-            if (! validate(key)) {
+        for (String key : DESCRIPTOR_PROPERTIES) {
+            if (!validate(key)) {
                 LOGGER.error("The property {} is not valid", key);
                 return false;
             }

@@ -23,7 +23,4 @@ import io.gravitee.plugin.core.internal.PluginClassLoaderFactoryImpl;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ConnectorClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<ConnectorPlugin>
-        implements ConnectorClassLoaderFactory {
-
-}
+public class ConnectorClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<ConnectorPlugin> implements ConnectorClassLoaderFactory {}

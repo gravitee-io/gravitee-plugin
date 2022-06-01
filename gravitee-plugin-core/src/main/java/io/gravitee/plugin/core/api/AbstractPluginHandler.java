@@ -17,13 +17,12 @@ package io.gravitee.plugin.core.api;
 
 import io.gravitee.plugin.api.DeploymentContextFactory;
 import io.gravitee.plugin.api.DeploymentLifecycle;
+import java.io.IOException;
+import java.net.URLClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-
-import java.io.IOException;
-import java.net.URLClassLoader;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -68,14 +67,12 @@ public abstract class AbstractPluginHandler implements PluginHandler {
                 if (classloader instanceof URLClassLoader) {
                     try {
                         ((URLClassLoader) classloader).close();
-                    } catch (IOException e) {
-                    }
+                    } catch (IOException e) {}
                 }
                 if (classloader instanceof PluginClassLoader) {
                     try {
                         ((PluginClassLoader) classloader).close();
-                    } catch (IOException e) {
-                    }
+                    } catch (IOException e) {}
                 }
             }
         } else {

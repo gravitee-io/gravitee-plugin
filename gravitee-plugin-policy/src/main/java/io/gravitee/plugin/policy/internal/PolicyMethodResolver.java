@@ -15,21 +15,20 @@
  */
 package io.gravitee.plugin.policy.internal;
 
+import static org.reflections.ReflectionUtils.withAnnotation;
+import static org.reflections.ReflectionUtils.withModifier;
+
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnRequestContent;
 import io.gravitee.policy.api.annotations.OnResponse;
 import io.gravitee.policy.api.annotations.OnResponseContent;
-import org.reflections.ReflectionUtils;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static org.reflections.ReflectionUtils.withAnnotation;
-import static org.reflections.ReflectionUtils.withModifier;
+import org.reflections.ReflectionUtils;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -37,20 +36,20 @@ import static org.reflections.ReflectionUtils.withModifier;
  */
 public class PolicyMethodResolver {
 
-    private final static Class<? extends Annotation> [] RESOLVABLE_ANNOTATIONS = new Class[] {
-            OnRequest.class, OnResponse.class, OnRequestContent.class, OnResponseContent.class
+    private static final Class<? extends Annotation>[] RESOLVABLE_ANNOTATIONS = new Class[] {
+        OnRequest.class,
+        OnResponse.class,
+        OnRequestContent.class,
+        OnResponseContent.class,
     };
 
     public Map<Class<? extends Annotation>, Method> resolve(Class<?> policyClass) {
         Map<Class<? extends Annotation>, Method> methods = new HashMap<>();
 
-        for(Class<? extends Annotation> annot : RESOLVABLE_ANNOTATIONS) {
-            Set<Method> resolved = ReflectionUtils.getMethods(
-                    policyClass,
-                    withModifier(Modifier.PUBLIC),
-                    withAnnotation(annot));
+        for (Class<? extends Annotation> annot : RESOLVABLE_ANNOTATIONS) {
+            Set<Method> resolved = ReflectionUtils.getMethods(policyClass, withModifier(Modifier.PUBLIC), withAnnotation(annot));
 
-            if (! resolved.isEmpty()) {
+            if (!resolved.isEmpty()) {
                 methods.put(annot, resolved.iterator().next());
             }
         }

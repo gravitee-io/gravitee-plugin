@@ -24,7 +24,6 @@ import io.gravitee.policy.api.PolicyContext;
  * @author GraviteeSource Team
  */
 public interface PolicyPlugin<C extends PolicyConfiguration> extends ConfigurablePlugin<C> {
-
     String PLUGIN_TYPE = "policy";
 
     Class<?> policy();
@@ -35,5 +34,4 @@ public interface PolicyPlugin<C extends PolicyConfiguration> extends Configurabl
     default String type() {
         return PLUGIN_TYPE;
     }
-
 }

@@ -22,6 +22,5 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface PluginConfigurationResolver {
-
     Set<Class<?>> resolve(Plugin plugin);
 }

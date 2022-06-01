@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
  * @author GraviteeSource Team
  */
 public interface PolicyClassLoaderFactory extends PluginClassLoaderFactory<PolicyPlugin> {
-
     @Override
     default PluginClassLoader getOrCreateClassLoader(PolicyPlugin policyPlugin) {
         return getOrCreateClassLoader(policyPlugin, policyPlugin.getClass().getClassLoader());

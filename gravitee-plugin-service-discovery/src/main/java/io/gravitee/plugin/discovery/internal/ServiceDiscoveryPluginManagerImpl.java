@@ -22,6 +22,4 @@ import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ServiceDiscoveryPluginManagerImpl extends AbstractConfigurablePluginManager<ServiceDiscoveryPlugin> {
-
-}
+public class ServiceDiscoveryPluginManagerImpl extends AbstractConfigurablePluginManager<ServiceDiscoveryPlugin> {}

@@ -24,7 +24,6 @@ import io.gravitee.plugin.core.api.ConfigurablePlugin;
  * @author GraviteeSource Team
  */
 public interface NotifierPlugin<C extends NotifierConfiguration> extends ConfigurablePlugin<C> {
-
     String PLUGIN_TYPE = "notifier";
 
     Class<? extends Notifier> notifier();

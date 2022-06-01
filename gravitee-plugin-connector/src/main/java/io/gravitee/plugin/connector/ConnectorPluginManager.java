@@ -23,7 +23,6 @@ import io.gravitee.plugin.core.api.ConfigurablePluginManager;
  * @author GraviteeSource Team
  */
 public interface ConnectorPluginManager extends ConfigurablePluginManager<ConnectorPlugin> {
-
     ConnectorFactory<?> getConnectorByType(String type);
 
     ConnectorFactory<?> getConnector(String pluginId);

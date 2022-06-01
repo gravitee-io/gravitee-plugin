@@ -24,7 +24,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface PluginManifestProperties {
-
     String MANIFEST_ID_PROPERTY = "id";
     String MANIFEST_NAME_PROPERTY = "name";
     String MANIFEST_VERSION_PROPERTY = "version";
@@ -36,8 +35,14 @@ public interface PluginManifestProperties {
     String MANIFEST_PRIORITY_PROPERTY = "priority";
     String MANIFEST_DEPENDENCIES_PROPERTY = "dependencies";
 
-    Set<String> MANIFEST_PROPERTIES = new HashSet<>(Arrays.asList(
-       MANIFEST_ID_PROPERTY, MANIFEST_NAME_PROPERTY, MANIFEST_VERSION_PROPERTY, MANIFEST_DESCRIPTION_PROPERTY,
-            MANIFEST_CLASS_PROPERTY, MANIFEST_TYPE_PROPERTY
-    ));
+    Set<String> MANIFEST_PROPERTIES = new HashSet<>(
+        Arrays.asList(
+            MANIFEST_ID_PROPERTY,
+            MANIFEST_NAME_PROPERTY,
+            MANIFEST_VERSION_PROPERTY,
+            MANIFEST_DESCRIPTION_PROPERTY,
+            MANIFEST_CLASS_PROPERTY,
+            MANIFEST_TYPE_PROPERTY
+        )
+    );
 }

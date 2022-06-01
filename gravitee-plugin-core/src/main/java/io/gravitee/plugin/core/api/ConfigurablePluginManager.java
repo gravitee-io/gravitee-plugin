@@ -22,6 +22,5 @@ import java.io.IOException;
  * @author GraviteeSource Team
  */
 public interface ConfigurablePluginManager<T extends ConfigurablePlugin> extends PluginManager<T> {
-
     String getSchema(String pluginId) throws IOException;
 }

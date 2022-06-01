@@ -32,9 +32,8 @@ public class GlobMatchingFileVisitor extends SimpleFileVisitor<Path> {
      */
     private List<Path> matchedPaths = new ArrayList<>();
 
-    public  GlobMatchingFileVisitor(String pattern) {
-        matcher = FileSystems.getDefault()
-                .getPathMatcher("glob:" + pattern);
+    public GlobMatchingFileVisitor(String pattern) {
+        matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
     }
 
     @Override

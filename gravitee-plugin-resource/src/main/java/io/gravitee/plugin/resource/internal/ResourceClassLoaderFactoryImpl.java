@@ -16,14 +16,11 @@
 package io.gravitee.plugin.resource.internal;
 
 import io.gravitee.plugin.core.internal.PluginClassLoaderFactoryImpl;
-import io.gravitee.plugin.resource.ResourcePlugin;
 import io.gravitee.plugin.resource.ResourceClassLoaderFactory;
+import io.gravitee.plugin.resource.ResourcePlugin;
 
 /**
  * @author David BRASSELY (david at gravitee.io)
  * @author GraviteeSource Team
  */
-public class ResourceClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<ResourcePlugin>
-        implements ResourceClassLoaderFactory {
-
-}
+public class ResourceClassLoaderFactoryImpl extends PluginClassLoaderFactoryImpl<ResourcePlugin> implements ResourceClassLoaderFactory {}

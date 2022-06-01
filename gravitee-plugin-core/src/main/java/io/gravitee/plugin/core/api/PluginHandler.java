@@ -20,7 +20,6 @@ package io.gravitee.plugin.core.api;
  * @author GraviteeSource Team
  */
 public interface PluginHandler {
-
     boolean canHandle(Plugin plugin);
 
     void handle(Plugin plugin);

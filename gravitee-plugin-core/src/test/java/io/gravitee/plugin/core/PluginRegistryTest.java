@@ -15,30 +15,29 @@
  */
 package io.gravitee.plugin.core;
 
+import static org.mockito.Mockito.*;
+
 import io.gravitee.common.event.EventManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.internal.PluginRegistryConfiguration;
 import io.gravitee.plugin.core.internal.PluginRegistryImpl;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static org.mockito.Mockito.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
 public class PluginRegistryTest {
 
-    private static  ExecutorService executor;
+    private static ExecutorService executor;
 
     @BeforeClass
     public static void beforeClass() {
@@ -58,8 +57,7 @@ public class PluginRegistryTest {
 
     @Test(expected = RuntimeException.class)
     public void startWithInexistantWorkspace() throws Exception {
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(
-                "/io/gravitee/plugin/invalid/");
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl("/io/gravitee/plugin/invalid/");
         pluginRegistry.start();
     }
 

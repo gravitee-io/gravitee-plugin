@@ -20,12 +20,27 @@ package io.gravitee.plugin.core.api;
  * @author GraviteeSource Team
  */
 public enum PluginType {
-
-    POLICY, REPORTER, SERVICE, REPOSITORY, IDENTITY_PROVIDER, RESOURCE, FETCHER, CERTIFICATE, EXTENSION_GRANT,
-    NOTIFIER, ALERT, SERVICE_DISCOVERY, PROTOCOL, INGESTER, PROCESSOR, FACTOR, COCKPIT, COCKPIT_CONTROLLER;
+    POLICY,
+    REPORTER,
+    SERVICE,
+    REPOSITORY,
+    IDENTITY_PROVIDER,
+    RESOURCE,
+    FETCHER,
+    CERTIFICATE,
+    EXTENSION_GRANT,
+    NOTIFIER,
+    ALERT,
+    SERVICE_DISCOVERY,
+    PROTOCOL,
+    INGESTER,
+    PROCESSOR,
+    FACTOR,
+    COCKPIT,
+    COCKPIT_CONTROLLER;
 
     public static PluginType from(String sType) {
-        for(PluginType pluginType : values()) {
+        for (PluginType pluginType : values()) {
             if (pluginType.name().equalsIgnoreCase(sType)) {
                 return pluginType;
             }

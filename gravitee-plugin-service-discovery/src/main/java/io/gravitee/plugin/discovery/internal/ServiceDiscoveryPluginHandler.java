@@ -19,9 +19,8 @@ import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.net.URLClassLoader;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -57,7 +56,6 @@ public class ServiceDiscoveryPluginHandler extends AbstractSimplePluginHandler<S
 
     @Override
     protected ClassLoader getClassLoader(Plugin plugin) throws Exception {
-        return new URLClassLoader(plugin.dependencies(),
-                this.getClass().getClassLoader());
+        return new URLClassLoader(plugin.dependencies(), this.getClass().getClassLoader());
     }
 }
