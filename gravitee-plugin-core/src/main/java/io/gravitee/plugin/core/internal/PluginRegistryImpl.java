@@ -44,7 +44,7 @@ import org.springframework.util.StringUtils;
  */
 public class PluginRegistryImpl extends AbstractService implements PluginRegistry {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(PluginRegistryImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PluginRegistryImpl.class);
 
     private static final String JAR_EXTENSION = ".jar";
     private static final String JAR_GLOB = '*' + JAR_EXTENSION;
@@ -292,7 +292,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                 return null;
             }
 
-            return create(pluginManifestProperties);
+            return PluginManifestFactory.create(pluginManifestProperties);
         } catch (IOException ioe) {
             LOGGER.error("Unexpected error while trying to load plugin manifest", ioe);
             throw new IllegalStateException("Unexpected error while trying to load plugin manifest", ioe);
@@ -332,96 +332,6 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         }
 
         return urls;
-    }
-
-    /**
-     * Create a manifest from a properties file.
-     *
-     * @param properties The properties file to read.
-     * @return A plugin manifest.
-     */
-    private PluginManifest create(Properties properties) {
-        final String id = properties.getProperty(PluginManifestProperties.MANIFEST_ID_PROPERTY);
-        final String description = properties.getProperty(PluginManifestProperties.MANIFEST_DESCRIPTION_PROPERTY);
-        final String clazz = properties.getProperty(PluginManifestProperties.MANIFEST_CLASS_PROPERTY);
-        final String name = properties.getProperty(PluginManifestProperties.MANIFEST_NAME_PROPERTY);
-        final String version = properties.getProperty(PluginManifestProperties.MANIFEST_VERSION_PROPERTY);
-        final String type = properties.getProperty(PluginManifestProperties.MANIFEST_TYPE_PROPERTY);
-        final String category = properties.getProperty(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
-        final int priority = Integer.parseInt(properties.getProperty(PluginManifestProperties.MANIFEST_PRIORITY_PROPERTY, "1000"));
-        final List<io.gravitee.plugin.core.api.PluginDependency> dependencies = Stream
-            .of(properties.getProperty(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, "").split(","))
-            .filter(s -> !"".equals(s))
-            .map(dependencyStr -> {
-                final String[] split = dependencyStr.split(":");
-
-                if (split.length == 1) {
-                    return new PluginDependencyImpl(split[0], "*");
-                } else {
-                    return new PluginDependencyImpl(split[0], split[1]);
-                }
-            })
-            .collect(Collectors.toList());
-
-        final Map<String, String> propertiesMap = new HashMap<>();
-        properties.forEach((o, o2) -> {
-            String key = o.toString();
-            if (!PluginManifestProperties.MANIFEST_PROPERTIES.contains(key)) {
-                propertiesMap.put(o.toString(), o2.toString());
-            }
-        });
-
-        return new PluginManifest() {
-            @Override
-            public String id() {
-                return id;
-            }
-
-            @Override
-            public String name() {
-                return name;
-            }
-
-            @Override
-            public String description() {
-                return description;
-            }
-
-            @Override
-            public String category() {
-                return category;
-            }
-
-            @Override
-            public String version() {
-                return version;
-            }
-
-            @Override
-            public String plugin() {
-                return clazz;
-            }
-
-            @Override
-            public String type() {
-                return type;
-            }
-
-            @Override
-            public int priority() {
-                return priority;
-            }
-
-            @Override
-            public List<io.gravitee.plugin.core.api.PluginDependency> dependencies() {
-                return dependencies;
-            }
-
-            @Override
-            public Map<String, String> properties() {
-                return propertiesMap;
-            }
-        };
     }
 
     private List<File> getPluginsArchive(String directory) {
