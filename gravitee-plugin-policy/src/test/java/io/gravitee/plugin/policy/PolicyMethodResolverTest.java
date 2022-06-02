@@ -50,6 +50,12 @@ public class PolicyMethodResolverTest {
         Assert.assertEquals(2, methods.size());
     }
 
+    @Test
+    public void resolvePolicyMethods_inheritedMethods() {
+        Map methods = policyMethodResolver.resolve(DummyPolicy04.class);
+        Assert.assertEquals(2, methods.size());
+    }
+
     class DummyPolicy01 {}
 
     class DummyPolicy02 {
@@ -82,4 +88,6 @@ public class PolicyMethodResolverTest {
             // Do nothing
         }
     }
+
+    class DummyPolicy04 extends DummyPolicy03 {}
 }

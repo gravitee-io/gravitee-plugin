@@ -47,7 +47,7 @@ public class PolicyMethodResolver {
         Map<Class<? extends Annotation>, Method> methods = new HashMap<>();
 
         for (Class<? extends Annotation> annot : RESOLVABLE_ANNOTATIONS) {
-            Set<Method> resolved = ReflectionUtils.getMethods(policyClass, withModifier(Modifier.PUBLIC), withAnnotation(annot));
+            Set<Method> resolved = ReflectionUtils.getAllMethods(policyClass, withModifier(Modifier.PUBLIC), withAnnotation(annot));
 
             if (!resolved.isEmpty()) {
                 methods.put(annot, resolved.iterator().next());
