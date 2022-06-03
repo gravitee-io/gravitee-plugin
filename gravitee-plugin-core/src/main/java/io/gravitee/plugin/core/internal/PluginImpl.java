@@ -27,7 +27,7 @@ import java.nio.file.Path;
 public class PluginImpl implements Plugin {
 
     private Path path;
-    private PluginManifest manifest;
+    private final PluginManifest manifest;
     private URL[] dependencies;
 
     PluginImpl(PluginManifest manifest) {

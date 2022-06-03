@@ -56,11 +56,15 @@ public class PolicyPluginHandler extends AbstractSimplePluginHandler<PolicyPlugi
         policyPluginManager.register(policyPlugin);
 
         // Once registered, the classloader should be released
-        URLClassLoader classLoader = (URLClassLoader) policyPlugin.policy().getClassLoader();
-        try {
-            classLoader.close();
-        } catch (IOException e) {
-            logger.error("Unexpected exception while trying to release the policy classloader");
+        final ClassLoader policyClassLoader = policyPlugin.policy().getClassLoader();
+
+        if (policyClassLoader instanceof URLClassLoader) {
+            URLClassLoader classLoader = (URLClassLoader) policyClassLoader;
+            try {
+                classLoader.close();
+            } catch (IOException e) {
+                logger.error("Unexpected exception while trying to release the policy classloader");
+            }
         }
     }
 
