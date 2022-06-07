@@ -57,7 +57,7 @@ public abstract class AbstractPluginHandler implements PluginHandler {
                     Class<? extends DeploymentLifecycle> deploymentClass = ann.deployment();
 
                     // Load deployment lifecycle implementation from plugin classloader
-                    DeploymentLifecycle deploymentLifecycle = deploymentClass.newInstance();
+                    DeploymentLifecycle deploymentLifecycle = deploymentClass.getDeclaredConstructor().newInstance();
 
                     deploymentLifecycle.onDeploy(deploymentContextFactory.create());
                 }
