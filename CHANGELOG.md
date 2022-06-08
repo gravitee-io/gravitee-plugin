@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/gravitee-io/gravitee-plugin/compare/1.23.1...1.23.2) (2022-06-08)
+
+
+### Bug Fixes
+
+* open design of plugin instantiation ([4fc6494](https://github.com/gravitee-io/gravitee-plugin/commit/4fc64940da5d1a65f96ee08b07edc52d67c3fae2))
+
 ## [1.23.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.23.0...1.23.1) (2022-05-20)
 
 
