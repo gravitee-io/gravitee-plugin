@@ -1,3 +1,10 @@
+## [1.24.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.0...1.24.1) (2022-06-10)
+
+
+### Bug Fixes
+
+* fix version for all sub-modules ([8468b96](https://github.com/gravitee-io/gravitee-plugin/commit/8468b961e2c7d566f356fb7d2429179b2836dd9c))
+
 # [1.24.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.23.2...1.24.0) (2022-06-10)
 
 
