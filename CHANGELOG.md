@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.23.2...1.24.0) (2022-06-10)
+
+
+### Features
+
+* **jupiter:** detect inherited policy methods ([4560aee](https://github.com/gravitee-io/gravitee-plugin/commit/4560aeea8a588ff920cf2058e82e868bbfb7cdff))
+
 ## [1.23.2](https://github.com/gravitee-io/gravitee-plugin/compare/1.23.1...1.23.2) (2022-06-08)
 
 
