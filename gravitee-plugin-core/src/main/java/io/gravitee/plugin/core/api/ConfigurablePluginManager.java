@@ -23,4 +23,13 @@ import java.io.IOException;
  */
 public interface ConfigurablePluginManager<T extends ConfigurablePlugin> extends PluginManager<T> {
     String getSchema(String pluginId) throws IOException;
+
+    /**
+     * Get schema in a subfolder.
+     * @param pluginId is the id of the plugin we want to retrieve schema
+     * @param subFolder is the sub folder on which looks for the schema. Example: <code>getSchema("webhook", "subscriptions")</code>
+     * @return the schema as a {@link String}
+     * @throws IOException
+     */
+    String getSchema(String pluginId, String subFolder) throws IOException;
 }
