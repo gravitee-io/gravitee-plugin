@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -32,6 +33,9 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     extends AbstractPluginManager<T>
     implements ConfigurablePluginManager<T> {
 
+    public static final String DIRECTORY_SPLITTER_CHAR = "/";
+    private static final Pattern DIRECTORY_SPLITTER = Pattern.compile(DIRECTORY_SPLITTER_CHAR);
+
     private static final String SCHEMAS_DIRECTORY = "schemas";
 
     private static final String DOCS_DIRECTORY = "docs";
@@ -39,6 +43,11 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     @Override
     public String getSchema(String pluginId) throws IOException {
         return getFirstFile(pluginId, SCHEMAS_DIRECTORY);
+    }
+
+    @Override
+    public String getSchema(String pluginId, String subFolder) throws IOException {
+        return getFirstFile(pluginId, String.format("%s/%s", SCHEMAS_DIRECTORY, subFolder));
     }
 
     @Override
@@ -78,17 +87,14 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
         if (plugin != null) {
             Path workspaceDir = plugin.path();
 
-            File[] matches = workspaceDir.toFile().listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(directory));
+            final File dir = new File(workspaceDir.toString(), directory);
+            final File[] files = dir.listFiles(File::isFile);
 
-            if (matches.length == 1) {
-                File dir = matches[0];
-
-                if (dir.listFiles().length > 0) {
-                    return new String(Files.readAllBytes(dir.listFiles()[0].toPath()));
-                }
+            if (files != null && files.length > 0) {
+                return new String(Files.readAllBytes(files[0].toPath()));
             }
+            return null;
         }
-
         return null;
     }
 }
