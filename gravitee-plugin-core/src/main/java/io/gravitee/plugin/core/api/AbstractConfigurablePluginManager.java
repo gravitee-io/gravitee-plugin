@@ -42,6 +42,11 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     }
 
     @Override
+    public String getSchema(String pluginId, String subFolder) throws IOException {
+        return getFirstFile(pluginId, String.format("%s/%s", SCHEMAS_DIRECTORY, subFolder));
+    }
+
+    @Override
     public String getIcon(String pluginId) throws IOException {
         T plugin = get(pluginId);
         Map<String, String> properties = plugin.manifest().properties();
@@ -78,17 +83,14 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
         if (plugin != null) {
             Path workspaceDir = plugin.path();
 
-            File[] matches = workspaceDir.toFile().listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(directory));
+            final File dir = new File(workspaceDir.toString(), directory);
+            final File[] files = dir.listFiles(File::isFile);
 
-            if (matches.length == 1) {
-                File dir = matches[0];
-
-                if (dir.listFiles().length > 0) {
-                    return new String(Files.readAllBytes(dir.listFiles()[0].toPath()));
-                }
+            if (files != null && files.length > 0) {
+                return new String(Files.readAllBytes(files[0].toPath()));
             }
+            return null;
         }
-
         return null;
     }
 }
