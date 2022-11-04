@@ -38,7 +38,7 @@ public class FetcherPluginHandler extends AbstractSimplePluginHandler<FetcherPlu
 
     @Override
     protected String type() {
-        return null;
+        return "fetchers";
     }
 
     @Override
