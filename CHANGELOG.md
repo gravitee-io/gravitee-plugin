@@ -1,3 +1,10 @@
+## [1.24.2](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.1...1.24.2) (2022-11-04)
+
+
+### Bug Fixes
+
+* add a type to the FetcherPluginHandler ([283d149](https://github.com/gravitee-io/gravitee-plugin/commit/283d1491097fffcf7c41208937bdf85a12480808))
+
 ## [1.24.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.0...1.24.1) (2022-06-10)
 
 
