@@ -17,6 +17,7 @@ package io.gravitee.plugin.core.internal;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.*;
@@ -31,11 +32,11 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 /**
@@ -44,6 +45,7 @@ import org.springframework.util.StringUtils;
  */
 public class PluginRegistryImpl extends AbstractService implements PluginRegistry {
 
+    public static final String PROPERTY_STRING_FORMAT = "%s.%s.enabled";
     private static final Logger LOGGER = LoggerFactory.getLogger(PluginRegistryImpl.class);
 
     private static final String JAR_EXTENSION = ".jar";
@@ -54,8 +56,23 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     private static final String PLUGIN_MANIFEST_FILE = "plugin.properties";
 
+    private static final Map<String, String> PLUGIN_TYPE_PROPERTY_ALIASES = new HashMap<>();
+
+    static {
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("service", "services");
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("policy", "policies");
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("alert", "alerts");
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("fetcher", "fetchers");
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("connector", "connectors");
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("notifier", "notifiers");
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("service_discovery", "service-discoveries");
+    }
+
     @Autowired
     private PluginRegistryConfiguration configuration;
+
+    @Autowired
+    private Environment environment;
 
     @Autowired
     @Qualifier("corePluginExecutor")
@@ -199,7 +216,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
             // 2_ Load plugin from the working folder
             PluginManifest manifest = readPluginManifest(workDir);
-            if (manifest != null) {
+            if (manifest != null && isEnabled(manifest)) {
                 URL[] pluginDependencies = extractPluginDependencies(workDir);
                 URL[] extDependencies = extractPluginExtensionDependencies(manifest, registryDir.toPath());
 
@@ -219,6 +236,35 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         } catch (IOException ioe) {
             LOGGER.error("An unexpected error occurs while loading plugin archive {}", pluginArchivePath, ioe);
         }
+    }
+
+    /**
+     * Check if plugin is enabled.
+     * First, check in {@link PluginRegistryImpl#PLUGIN_TYPE_PROPERTY_ALIASES} plugin type has an alias for properties.
+     * Alias matches the implementation of {@link AbstractPluginHandler#type()}: plugin.type will be "service" but pluginHandler.type will be "services".
+     * If property is not contained based on alias, do a regular search of the property.
+     * @param pluginManifest
+     * @return true if plugin is enabled
+     */
+    private boolean isEnabled(PluginManifest pluginManifest) {
+        boolean enabled;
+        final String propertyFromAlias = String.format(
+            PROPERTY_STRING_FORMAT,
+            PLUGIN_TYPE_PROPERTY_ALIASES.get(pluginManifest.type()),
+            pluginManifest.id()
+        );
+        if (PLUGIN_TYPE_PROPERTY_ALIASES.containsKey(pluginManifest.type()) && environment.containsProperty(propertyFromAlias)) {
+            enabled = environment.getProperty(propertyFromAlias, Boolean.class, true);
+        } else {
+            enabled =
+                environment.getProperty(
+                    String.format(PROPERTY_STRING_FORMAT, pluginManifest.type(), pluginManifest.id()),
+                    Boolean.class,
+                    true
+                );
+        }
+        LOGGER.debug("Plugin {} is loaded in registry: {}", pluginManifest.id(), enabled);
+        return enabled;
     }
 
     /**
@@ -389,5 +435,10 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
     public void setConfiguration(PluginRegistryConfiguration configuration) {
         this.configuration = configuration;
+    }
+
+    @VisibleForTesting
+    void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
 }

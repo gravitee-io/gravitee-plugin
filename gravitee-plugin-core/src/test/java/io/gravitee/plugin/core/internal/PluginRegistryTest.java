@@ -13,31 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core;
+package io.gravitee.plugin.core.internal;
 
 import static org.mockito.Mockito.*;
 
 import io.gravitee.common.event.EventManager;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.internal.PluginRegistryConfiguration;
-import io.gravitee.plugin.core.internal.PluginRegistryImpl;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
+@RunWith(MockitoJUnitRunner.class)
 public class PluginRegistryTest {
 
     private static ExecutorService executor;
+
+    @Mock
+    private Environment environment;
 
     @BeforeClass
     public static void beforeClass() {
@@ -47,6 +54,11 @@ public class PluginRegistryTest {
     @AfterClass
     public static void afterClass() {
         executor.shutdown();
+    }
+
+    @Before
+    public void setUp() {
+        when(environment.getProperty(anyString(), any(), any())).thenReturn(true);
     }
 
     @Test(expected = RuntimeException.class)
@@ -112,7 +124,30 @@ public class PluginRegistryTest {
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
         pluginRegistry.start();
 
+        Assert.assertEquals(4, pluginRegistry.plugins().size());
+    }
+
+    @Test
+    public void startWithValidWorkspace_withOneDependencyWithAliasDisabled() throws Exception {
+        when(environment.containsProperty("policies.my-policy-1.enabled")).thenReturn(true);
+        when(environment.getProperty("policies.my-policy-1.enabled", Boolean.class, true)).thenReturn(false);
+
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.start();
+
         Assert.assertEquals(3, pluginRegistry.plugins().size());
+        Assert.assertTrue(pluginRegistry.plugins().stream().noneMatch(p -> p.id().equals("my-policy-1")));
+    }
+
+    @Test
+    public void startWithValidWorkspace_withOneDependencyWithoutAliasDisabled() throws Exception {
+        when(environment.getProperty("custom.custom-plugin.enabled", Boolean.class, true)).thenReturn(false);
+
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.start();
+
+        Assert.assertEquals(3, pluginRegistry.plugins().size());
+        Assert.assertTrue(pluginRegistry.plugins().stream().noneMatch(p -> p.id().equals("custom-plugin")));
     }
 
     private PluginRegistryImpl initPluginRegistry(String path) throws UnsupportedEncodingException {
@@ -121,6 +156,7 @@ public class PluginRegistryTest {
         pluginRegistry.setEventManager(mock(EventManager.class));
         pluginRegistry.setConfiguration(mock(PluginRegistryConfiguration.class));
         pluginRegistry.setExecutor(executor);
+        pluginRegistry.setEnvironment(environment);
         return pluginRegistry;
     }
 }
