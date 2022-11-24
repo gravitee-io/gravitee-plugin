@@ -1,3 +1,10 @@
+## [1.24.3](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.2...1.24.3) (2022-11-24)
+
+
+### Bug Fixes
+
+* do not add plugin to PluginRegistry if not enabled ([a881c37](https://github.com/gravitee-io/gravitee-plugin/commit/a881c377a045510c9fe1e768e5a313d8503beb98))
+
 ## [1.24.2](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.1...1.24.2) (2022-11-04)
 
 
