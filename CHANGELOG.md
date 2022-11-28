@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.3...1.25.0) (2022-11-28)
+
+
+### Features
+
+* add deeper file search (in subfolders) ([6b36ede](https://github.com/gravitee-io/gravitee-plugin/commit/6b36ede35d830da050430ccdca355065d2a6e8f5))
+
 # [1.25.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.1...1.25.0-alpha.1) (2022-10-26)
 
 
