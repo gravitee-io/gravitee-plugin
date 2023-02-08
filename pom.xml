@@ -45,7 +45,7 @@
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <reflections.version>0.9.11</reflections.version>
         <gravitee-identityprovider-api.version>1.0.0</gravitee-identityprovider-api.version>
-        <gravitee-cockpit-api.version>1.0.0</gravitee-cockpit-api.version>
+        <gravitee-cockpit-api.version>1.13.8</gravitee-cockpit-api.version>
         <gravitee-connector-api.version>1.0.0</gravitee-connector-api.version>
         <gravitee-bom.version>2.8</gravitee-bom.version>
     </properties>
