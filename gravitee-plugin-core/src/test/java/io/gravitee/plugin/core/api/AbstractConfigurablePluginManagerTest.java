@@ -22,6 +22,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,6 +36,7 @@ public class AbstractConfigurablePluginManagerTest {
 
     public static final String FAKE_PLUGIN = "fake-plugin";
     private AbstractConfigurablePluginManager<FakePlugin> cut;
+    private static Map<String, String> properties = new HashMap<>();
 
     @Before
     public void setUp() {
@@ -73,6 +77,14 @@ public class AbstractConfigurablePluginManagerTest {
         assertEquals("plugin documentation", schema);
     }
 
+    @Test
+    public void shouldGetIconAsBase64() throws IOException {
+        cut.register(new FakePlugin());
+        properties.put("icon", "images/rest-api.png");
+        final String icon = cut.getIcon(FAKE_PLUGIN);
+        assertTrue(icon.startsWith("data:image/png;base64"));
+    }
+
     private static class FakePlugin implements ConfigurablePlugin<String> {
 
         @Override
@@ -106,7 +118,57 @@ public class AbstractConfigurablePluginManagerTest {
 
         @Override
         public PluginManifest manifest() {
-            return null;
+            return new PluginManifest() {
+                @Override
+                public String id() {
+                    return FAKE_PLUGIN;
+                }
+
+                @Override
+                public String name() {
+                    return null;
+                }
+
+                @Override
+                public String description() {
+                    return null;
+                }
+
+                @Override
+                public String category() {
+                    return null;
+                }
+
+                @Override
+                public String version() {
+                    return null;
+                }
+
+                @Override
+                public String plugin() {
+                    return null;
+                }
+
+                @Override
+                public String type() {
+                    return null;
+                }
+
+                @Override
+                public int priority() {
+                    return 0;
+                }
+
+                @Override
+                public List<PluginDependency> dependencies() {
+                    return null;
+                }
+
+                @Override
+                public Map<String, String> properties() {
+                    return properties;
+                }
+            };
         }
 
         @Override

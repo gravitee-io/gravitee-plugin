@@ -34,6 +34,9 @@ public interface PluginManifestProperties {
     String MANIFEST_CATEGORY_PROPERTY = "category";
     String MANIFEST_PRIORITY_PROPERTY = "priority";
     String MANIFEST_DEPENDENCIES_PROPERTY = "dependencies";
+    String MORE_INFO_DESCRIPTION_PROPERTY = "moreInfo.description";
+    String MORE_INFO_DOCUMENTATION_URL_PROPERTY = "moreInfo.documentationUrl";
+    String MORE_INFO_SCHEMA_IMG_PROPERTY = "moreInfo.schemaImg";
 
     Set<String> MANIFEST_PROPERTIES = new HashSet<>(
         Arrays.asList(
