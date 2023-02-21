@@ -19,6 +19,7 @@ import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
@@ -50,15 +51,15 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     public String getIcon(String pluginId) throws IOException {
         T plugin = get(pluginId);
         Map<String, String> properties = plugin.manifest().properties();
-        if (properties != null) {
-            String icon = properties.get(PluginManifestProperties.MANIFEST_ICON_PROPERTY);
-            if (icon != null) {
-                Path iconFile = Paths.get(plugin.path().toString(), icon);
-                String mimeType = Files.probeContentType(iconFile);
-                return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(iconFile));
-            }
-        }
+        return this.getFileFromPropertyAsBase64(plugin, properties, PluginManifestProperties.MANIFEST_ICON_PROPERTY);
+    }
 
+    private String getFileFromPropertyAsBase64(T plugin, Map<String, String> properties, String property) throws IOException {
+        if (properties != null && properties.containsKey(property)) {
+            Path file = Paths.get(plugin.path().toString(), properties.get(property));
+            String mimeType = Files.probeContentType(file);
+            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(file));
+        }
         return null;
     }
 
@@ -92,5 +93,20 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
             return null;
         }
         return null;
+    }
+
+    @Override
+    public PluginMoreInformation getMoreInformation(String pluginId) throws IOException {
+        T plugin = get(pluginId);
+        Map<String, String> properties = plugin.manifest().properties();
+        PluginMoreInformation pluginMoreInformation = new PluginMoreInformation();
+        if (properties != null) {
+            pluginMoreInformation.setDescription(properties.get(PluginManifestProperties.MORE_INFO_DESCRIPTION_PROPERTY));
+            pluginMoreInformation.setDocumentationUrl(properties.get(PluginManifestProperties.MORE_INFO_DOCUMENTATION_URL_PROPERTY));
+            pluginMoreInformation.setSchemaImg(
+                getFileFromPropertyAsBase64(plugin, properties, PluginManifestProperties.MORE_INFO_SCHEMA_IMG_PROPERTY)
+            );
+        }
+        return pluginMoreInformation;
     }
 }

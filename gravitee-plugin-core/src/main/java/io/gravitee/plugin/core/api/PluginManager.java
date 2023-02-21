@@ -34,4 +34,6 @@ public interface PluginManager<T extends Plugin> {
     String getDocumentation(String pluginId) throws IOException;
 
     String getCategory(String pluginId) throws IOException;
+
+    PluginMoreInformation getMoreInformation(String pluginId) throws IOException;
 }
