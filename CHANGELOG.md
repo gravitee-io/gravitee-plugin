@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.25.0...1.26.0) (2023-02-27)
+
+
+### Features
+
+* add more information properties ([75c928e](https://github.com/gravitee-io/gravitee-plugin/commit/75c928ee1c60099c40f6b7976f3250e9235b5636))
+
 # [1.25.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.24.3...1.25.0) (2022-11-28)
 
 
