@@ -17,6 +17,7 @@ package io.gravitee.plugin.core.api;
 
 import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -24,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -32,6 +35,8 @@ import java.util.Map;
 public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePlugin>
     extends AbstractPluginManager<T>
     implements ConfigurablePluginManager<T> {
+
+    private final Logger logger = LoggerFactory.getLogger(AbstractConfigurablePluginManager.class);
 
     private static final String SCHEMAS_DIRECTORY = "schemas";
 
@@ -56,9 +61,13 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
     private String getFileFromPropertyAsBase64(T plugin, Map<String, String> properties, String property) throws IOException {
         if (properties != null && properties.containsKey(property)) {
-            Path file = Paths.get(plugin.path().toString(), properties.get(property));
-            String mimeType = Files.probeContentType(file);
-            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(file));
+            try {
+                Path file = Paths.get(plugin.path().toString(), properties.get(property));
+                String mimeType = Files.probeContentType(file);
+                return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(file));
+            } catch (NoSuchFileException ex) {
+                logger.warn("File not found {}", plugin.path().toString());
+            }
         }
         return null;
     }

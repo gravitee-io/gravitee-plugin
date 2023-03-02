@@ -85,6 +85,14 @@ public class AbstractConfigurablePluginManagerTest {
         assertTrue(icon.startsWith("data:image/png;base64"));
     }
 
+    @Test
+    public void shouldGetNullIfFileNotFound() throws IOException {
+        cut.register(new FakePlugin());
+        properties.put("icon", "images/fake-path.png");
+        final String icon = cut.getIcon(FAKE_PLUGIN);
+        assertNull(icon);
+    }
+
     private static class FakePlugin implements ConfigurablePlugin<String> {
 
         @Override
