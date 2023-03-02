@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.26.0...1.26.1) (2023-03-02)
+
+
+### Bug Fixes
+
+* return null if file not found instead of Exception ([46bdd3d](https://github.com/gravitee-io/gravitee-plugin/commit/46bdd3db80c67ef558a67b61e0dbf1d8f8371e44))
+
 # [1.26.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.25.0...1.26.0) (2023-02-27)
 
 
