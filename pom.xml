@@ -29,7 +29,7 @@
 
     <groupId>io.gravitee.plugin</groupId>
     <artifactId>gravitee-plugin</artifactId>
-    <version>1.24.1</version>
+    <version>1.25.0-cluster-plugin-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gravitee.io APIM - Plugin</name>
 

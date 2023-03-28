@@ -41,7 +41,7 @@ public class PluginEventListener extends AbstractService implements EventListene
     /**
      * Allows to define priority between the different plugin types.
      */
-    private static final List<String> pluginPriority = Arrays.asList("repository", "alert", "cockpit");
+    private static final List<String> pluginPriority = Arrays.asList("cluster", "repository", "alert", "cockpit");
 
     @Value("${plugins.failOnDuplicate:true}")
     private boolean failOnDuplicate;
