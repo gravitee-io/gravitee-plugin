@@ -22,7 +22,14 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginEvent;
 import io.gravitee.plugin.core.api.PluginHandler;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -41,7 +48,7 @@ public class PluginEventListener extends AbstractService implements EventListene
     /**
      * Allows to define priority between the different plugin types.
      */
-    private static final List<String> pluginPriority = Arrays.asList("repository", "alert", "cockpit");
+    private static final List<String> pluginPriority = Arrays.asList("cluster", "repository", "alert", "cockpit");
 
     @Value("${plugins.failOnDuplicate:true}")
     private boolean failOnDuplicate;
