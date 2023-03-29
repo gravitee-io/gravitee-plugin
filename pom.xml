@@ -24,12 +24,12 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>20.3</version>
+        <version>19.2.1</version>
     </parent>
 
     <groupId>io.gravitee.plugin</groupId>
     <artifactId>gravitee-plugin</artifactId>
-    <version>1.26.1</version>
+    <version>1.27.0-archi-230-cluster-plugin-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gravitee.io APIM - Plugin</name>
 
@@ -47,7 +47,6 @@
         <gravitee-identityprovider-api.version>1.0.0</gravitee-identityprovider-api.version>
         <gravitee-cockpit-api.version>1.0.0</gravitee-cockpit-api.version>
         <gravitee-connector-api.version>1.0.0</gravitee-connector-api.version>
-        <gravitee-bom.version>2.8</gravitee-bom.version>
     </properties>
 
     <modules>
@@ -67,16 +66,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Gravitee dependencies -->
-            <!-- Import bom to properly inherit all dependencies -->
-            <dependency>
-                <groupId>io.gravitee</groupId>
-                <artifactId>gravitee-bom</artifactId>
-                <version>${gravitee-bom.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-
             <!-- Self import modules -->
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
@@ -226,10 +215,12 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
+            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -242,14 +233,17 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
         </dependency>
 
         <!-- Unit Tests -->
@@ -262,6 +256,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -271,9 +266,9 @@
             <plugin>
                 <groupId>com.hubspot.maven.plugins</groupId>
                 <artifactId>prettier-maven-plugin</artifactId>
-                <version>0.17</version>
+                <version>0.18</version>
                 <configuration>
-                    <nodeVersion>12.13.0</nodeVersion>
+                    <nodeVersion>16.16.0</nodeVersion>
                     <prettierJavaVersion>1.6.1</prettierJavaVersion>
                 </configuration>
                 <executions>
