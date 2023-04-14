@@ -1,3 +1,10 @@
+# [1.27.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.26.1...1.27.0-alpha.1) (2023-04-14)
+
+
+### Features
+
+* add new plugin type for cluster ([7336c9f](https://github.com/gravitee-io/gravitee-plugin/commit/7336c9f8137df52aa1765ce91932646914605e22))
+
 ## [1.26.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.26.0...1.26.1) (2023-03-02)
 
 
