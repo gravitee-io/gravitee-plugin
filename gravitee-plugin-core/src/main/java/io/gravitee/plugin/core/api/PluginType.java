@@ -38,7 +38,8 @@ public enum PluginType {
     FACTOR,
     COCKPIT,
     COCKPIT_CONTROLLER,
-    CLUSTER;
+    CLUSTER,
+    CACHE;
 
     public static PluginType from(String sType) {
         for (PluginType pluginType : values()) {
