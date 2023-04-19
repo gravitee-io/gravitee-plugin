@@ -1,3 +1,10 @@
+# [1.27.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.1...1.27.0-alpha.2) (2023-04-19)
+
+
+### Features
+
+* add new cache plugin ([1ce83e1](https://github.com/gravitee-io/gravitee-plugin/commit/1ce83e178af2dace8c090afab7c73104b02d93a3))
+
 # [1.27.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.26.1...1.27.0-alpha.1) (2023-04-14)
 
 

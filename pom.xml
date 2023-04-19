@@ -29,7 +29,7 @@
 
     <groupId>io.gravitee.plugin</groupId>
     <artifactId>gravitee-plugin</artifactId>
-    <version>1.27.0-archi-231-cache-manager-SNAPSHOT</version>
+    <version>1.27.0-alpha.2</version>
     <packaging>pom</packaging>
     <name>Gravitee.io APIM - Plugin</name>
 
