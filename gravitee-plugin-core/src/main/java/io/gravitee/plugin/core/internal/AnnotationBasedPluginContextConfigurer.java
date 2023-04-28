@@ -19,8 +19,8 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginConfigurationResolver;
 import io.gravitee.plugin.core.api.PluginContextConfigurer;
+import java.util.Arrays;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,20 +76,31 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
     public ConfigurableApplicationContext applicationContext() {
         if (pluginContext == null) {
             LOGGER.debug("Initializing a new plugin context for {}", plugin.id());
-            AnnotationConfigApplicationContext configApplicationContext = new AnnotationConfigApplicationContext();
-            configApplicationContext.setClassLoader(classLoader());
-            configApplicationContext.setEnvironment(environment());
-            configApplicationContext.setParent(containerContext);
 
-            Set<Class<?>> configurations = configurations();
-            LOGGER.debug(
-                "Registering following @Configuration classes for {}: {}",
-                plugin.id(),
-                configurations.stream().map(Class::getName).collect(Collectors.joining(", "))
-            );
+            ClassLoader pluginClassLoader = classLoader();
+            ClassLoader containerClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                // Class loader switch is required for internal component such as ConditionResolver to use the good one
+                Thread.currentThread().setContextClassLoader(pluginClassLoader);
+                AnnotationConfigApplicationContext configApplicationContext = new AnnotationConfigApplicationContext();
+                configApplicationContext.setClassLoader(pluginClassLoader);
+                configApplicationContext.setEnvironment(environment());
+                configApplicationContext.setParent(containerContext);
 
-            configurations.forEach(configApplicationContext::register);
-            pluginContext = configApplicationContext;
+                Set<Class<?>> configurations = configurations();
+                if (configurations != null && !configurations.isEmpty()) {
+                    Class[] configurationsArray = configurations.toArray(new Class[0]);
+                    LOGGER.debug(
+                        "Registering following @Configuration classes for {}: {}",
+                        plugin.id(),
+                        Arrays.toString(configurationsArray)
+                    );
+                    configApplicationContext.register(configurationsArray);
+                }
+                pluginContext = configApplicationContext;
+            } finally {
+                Thread.currentThread().setContextClassLoader(containerClassLoader);
+            }
         }
 
         return pluginContext;
