@@ -69,7 +69,11 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
 
         // Get all the scope handled by the plugin and check there is an associated configuration.
         for (Scope scope : scopeProvider.getHandledScopes()) {
-            checkRepositoryConfig(scope);
+            checkRepositoryConfig(scope, true);
+        }
+
+        for (Scope scope : scopeProvider.getOptionalHandledScopes()) {
+            checkRepositoryConfig(scope, false);
         }
     }
 
@@ -175,16 +179,21 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
     /**
      * Check the repository configuration is defined for the corresponding scope.
      * @param scope the scope for which to check the configuration.
+     * @param failOnMissing if <code>true</code> fail if missing configuration
      *
      * @throws IllegalStateException thrown if no repository configuration has been found for the scope.
      */
-    private void checkRepositoryConfig(Scope scope) throws IllegalStateException {
+    private void checkRepositoryConfig(final Scope scope, final boolean failOnMissing) throws IllegalStateException {
         String repositoryType = getRepositoryType(scope);
         LOGGER.info("Loading repository for scope {}: {}", scope, repositoryType);
 
         if (repositoryType == null || repositoryType.isEmpty()) {
-            LOGGER.error("No repository type defined in configuration for {}", scope.getName());
-            throw new IllegalStateException("No repository type defined in configuration for " + scope.getName());
+            if (failOnMissing) {
+                LOGGER.error("No repository type defined in configuration for {}", scope.getName());
+                throw new IllegalStateException("No repository type defined in configuration for " + scope.getName());
+            } else {
+                LOGGER.warn("No repository type defined in configuration for {}", scope.getName());
+            }
         }
     }
 
