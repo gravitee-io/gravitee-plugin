@@ -1,3 +1,15 @@
+# [1.27.0-alpha.3](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.2...1.27.0-alpha.3) (2023-05-29)
+
+
+### Bug Fixes
+
+* wrong classloader is used on some spring resolver ([4dcf218](https://github.com/gravitee-io/gravitee-plugin/commit/4dcf218fd4d77e71881f8bd543d8beb29222cb91))
+
+
+### Features
+
+* handle optional repository scopes ([5ff0b63](https://github.com/gravitee-io/gravitee-plugin/commit/5ff0b635abb77510cdce4a595bf02e74c33da38b))
+
 # [1.27.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.1...1.27.0-alpha.2) (2023-04-19)
 
 

@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gravitee-plugin</artifactId>
         <groupId>io.gravitee.plugin</groupId>
-        <version>1.27.0-archi-217-distributed-sync-SNAPSHOT</version>
+        <version>1.27.0-alpha.3</version>
     </parent>
 
     <artifactId>gravitee-plugin-cockpit</artifactId>

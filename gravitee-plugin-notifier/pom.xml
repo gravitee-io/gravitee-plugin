@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.plugin</groupId>
         <artifactId>gravitee-plugin</artifactId>
-        <version>1.27.0-archi-217-distributed-sync-SNAPSHOT</version>
+        <version>1.27.0-alpha.3</version>
     </parent>
 
     <artifactId>gravitee-plugin-notifier</artifactId>
