@@ -1,3 +1,10 @@
+# [1.27.0-alpha.4](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.3...1.27.0-alpha.4) (2023-05-30)
+
+
+### Bug Fixes
+
+* bump platform repository api version ([136d4ff](https://github.com/gravitee-io/gravitee-plugin/commit/136d4ff762f8cfb0133a81d5979b77b0c6f846ef))
+
 # [1.27.0-alpha.3](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.2...1.27.0-alpha.3) (2023-05-29)
 
 
