@@ -24,6 +24,8 @@ import java.io.IOException;
 public interface ConfigurablePluginManager<T extends ConfigurablePlugin> extends PluginManager<T> {
     String getSchema(String pluginId) throws IOException;
 
+    String getSchema(String pluginId, boolean includeDisabled) throws IOException;
+
     /**
      * Get schema in a subfolder.
      * @param pluginId is the id of the plugin we want to retrieve schema
@@ -32,4 +34,6 @@ public interface ConfigurablePluginManager<T extends ConfigurablePlugin> extends
      * @throws IOException
      */
     String getSchema(String pluginId, String subFolder) throws IOException;
+
+    String getSchema(String pluginId, String subFolder, boolean includeDisabled) throws IOException;
 }

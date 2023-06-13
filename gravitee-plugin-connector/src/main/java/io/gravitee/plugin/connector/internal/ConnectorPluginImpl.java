@@ -69,6 +69,11 @@ class ConnectorPluginImpl implements ConnectorPlugin {
     }
 
     @Override
+    public boolean deployed() {
+        return plugin.deployed();
+    }
+
+    @Override
     public Class<? extends ConnectorConfiguration> configuration() {
         return connectorConfigurationClass;
     }

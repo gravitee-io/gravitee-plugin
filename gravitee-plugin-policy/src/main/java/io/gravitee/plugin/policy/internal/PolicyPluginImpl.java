@@ -76,6 +76,11 @@ class PolicyPluginImpl implements PolicyPlugin {
     }
 
     @Override
+    public boolean deployed() {
+        return plugin.deployed();
+    }
+
+    @Override
     public Class<? extends PolicyConfiguration> configuration() {
         return policyConfigurationClass;
     }

@@ -27,13 +27,25 @@ public interface PluginManager<T extends Plugin> {
 
     Collection<T> findAll();
 
+    Collection<T> findAll(boolean includeNotDeployed);
+
     T get(String pluginId);
+
+    T get(String pluginId, boolean includeNotDeployed);
 
     String getIcon(String pluginId) throws IOException;
 
+    String getIcon(String pluginId, boolean includeNotDeployed) throws IOException;
+
     String getDocumentation(String pluginId) throws IOException;
+
+    String getDocumentation(String pluginId, boolean includeNotDeployed) throws IOException;
 
     String getCategory(String pluginId) throws IOException;
 
+    String getCategory(String pluginId, boolean includeNotDeployed) throws IOException;
+
     PluginMoreInformation getMoreInformation(String pluginId) throws IOException;
+
+    PluginMoreInformation getMoreInformation(String pluginId, boolean includeNotDeployed) throws IOException;
 }

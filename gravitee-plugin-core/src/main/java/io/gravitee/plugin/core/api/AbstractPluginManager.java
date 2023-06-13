@@ -18,6 +18,7 @@ package io.gravitee.plugin.core.api;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -34,11 +35,31 @@ public abstract class AbstractPluginManager<T extends Plugin> implements PluginM
 
     @Override
     public Collection<T> findAll() {
-        return plugins.values();
+        return plugins.values().stream().filter(Plugin::deployed).collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<T> findAll(boolean includeNotDeployed) {
+        if (includeNotDeployed) {
+            return plugins.values();
+        }
+        return findAll();
     }
 
     @Override
     public T get(String pluginId) {
-        return plugins.get(pluginId);
+        T plugin = plugins.get(pluginId);
+        if (plugin != null && !plugin.deployed()) {
+            return null;
+        }
+        return plugin;
+    }
+
+    @Override
+    public T get(String pluginId, boolean includeNotDeployed) {
+        if (includeNotDeployed) {
+            return plugins.get(pluginId);
+        }
+        return get(pluginId);
     }
 }

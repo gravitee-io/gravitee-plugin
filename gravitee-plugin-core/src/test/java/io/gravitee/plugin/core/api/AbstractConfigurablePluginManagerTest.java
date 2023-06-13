@@ -50,6 +50,18 @@ public class AbstractConfigurablePluginManagerTest {
     }
 
     @Test
+    public void shouldGetNullIfPluginNotDeployed() {
+        cut.register(new FakePlugin(false));
+        assertNull(cut.get(FAKE_PLUGIN));
+    }
+
+    @Test
+    public void shouldGetPluginIfPluginNotDeployedButIncludeNotDeployed() {
+        cut.register(new FakePlugin(false));
+        assertNotNull(cut.get(FAKE_PLUGIN, true));
+    }
+
+    @Test
     public void shouldGetFirstSchemaFile() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getSchema(FAKE_PLUGIN);
@@ -94,6 +106,16 @@ public class AbstractConfigurablePluginManagerTest {
     }
 
     private static class FakePlugin implements ConfigurablePlugin<String> {
+
+        boolean deployed;
+
+        public FakePlugin() {
+            this.deployed = true;
+        }
+
+        public FakePlugin(boolean deployed) {
+            this.deployed = deployed;
+        }
 
         @Override
         public Class<String> configuration() {
@@ -182,6 +204,11 @@ public class AbstractConfigurablePluginManagerTest {
         @Override
         public URL[] dependencies() {
             return new URL[0];
+        }
+
+        @Override
+        public boolean deployed() {
+            return deployed;
         }
     }
 }

@@ -68,6 +68,11 @@ class NotifierPluginImpl implements NotifierPlugin {
     }
 
     @Override
+    public boolean deployed() {
+        return plugin.deployed();
+    }
+
+    @Override
     public Class configuration() {
         return notifierConfigurationClass;
     }

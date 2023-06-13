@@ -68,6 +68,11 @@ class ServiceDiscoveryPluginImpl implements ServiceDiscoveryPlugin {
     }
 
     @Override
+    public boolean deployed() {
+        return plugin.deployed();
+    }
+
+    @Override
     public Class configuration() {
         return serviceDiscoveryConfiguration;
     }

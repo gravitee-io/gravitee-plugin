@@ -68,6 +68,11 @@ class ResourcePluginImpl implements ResourcePlugin {
     }
 
     @Override
+    public boolean deployed() {
+        return plugin.deployed();
+    }
+
+    @Override
     public Class configuration() {
         return resourceConfigurationClass;
     }

@@ -29,15 +29,18 @@ public abstract class AbstractSpringPluginHandler<T> extends AbstractPluginHandl
 
     @Override
     protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            ApplicationContext context = pluginContextFactory.create(plugin);
-            T pluginInst = (T) context.getBean(pluginClass);
-            register(pluginInst);
-        } catch (Exception ex) {
-            logger.error("Unexpected error while creating {}", plugin.id(), ex);
+        // Do not register when plugin is not deployed since AbstractSpringPluginHandler is used to register different kind of Plugin like : Alert, Reporter, Cockpit and Service
+        if (plugin.deployed()) {
+            try {
+                ApplicationContext context = pluginContextFactory.create(plugin);
+                T pluginInst = (T) context.getBean(pluginClass);
+                register(pluginInst);
+            } catch (Exception ex) {
+                logger.error("Unexpected error while creating {}", plugin.id(), ex);
 
-            // Be sure that the context does not exist anymore.
-            pluginContextFactory.remove(plugin);
+                // Be sure that the context does not exist anymore.
+                pluginContextFactory.remove(plugin);
+            }
         }
     }
 
