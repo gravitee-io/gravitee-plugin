@@ -17,7 +17,6 @@ package io.gravitee.plugin.core.api;
 
 import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -44,19 +43,37 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
     @Override
     public String getSchema(String pluginId) throws IOException {
-        return getFirstFile(pluginId, SCHEMAS_DIRECTORY);
+        return getSchema(pluginId, false);
+    }
+
+    @Override
+    public String getSchema(String pluginId, boolean includeNotDeployed) throws IOException {
+        return getFirstFile(pluginId, SCHEMAS_DIRECTORY, includeNotDeployed);
     }
 
     @Override
     public String getSchema(String pluginId, String subFolder) throws IOException {
-        return getFirstFile(pluginId, String.format("%s/%s", SCHEMAS_DIRECTORY, subFolder));
+        return getSchema(pluginId, subFolder, false);
+    }
+
+    @Override
+    public String getSchema(String pluginId, String subFolder, boolean includeNotDeployed) throws IOException {
+        return getFirstFile(pluginId, String.format("%s/%s", SCHEMAS_DIRECTORY, subFolder), includeNotDeployed);
     }
 
     @Override
     public String getIcon(String pluginId) throws IOException {
-        T plugin = get(pluginId);
-        Map<String, String> properties = plugin.manifest().properties();
-        return this.getFileFromPropertyAsBase64(plugin, properties, PluginManifestProperties.MANIFEST_ICON_PROPERTY);
+        return getIcon(pluginId, false);
+    }
+
+    @Override
+    public String getIcon(String pluginId, boolean includeNotDeployed) throws IOException {
+        T plugin = get(pluginId, includeNotDeployed);
+        if (plugin != null) {
+            Map<String, String> properties = plugin.manifest().properties();
+            return this.getFileFromPropertyAsBase64(plugin, properties, PluginManifestProperties.MANIFEST_ICON_PROPERTY);
+        }
+        return null;
     }
 
     private String getFileFromPropertyAsBase64(T plugin, Map<String, String> properties, String property) throws IOException {
@@ -74,21 +91,33 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
     @Override
     public String getDocumentation(String pluginId) throws IOException {
-        return getFirstFile(pluginId, DOCS_DIRECTORY);
+        return getFirstFile(pluginId, DOCS_DIRECTORY, false);
+    }
+
+    @Override
+    public String getDocumentation(String pluginId, boolean includeNotDeployed) throws IOException {
+        return getFirstFile(pluginId, DOCS_DIRECTORY, includeNotDeployed);
     }
 
     @Override
     public String getCategory(String pluginId) throws IOException {
-        T plugin = get(pluginId);
-        Map<String, String> properties = plugin.manifest().properties();
-        if (properties != null) {
-            return properties.get(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
+        return getCategory(pluginId, false);
+    }
+
+    @Override
+    public String getCategory(String pluginId, boolean includeNotDeployed) throws IOException {
+        T plugin = get(pluginId, includeNotDeployed);
+        if (plugin != null) {
+            Map<String, String> properties = plugin.manifest().properties();
+            if (properties != null) {
+                return properties.get(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
+            }
         }
         return null;
     }
 
-    private String getFirstFile(String pluginId, String directory) throws IOException {
-        final T plugin = get(pluginId);
+    private String getFirstFile(String pluginId, String directory, boolean includeNotDeployed) throws IOException {
+        final T plugin = get(pluginId, includeNotDeployed);
 
         if (plugin != null) {
             Path workspaceDir = plugin.path();
@@ -106,16 +135,24 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
     @Override
     public PluginMoreInformation getMoreInformation(String pluginId) throws IOException {
-        T plugin = get(pluginId);
-        Map<String, String> properties = plugin.manifest().properties();
-        PluginMoreInformation pluginMoreInformation = new PluginMoreInformation();
-        if (properties != null) {
-            pluginMoreInformation.setDescription(properties.get(PluginManifestProperties.MORE_INFO_DESCRIPTION_PROPERTY));
-            pluginMoreInformation.setDocumentationUrl(properties.get(PluginManifestProperties.MORE_INFO_DOCUMENTATION_URL_PROPERTY));
-            pluginMoreInformation.setSchemaImg(
-                getFileFromPropertyAsBase64(plugin, properties, PluginManifestProperties.MORE_INFO_SCHEMA_IMG_PROPERTY)
-            );
+        return getMoreInformation(pluginId, false);
+    }
+
+    @Override
+    public PluginMoreInformation getMoreInformation(String pluginId, boolean includeNotDeployed) throws IOException {
+        T plugin = get(pluginId, includeNotDeployed);
+        if (plugin != null) {
+            Map<String, String> properties = plugin.manifest().properties();
+            PluginMoreInformation pluginMoreInformation = new PluginMoreInformation();
+            if (properties != null) {
+                pluginMoreInformation.setDescription(properties.get(PluginManifestProperties.MORE_INFO_DESCRIPTION_PROPERTY));
+                pluginMoreInformation.setDocumentationUrl(properties.get(PluginManifestProperties.MORE_INFO_DOCUMENTATION_URL_PROPERTY));
+                pluginMoreInformation.setSchemaImg(
+                    getFileFromPropertyAsBase64(plugin, properties, PluginManifestProperties.MORE_INFO_SCHEMA_IMG_PROPERTY)
+                );
+            }
+            return pluginMoreInformation;
         }
-        return pluginMoreInformation;
+        return null;
     }
 }

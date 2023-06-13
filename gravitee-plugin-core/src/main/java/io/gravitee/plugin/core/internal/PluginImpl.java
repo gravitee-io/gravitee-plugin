@@ -29,6 +29,7 @@ public class PluginImpl implements Plugin {
     private Path path;
     private final PluginManifest manifest;
     private URL[] dependencies;
+    private boolean deployed = true;
 
     PluginImpl(PluginManifest manifest) {
         this.manifest = manifest;
@@ -62,6 +63,15 @@ public class PluginImpl implements Plugin {
     @Override
     public URL[] dependencies() {
         return dependencies;
+    }
+
+    @Override
+    public boolean deployed() {
+        return deployed;
+    }
+
+    public void setDeployed(boolean deployed) {
+        this.deployed = deployed;
     }
 
     public void setPath(Path path) {

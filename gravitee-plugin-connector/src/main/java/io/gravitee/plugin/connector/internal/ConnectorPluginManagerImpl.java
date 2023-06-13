@@ -38,7 +38,9 @@ public class ConnectorPluginManagerImpl extends AbstractConfigurablePluginManage
     private final ConnectorClassLoaderFactory classLoaderFactory;
 
     private final Map<String, ConnectorFactory<?>> factories = new HashMap<>();
+    private final Map<String, ConnectorFactory<?>> undeployedFactories = new HashMap<>();
     private final Map<String, ConnectorFactory<?>> factoriesByType = new HashMap<>();
+    private final Map<String, ConnectorFactory<?>> undeployedFactoriesByType = new HashMap<>();
 
     public ConnectorPluginManagerImpl(final ConnectorClassLoaderFactory classLoaderFactory) {
         this.classLoaderFactory = classLoaderFactory;
@@ -53,12 +55,20 @@ public class ConnectorPluginManagerImpl extends AbstractConfigurablePluginManage
         try {
             final Class<ConnectorFactory> connectorFactoryClass = (Class<ConnectorFactory>) pluginClassLoader.loadClass(plugin.clazz());
             final ConnectorFactory factory = connectorFactoryClass.getDeclaredConstructor().newInstance();
-            factories.put(plugin.id(), factory);
+            if (plugin.deployed()) {
+                factories.put(plugin.id(), factory);
+            } else {
+                undeployedFactories.put(plugin.id(), factory);
+            }
 
             final Collection<String> types = factory.supportedTypes();
             if (types != null) {
                 for (String type : types) {
-                    factoriesByType.put(type.toLowerCase(), factory);
+                    if (plugin.deployed()) {
+                        factoriesByType.put(type.toLowerCase(), factory);
+                    } else {
+                        undeployedFactoriesByType.put(type.toLowerCase(), factory);
+                    }
                 }
             }
         } catch (Exception ex) {
@@ -68,11 +78,29 @@ public class ConnectorPluginManagerImpl extends AbstractConfigurablePluginManage
 
     @Override
     public ConnectorFactory<?> getConnectorByType(String type) {
-        return factoriesByType.get(type.toLowerCase());
+        return getConnectorByType(type, false);
+    }
+
+    @Override
+    public ConnectorFactory<?> getConnectorByType(String type, boolean includeNotDeployed) {
+        ConnectorFactory<?> factory = factoriesByType.get(type.toLowerCase());
+        if (factory == null && includeNotDeployed) {
+            return undeployedFactoriesByType.get(type.toLowerCase());
+        }
+        return factory;
     }
 
     @Override
     public ConnectorFactory<?> getConnector(String pluginId) {
         return factories.get(pluginId);
+    }
+
+    @Override
+    public ConnectorFactory<?> getConnector(String pluginId, boolean includeNotDeployed) {
+        ConnectorFactory<?> factory = factories.get(pluginId);
+        if (factory == null && includeNotDeployed) {
+            return undeployedFactories.get(pluginId);
+        }
+        return factory;
     }
 }

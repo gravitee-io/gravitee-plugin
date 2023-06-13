@@ -52,4 +52,9 @@ public interface Plugin {
      * Plugin dependencies.
      */
     URL[] dependencies();
+
+    /**
+     * Plugin deployment status.
+     */
+    boolean deployed();
 }

@@ -17,6 +17,7 @@ package io.gravitee.plugin.core.api;
 
 import io.gravitee.plugin.api.PluginDeploymentContextFactory;
 import io.gravitee.plugin.api.PluginDeploymentLifecycle;
+import io.gravitee.plugin.core.internal.PluginImpl;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import org.slf4j.Logger;
@@ -61,7 +62,9 @@ public abstract class AbstractPluginHandler implements PluginHandler {
                     if (pluginDeploymentLifecycle.isDeployable(pluginDeploymentContextFactory.create())) {
                         handle(plugin, pluginClass);
                     } else {
-                        logger.warn("Plugin {} can't be deployed", plugin.id());
+                        ((PluginImpl) plugin).setDeployed(false);
+                        handle(plugin, pluginClass);
+                        logger.warn("Plugin {} detected but not activated", plugin.id());
                     }
                 } else {
                     // Not all plugins have io.gravitee.plugin.api.annotations.Plugin annotation
