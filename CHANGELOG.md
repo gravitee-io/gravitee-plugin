@@ -1,3 +1,16 @@
+# [2.0.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.4...2.0.0-alpha.1) (2023-06-15)
+
+
+### Features
+
+* allow plugins to be registered when not deployed ([e022030](https://github.com/gravitee-io/gravitee-plugin/commit/e0220301ab4b605c7f61502c4ec0e7c88f603d3c))
+
+
+### BREAKING CHANGES
+
+* added new deployed status on Plugin and change the plugin handler behavior
+to call handle on all plugins except the one that extends AbstractSpringPluginHandler
+
 # [1.27.0-alpha.4](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.3...1.27.0-alpha.4) (2023-05-30)
 
 
