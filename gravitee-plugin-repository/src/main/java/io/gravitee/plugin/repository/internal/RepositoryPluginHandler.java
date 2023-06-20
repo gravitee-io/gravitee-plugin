@@ -18,10 +18,7 @@ package io.gravitee.plugin.repository.internal;
 import io.gravitee.platform.repository.api.RepositoryProvider;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.platform.repository.api.Scope;
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
+import io.gravitee.plugin.core.api.*;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,7 +39,7 @@ import org.springframework.util.Assert;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RepositoryPluginHandler implements PluginHandler, InitializingBean {
+public class RepositoryPluginHandler extends AbstractPluginHandler implements InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryPluginHandler.class);
     public static final int RETRY_DELAY_MS = 5000;
@@ -83,48 +80,57 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        try {
-            LOGGER.info("Register a new repository: {} [{}]", plugin.id(), plugin.clazz());
+    protected String type() {
+        return PLUGIN_TYPE;
+    }
 
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-            final Class<?> repositoryClass = classloader.loadClass(plugin.clazz());
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    }
 
-            Assert.isAssignable(RepositoryProvider.class, repositoryClass);
+    @Override
+    protected void handle(Plugin plugin, Class<?> repositoryClass) {
+        if (plugin.deployed()) {
+            try {
+                LOGGER.info("Register a new repository: {} [{}]", plugin.id(), plugin.clazz());
 
-            RepositoryProvider repository = createInstance((Class<RepositoryProvider>) repositoryClass);
-            Scope[] scopes = repository.scopes();
+                Assert.isAssignable(RepositoryProvider.class, repositoryClass);
 
-            for (Scope scope : scopes) {
-                if (repository.type().equals(getRepositoryType(scope))) {
-                    if (!repositories.containsKey(scope)) {
-                        boolean loaded = false;
-                        int tries = 0;
+                RepositoryProvider repository = createInstance((Class<RepositoryProvider>) repositoryClass);
+                Scope[] scopes = repository.scopes();
 
-                        while (!loaded) {
-                            if (tries > 0) {
-                                // Wait some time before giving an other try.
-                                Thread.sleep(RETRY_DELAY_MS);
+                for (Scope scope : scopes) {
+                    if (repository.type().equals(getRepositoryType(scope))) {
+                        if (!repositories.containsKey(scope)) {
+                            boolean loaded = false;
+                            int tries = 0;
+
+                            while (!loaded) {
+                                if (tries > 0) {
+                                    // Wait some time before giving an other try.
+                                    Thread.sleep(RETRY_DELAY_MS);
+                                }
+                                loaded = loadRepository(scope, repository, plugin);
+                                tries++;
+
+                                if (!loaded) {
+                                    LOGGER.error(
+                                        "Unable to load repository {} for scope {}. Retry in {} ms...",
+                                        plugin.id(),
+                                        scope,
+                                        RETRY_DELAY_MS
+                                    );
+                                }
                             }
-                            loaded = loadRepository(scope, repository, plugin);
-                            tries++;
-
-                            if (!loaded) {
-                                LOGGER.error(
-                                    "Unable to load repository {} for scope {}. Retry in {} ms...",
-                                    plugin.id(),
-                                    scope,
-                                    RETRY_DELAY_MS
-                                );
-                            }
+                        } else {
+                            LOGGER.warn("Repository scope {} already loaded by {}", scope, repositories.get(scope));
                         }
-                    } else {
-                        LOGGER.warn("Repository scope {} already loaded by {}", scope, repositories.get(scope));
                     }
                 }
+            } catch (Exception iae) {
+                LOGGER.error("Unexpected error while create repository instance", iae);
             }
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create repository instance", iae);
         }
     }
 
