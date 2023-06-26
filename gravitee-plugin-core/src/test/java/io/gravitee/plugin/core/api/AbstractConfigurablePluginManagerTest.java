@@ -15,33 +15,37 @@
  */
 package io.gravitee.plugin.core.api;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 
 /**
  * @author Yann TAVERNIER (yann.tavernier at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AbstractConfigurablePluginManagerTest {
 
-    public static final String FAKE_PLUGIN = "fake-plugin";
-    private AbstractConfigurablePluginManager<FakePlugin> cut;
-    private static Map<String, String> properties = new HashMap<>();
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+class AbstractConfigurablePluginManagerTest {
 
-    @Before
+    static final String FAKE_PLUGIN = "fake-plugin";
+    AbstractConfigurablePluginManager<FakePlugin> cut;
+    static Map<String, String> properties = new HashMap<>();
+
+    @BeforeEach
     public void setUp() {
         cut =
-            new AbstractConfigurablePluginManager<FakePlugin>() {
+            new AbstractConfigurablePluginManager<>() {
                 @Override
                 public void register(FakePlugin plugin) {
                     super.register(plugin);
@@ -50,47 +54,47 @@ public class AbstractConfigurablePluginManagerTest {
     }
 
     @Test
-    public void shouldGetNullIfPluginNotDeployed() {
+    void should_get_null_if_plugin_not_deployed() {
         cut.register(new FakePlugin(false));
         assertNull(cut.get(FAKE_PLUGIN));
     }
 
     @Test
-    public void shouldGetPluginIfPluginNotDeployedButIncludeNotDeployed() {
+    void should_get_plugin_if_plugin_not_deployed_but_include_not_deployed() {
         cut.register(new FakePlugin(false));
-        assertNotNull(cut.get(FAKE_PLUGIN, true));
+        Assertions.assertNotNull(cut.get(FAKE_PLUGIN, true));
     }
 
     @Test
-    public void shouldGetFirstSchemaFile() throws IOException {
+    void should_get_first_schema_file() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getSchema(FAKE_PLUGIN);
         assertEquals("{\n  \"schema\": \"configuration\"\n}", schema);
     }
 
     @Test
-    public void shouldGetFirstSchemaFileInSubFolder1() throws IOException {
+    void should_get_first_schema_file_in_sub_folder1() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getSchema(FAKE_PLUGIN, "subfolder_1");
         assertEquals("{\n  \"schema\": \"subfolder_1\"\n}", schema);
     }
 
     @Test
-    public void shouldGetFirstSchemaFileInSubFolder2() throws IOException {
+    void should_get_first_schema_file_in_sub_folder2() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getSchema(FAKE_PLUGIN, "subfolder_1/subfolder_2");
         assertEquals("{\n  \"schema\": \"subfolder_2\"\n}", schema);
     }
 
     @Test
-    public void shouldGetFirstDocumentationFile() throws IOException {
+    void should_get_first_documentation_file() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getDocumentation(FAKE_PLUGIN);
         assertEquals("plugin documentation", schema);
     }
 
     @Test
-    public void shouldGetIconAsBase64() throws IOException {
+    void should_get_icon_as_base64() throws IOException {
         cut.register(new FakePlugin());
         properties.put("icon", "images/rest-api.png");
         final String icon = cut.getIcon(FAKE_PLUGIN);
@@ -98,7 +102,7 @@ public class AbstractConfigurablePluginManagerTest {
     }
 
     @Test
-    public void shouldGetNullIfFileNotFound() throws IOException {
+    void should_get_null_if_file_not_found() throws IOException {
         cut.register(new FakePlugin());
         properties.put("icon", "images/fake-path.png");
         final String icon = cut.getIcon(FAKE_PLUGIN);
@@ -201,7 +205,7 @@ public class AbstractConfigurablePluginManagerTest {
 
                 @Override
                 public Map<String, String> properties() {
-                    return properties;
+                    return AbstractConfigurablePluginManagerTest.properties;
                 }
             };
         }

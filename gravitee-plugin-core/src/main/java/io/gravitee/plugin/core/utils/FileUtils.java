@@ -21,15 +21,29 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FileUtils {
 
-    private FileUtils() {}
-
-    public static DirectoryStream newDirectoryStream(Path dir, String glob) throws IOException {
+    /**
+     * List of files matching the "glob: " syntax in a given  directory.
+     *
+     * @param dir  the base directory to list into
+     * @param glob the glob to apply
+     * @return a stream of files matching the glob
+     * @throws IOException error during listing
+     * @see FileSystem#getPathMatcher(String)
+     */
+    public static DirectoryStream<Path> newDirectoryStream(Path dir, String glob) throws IOException {
+        Objects.requireNonNull(dir);
+        Objects.requireNonNull(glob);
         // create a matcher and return a filter that uses it.
         FileSystem fs = dir.getFileSystem();
         final PathMatcher matcher = fs.getPathMatcher("glob:" + glob);

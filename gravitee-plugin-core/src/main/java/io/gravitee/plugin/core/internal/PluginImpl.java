@@ -19,6 +19,9 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -26,10 +29,20 @@ import java.nio.file.Path;
  */
 public class PluginImpl implements Plugin {
 
+    @Setter
     private Path path;
+
     private final PluginManifest manifest;
+
+    @Setter
     private URL[] dependencies;
+
+    @Setter
     private boolean deployed = true;
+
+    @Getter
+    @Setter
+    private long archiveTimestamp;
 
     PluginImpl(PluginManifest manifest) {
         this.manifest = manifest;
@@ -70,16 +83,8 @@ public class PluginImpl implements Plugin {
         return deployed;
     }
 
-    public void setDeployed(boolean deployed) {
-        this.deployed = deployed;
-    }
-
-    public void setPath(Path path) {
-        this.path = path;
-    }
-
-    public void setDependencies(URL[] dependencies) {
-        this.dependencies = dependencies;
+    public boolean valid() {
+        return id() != null && !Objects.equals(id(), "");
     }
 
     @Override

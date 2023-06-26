@@ -15,17 +15,16 @@
  */
 package io.gravitee.plugin.core.spring;
 
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginConfigurationResolver;
-import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.api.PluginRegistry;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.plugin.core.api.*;
 import io.gravitee.plugin.core.internal.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.Collection;
+import java.util.concurrent.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -42,13 +41,19 @@ public class PluginConfiguration {
     }
 
     @Bean
-    public PluginRegistry pluginRegistry() {
-        return new PluginRegistryImpl();
+    public PluginRegistry pluginRegistry(
+        PluginRegistryConfiguration pluginRegistryConfiguration,
+        Environment environement,
+        @Qualifier("corePluginExecutor") ExecutorService executorService,
+        EventManager eventManager
+    ) {
+        return new PluginRegistryImpl(pluginRegistryConfiguration, environement, executorService, eventManager);
     }
 
     @Bean(name = "pluginClassLoaderFactory")
+    @SuppressWarnings("rawtypes")
     public PluginClassLoaderFactory classLoaderFactory() {
-        return new CachedPluginClassLoaderFactory();
+        return new CachedPluginClassLoaderFactory<>();
     }
 
     @Bean
@@ -57,8 +62,9 @@ public class PluginConfiguration {
     }
 
     @Bean
-    public PluginEventListener pluginEventListener() {
-        return new PluginEventListener();
+    @Autowired
+    public PluginEventListener pluginEventListener(Collection<PluginHandler> pluginHandlers, EventManager eventManager) {
+        return new PluginEventListener(pluginHandlers, eventManager);
     }
 
     @Bean
