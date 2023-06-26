@@ -15,27 +15,31 @@
  */
 package io.gravitee.plugin.core.internal;
 
-import static java.util.concurrent.CompletableFuture.runAsync;
-
-import com.google.common.annotations.VisibleForTesting;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.*;
 import io.gravitee.plugin.core.utils.FileUtils;
 import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -43,10 +47,11 @@ import org.springframework.util.StringUtils;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PluginRegistryImpl extends AbstractService implements PluginRegistry {
+@Slf4j
+@RequiredArgsConstructor
+public class PluginRegistryImpl extends AbstractService<PluginRegistry> implements PluginRegistry {
 
     public static final String PROPERTY_STRING_FORMAT = "%s.%s.enabled";
-    private static final Logger LOGGER = LoggerFactory.getLogger(PluginRegistryImpl.class);
 
     private static final String JAR_EXTENSION = ".jar";
     private static final String JAR_GLOB = '*' + JAR_EXTENSION;
@@ -68,32 +73,21 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         PLUGIN_TYPE_PROPERTY_ALIASES.put("service_discovery", "service-discoveries");
     }
 
-    @Autowired
-    private PluginRegistryConfiguration configuration;
+    private final PluginRegistryConfiguration configuration;
 
-    @Autowired
-    private Environment environment;
+    private final Environment environment;
 
-    @Autowired
-    @Qualifier("corePluginExecutor")
-    private ExecutorService executor;
+    private final ExecutorService executor;
+
+    private final EventManager eventManager;
 
     private boolean init = false;
 
-    private List<Plugin> plugins = new ArrayList<>();
-
-    @Autowired
-    private EventManager eventManager;
+    private final List<Plugin> plugins = new ArrayList<>();
 
     private String[] workspacesPath;
 
-    /**
-     * Empty constructor is used to use a workspace directory defined from @Value annotation
-     * on workspacePath field.
-     */
-    public PluginRegistryImpl() {}
-
-    public PluginRegistryImpl(String workspacePath) {
+    public void setWorkspacesPath(String workspacePath) {
         this.workspacesPath = new String[] { workspacePath };
     }
 
@@ -102,19 +96,19 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         super.doStart();
 
         if (!init) {
-            LOGGER.info("Initializing plugin registry.");
+            log.info("Initializing plugin registry.");
             this.init();
-            LOGGER.info("Plugins have been loaded and installed.");
+            log.info("Plugins have been loaded and installed.");
         } else {
-            LOGGER.warn("Plugin registry has already been initialized.");
+            log.warn("Plugin registry has already been initialized.");
         }
     }
 
     public void init() throws Exception {
         String[] pluginsPath = configuration.getPluginsPath();
         if ((pluginsPath == null || pluginsPath.length == 0) && workspacesPath == null) {
-            LOGGER.error("No plugin registry configured.");
-            throw new RuntimeException("No plugin registry configured.");
+            log.error("No plugin registry configured.");
+            throw new IllegalArgumentException("No plugin registry configured.");
         }
 
         // Use override configuration
@@ -122,79 +116,81 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             pluginsPath = workspacesPath;
         }
 
-        for (String aWorkspacePath : pluginsPath) {
-            loadPluginsFromRegistry(aWorkspacePath);
+        this.plugins.addAll(
+                Flowable
+                    .fromArray(pluginsPath)
+                    .doOnSubscribe(s -> this.init = true)
+                    .flatMap(this::loadPluginsFromPath)
+                    // reserve sort
+                    .sorted((p1, p2) -> Math.negateExact(((Long) p1.getArchiveTimestamp()).compareTo(p2.getArchiveTimestamp())))
+                    // As plugins arrive sorted by reverse file date
+                    // we can exclude duplicates and keep the most recent one
+                    .distinct()
+                    .doOnNext(plugin -> eventManager.publishEvent(PluginEvent.DEPLOYED, plugin))
+                    .cast(Plugin.class)
+                    .toList()
+                    .doOnSuccess(list -> {
+                        printPlugins(list);
+                        eventManager.publishEvent(PluginEvent.ENDED, null);
+                    })
+                    .blockingGet()
+            );
+    }
+
+    private Flowable<PluginImpl> loadPluginsFromPath(final String pluginPathAsString) throws IOException {
+        File pluginDir = new File(pluginPathAsString);
+
+        // Quick sanity check
+        if (!pluginDir.isDirectory()) {
+            return Flowable.error(
+                new IllegalArgumentException("Invalid registry directory. Not a directory: " + pluginDir.getAbsolutePath())
+            );
         }
 
-        printPlugins();
-        eventManager.publishEvent(PluginEvent.ENDED, null);
+        final Path pluginPath = pluginDir.toPath();
+        log.info("Loading plugins from {}", pluginDir);
+
+        final DirectoryStream<Path> stream = FileUtils.newDirectoryStream(pluginPath, ZIP_GLOB);
+        return Flowable
+            .fromIterable(stream)
+            .subscribeOn(Schedulers.from(executor))
+            .map(path -> loadPlugin(pluginDir, path))
+            .filter(PluginImpl::valid)
+            .doFinally(stream::close);
     }
 
-    private void loadPluginsFromRegistry(String registryPath) throws Exception {
-        File registryDir = new File(registryPath);
-
-        // Quick sanity check on the install root
-        if (!registryDir.isDirectory()) {
-            LOGGER.error("Invalid registry directory, {} is not a directory.", registryDir.getAbsolutePath());
-            throw new RuntimeException("Invalid registry directory. Not a directory: " + registryDir.getAbsolutePath());
-        }
-
-        loadPlugins(registryDir);
+    private static void printPlugins(final List<Plugin> plugins) {
+        plugins.stream().map(Plugin::type).distinct().forEach(type -> printPluginByType(plugins, type));
     }
 
-    private void loadPlugins(File registryDir) throws Exception {
-        Path registryPath = registryDir.toPath();
-        LOGGER.info("Loading plugins from {}", registryDir);
-
-        try (DirectoryStream<Path> stream = FileUtils.newDirectoryStream(registryPath, ZIP_GLOB)) {
-            List<CompletableFuture<?>> futures = new ArrayList<>();
-            Iterator<Path> archiveIte = stream.iterator();
-
-            if (archiveIte.hasNext()) {
-                while (archiveIte.hasNext()) {
-                    final Path path = archiveIte.next();
-                    futures.add(runAsync(() -> loadPlugin(registryDir, path), executor));
-                }
-            } else {
-                LOGGER.warn("No plugin has been found in {}", registryDir);
-            }
-
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
-
-            init = true;
-        } catch (IOException ioe) {
-            LOGGER.error("An unexpected error occurs", ioe);
-            throw ioe;
-        }
-    }
-
-    private void printPlugins() {
-        plugins.stream().map(Plugin::type).distinct().forEach(this::printPluginByType);
-    }
-
-    private void printPluginByType(String pluginType) {
-        LOGGER.info("List of available {}: ", pluginType.toLowerCase());
+    private static void printPluginByType(final List<Plugin> plugins, final String pluginType) {
+        log.info("List of available {}: ", pluginType.toLowerCase());
         plugins
             .stream()
             .filter(plugin -> pluginType.equalsIgnoreCase(plugin.type()))
-            .forEach(plugin -> LOGGER.info("\t> {} [{}] has been loaded", plugin.id(), plugin.manifest().version()));
+            .forEach(plugin -> log.info("\t> {} [{}] has been loaded", plugin.id(), plugin.manifest().version()));
     }
 
     /**
      * Load a plugin from a zip archive.
-     *
-     * Plugin archive structure must be as follow:
+     * <p>
+     * Plugin archive structure must be as follows:
+     * <pre>
      *  my-plugin-dir/
      *      my-plugin.jar
      *      lib/
      *          dependency01.jar
      *          dependency02.jar
+     * </pre>
      *
-     * @param registryDir The directory containing plugins
+     * @param registryDir       The directory containing plugins
      * @param pluginArchivePath The directory containing the plugin definition
      */
-    private void loadPlugin(File registryDir, Path pluginArchivePath) {
-        LOGGER.debug("Loading plugin from {}", pluginArchivePath);
+    private PluginImpl loadPlugin(File registryDir, Path pluginArchivePath) {
+        log.debug("Loading plugin archive {}", pluginArchivePath);
+
+        // create an invalid (empty) plugin as RxJava do not support null values.
+        PluginImpl plugin = new PluginImpl(PluginManifestFactory.create(new Properties()));
 
         try {
             // 1_ Extract plugin into a temporary working folder
@@ -211,7 +207,6 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
             }
 
             FileUtils.delete(workDir);
-
             FileUtils.unzip(pluginArchivePath.toString(), workDir);
 
             // 2_ Load plugin from the working folder
@@ -220,22 +215,22 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                 URL[] pluginDependencies = extractPluginDependencies(workDir);
                 URL[] extDependencies = extractPluginExtensionDependencies(manifest, registryDir.toPath());
 
-                if (extDependencies != null) {
-                    URL[] dependencies = Arrays.copyOf(pluginDependencies, pluginDependencies.length + extDependencies.length);
-                    System.arraycopy(extDependencies, 0, dependencies, pluginDependencies.length, extDependencies.length);
-                    pluginDependencies = dependencies;
-                }
+                URL[] dependencies = Arrays.copyOf(pluginDependencies, pluginDependencies.length + extDependencies.length);
+                System.arraycopy(extDependencies, 0, dependencies, pluginDependencies.length, extDependencies.length);
 
-                PluginImpl plugin = new PluginImpl(manifest);
+                plugin = new PluginImpl(manifest);
+                plugin.setArchiveTimestamp(getFileTimestamp(pluginArchivePath));
                 plugin.setPath(workDir);
-                plugin.setDependencies(pluginDependencies);
-
-                eventManager.publishEvent(PluginEvent.DEPLOYED, plugin);
-                plugins.add(plugin);
+                plugin.setDependencies(dependencies);
             }
         } catch (IOException ioe) {
-            LOGGER.error("An unexpected error occurs while loading plugin archive {}", pluginArchivePath, ioe);
+            log.error("An unexpected error occurs while loading plugin archive {}", pluginArchivePath, ioe);
         }
+        return plugin;
+    }
+
+    static long getFileTimestamp(Path pluginArchivePath) throws IOException {
+        return Files.getLastModifiedTime(pluginArchivePath).toInstant().toEpochMilli();
     }
 
     /**
@@ -243,7 +238,8 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
      * First, check in {@link PluginRegistryImpl#PLUGIN_TYPE_PROPERTY_ALIASES} plugin type has an alias for properties.
      * Alias matches the implementation of {@link AbstractPluginHandler#type()}: plugin.type will be "service" but pluginHandler.type will be "services".
      * If property is not contained based on alias, do a regular search of the property.
-     * @param pluginManifest
+     *
+     * @param pluginManifest the plugin manifest object
      * @return true if plugin is enabled
      */
     private boolean isEnabled(PluginManifest pluginManifest) {
@@ -263,7 +259,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
                     true
                 );
         }
-        LOGGER.debug("Plugin {} is loaded in registry: {}", pluginManifest.id(), enabled);
+        log.debug("Plugin {} is loaded in registry: {}", pluginManifest.id(), enabled);
         return enabled;
     }
 
@@ -271,76 +267,64 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
      * Extract plugin dependencies by reading all jars from plugin directory root path.
      *
      * @param pluginDirPath Plugin directory root path
-     * @return Plugin dependency URLs
+     * @return Plugin ext dependency URLs or empty array (if an error occurres)
      */
     private URL[] extractPluginDependencies(Path pluginDirPath) {
         try {
             GlobMatchingFileVisitor visitor = new GlobMatchingFileVisitor(JAR_GLOB);
             Files.walkFileTree(pluginDirPath, visitor);
             List<Path> pluginDependencies = visitor.getMatchedPaths();
-            return listToArray(pluginDependencies);
+            return pathsToURLArray(pluginDependencies);
         } catch (IOException ioe) {
-            LOGGER.error("Unexpected error while looking for plugin dependencies", ioe);
-            return null;
+            log.error("Unexpected error while looking for plugin dependencies", ioe);
+            return new URL[0];
         }
     }
 
     /**
      * Extract plugin dependency from ext directory to extend easily plugin classloader
-     * @param manifest Plugin manifest
+     *
+     * @param manifest     Plugin manifest
      * @param registryPath Path to the plugin registry
-     * @return
+     * @return Plugin ext dependency URLs or empty array (if an error occurres)
      */
     private URL[] extractPluginExtensionDependencies(PluginManifest manifest, Path registryPath) {
-        try {
-            GlobMatchingFileVisitor visitor = new GlobMatchingFileVisitor(JAR_GLOB);
-            Path extPath = Paths.get(registryPath.toString(), "ext", manifest.id());
-            if (extPath.toFile().exists()) {
-                Files.walkFileTree(extPath, visitor);
-                List<Path> pluginDependencies = visitor.getMatchedPaths();
-                return listToArray(pluginDependencies);
-            } else {
-                return null;
-            }
-        } catch (IOException ioe) {
-            LOGGER.error("Unexpected error while looking for plugin dependencies", ioe);
-            return null;
+        Path extPath = Paths.get(registryPath.toString(), "ext", manifest.id());
+        if (extPath.toFile().exists()) {
+            return extractPluginDependencies(extPath);
+        } else {
+            return new URL[0];
         }
     }
 
-    /**
-     *
-     * @param pluginPath
-     * @return
-     */
     private PluginManifest readPluginManifest(Path pluginPath) {
-        try (DirectoryStream stream = FileUtils.newDirectoryStream(pluginPath, JAR_GLOB)) {
-            Iterator iterator = stream.iterator();
+        try (DirectoryStream<Path> stream = FileUtils.newDirectoryStream(pluginPath, JAR_GLOB)) {
+            Iterator<Path> iterator = stream.iterator();
             if (!iterator.hasNext()) {
-                LOGGER.debug("Unable to find a jar in the root directory: {}", pluginPath);
+                log.debug("Unable to find a jar in the root directory: {}", pluginPath);
                 return null;
             }
 
-            Path pluginJarPath = (Path) iterator.next();
-            LOGGER.debug("Found a jar in the root directory, looking for a plugin manifest in {}", pluginJarPath);
+            Path pluginJarPath = iterator.next();
+            log.debug("Found a jar in the root directory, looking for a plugin manifest in {}", pluginJarPath);
 
             Properties pluginManifestProperties = loadPluginManifest(pluginJarPath.toString());
-            if (pluginManifestProperties == null) {
-                LOGGER.error("No plugin.properties found from {}", pluginJarPath);
+            if (pluginManifestProperties.isEmpty()) {
+                log.error("No plugin.properties found from {}", pluginJarPath);
                 return null;
             }
 
-            LOGGER.debug("A plugin manifest has been loaded from: {}", pluginJarPath);
+            log.debug("A plugin manifest has been loaded from: {}", pluginJarPath);
 
             PluginManifestValidator validator = new PropertiesBasedPluginManifestValidator(pluginManifestProperties);
             if (!validator.validate()) {
-                LOGGER.error("Plugin manifest not valid, skipping plugin registration.");
+                log.error("Plugin manifest not valid, skipping plugin registration.");
                 return null;
             }
 
             return PluginManifestFactory.create(pluginManifestProperties);
         } catch (IOException ioe) {
-            LOGGER.error("Unexpected error while trying to load plugin manifest", ioe);
+            log.error("Unexpected error while trying to load plugin manifest", ioe);
             throw new IllegalStateException("Unexpected error while trying to load plugin manifest", ioe);
         }
     }
@@ -356,44 +340,31 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
 
             if (pluginManifestPath != null) {
                 Properties properties = new Properties();
-                properties.load(Files.newInputStream(pluginManifestPath));
-
+                try (InputStream is = Files.newInputStream(pluginManifestPath)) {
+                    properties.load(is);
+                }
                 return properties;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("{}", e.getMessage(), e);
         }
 
-        return null;
+        return new Properties();
     }
 
-    private URL[] listToArray(List<Path> paths) {
+    private URL[] pathsToURLArray(List<Path> paths) {
         URL[] urls = new URL[paths.size()];
         int idx = 0;
 
         for (Path path : paths) {
             try {
                 urls[idx++] = path.toUri().toURL();
-            } catch (IOException ioe) {}
+            } catch (IOException ioe) {
+                // path are coming from FS so they should be OK
+            }
         }
 
         return urls;
-    }
-
-    private List<File> getPluginsArchive(String directory) {
-        DirectoryStream.Filter<Path> filter = file -> (Files.isDirectory(file));
-
-        List<File> files = new ArrayList<>();
-        Path dir = FileSystems.getDefault().getPath(directory);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filter)) {
-            for (Path path : stream) {
-                files.add(path.toFile());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return files;
     }
 
     @Override
@@ -406,11 +377,7 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         return plugins.stream().filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type())).collect(Collectors.toSet());
     }
 
-    public void setEventManager(EventManager eventManager) {
-        this.eventManager = eventManager;
-    }
-
-    class PluginManifestVisitor extends SimpleFileVisitor<Path> {
+    static class PluginManifestVisitor extends SimpleFileVisitor<Path> {
 
         private Path pluginManifest = null;
 
@@ -427,18 +394,5 @@ public class PluginRegistryImpl extends AbstractService implements PluginRegistr
         public Path getPluginManifest() {
             return pluginManifest;
         }
-    }
-
-    public void setExecutor(ExecutorService executor) {
-        this.executor = executor;
-    }
-
-    public void setConfiguration(PluginRegistryConfiguration configuration) {
-        this.configuration = configuration;
-    }
-
-    @VisibleForTesting
-    void setEnvironment(Environment environment) {
-        this.environment = environment;
     }
 }

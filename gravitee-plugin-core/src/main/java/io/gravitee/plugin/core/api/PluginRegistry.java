@@ -22,7 +22,7 @@ import java.util.Collection;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PluginRegistry extends Service {
+public interface PluginRegistry extends Service<PluginRegistry> {
     Collection<Plugin> plugins();
 
     Collection<Plugin> plugins(String type);
