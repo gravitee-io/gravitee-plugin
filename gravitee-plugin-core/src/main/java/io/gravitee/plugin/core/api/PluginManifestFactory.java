@@ -44,6 +44,7 @@ public class PluginManifestFactory {
         final String version = properties.getProperty(PluginManifestProperties.MANIFEST_VERSION_PROPERTY);
         final String type = properties.getProperty(PluginManifestProperties.MANIFEST_TYPE_PROPERTY);
         final String category = properties.getProperty(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
+        final String feature = properties.getProperty(PluginManifestProperties.MANIFEST_FEATURE_PROPERTY);
         final int priority = Integer.parseInt(properties.getProperty(PluginManifestProperties.MANIFEST_PRIORITY_PROPERTY, "1000"));
         final List<PluginDependency> dependencies = Stream
             .of(properties.getProperty(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, "").split(","))
@@ -106,6 +107,11 @@ public class PluginManifestFactory {
             @Override
             public int priority() {
                 return priority;
+            }
+
+            @Override
+            public String feature() {
+                return feature;
             }
 
             @Override

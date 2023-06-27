@@ -19,4 +19,6 @@ package io.gravitee.plugin.api;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PluginDeploymentContext {}
+public interface PluginDeploymentContext {
+    boolean isPluginDeployable(String featureName);
+}
