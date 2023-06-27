@@ -1,3 +1,10 @@
+# [2.0.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.1...2.0.0-alpha.2) (2023-06-27)
+
+
+### Features
+
+* allow to deploy repositories based on license ([bd39e0f](https://github.com/gravitee-io/gravitee-plugin/commit/bd39e0fea336d5f7470bb488d391d45108b57d70))
+
 # [2.0.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.4...2.0.0-alpha.1) (2023-06-15)
 
 
