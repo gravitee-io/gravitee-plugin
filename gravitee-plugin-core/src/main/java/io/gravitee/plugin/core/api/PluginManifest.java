@@ -38,6 +38,8 @@ public interface PluginManifest {
 
     String type();
 
+    String feature();
+
     default int priority() {
         return 1000;
     }

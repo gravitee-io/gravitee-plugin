@@ -190,6 +190,11 @@ public class AbstractConfigurablePluginManagerTest {
                 }
 
                 @Override
+                public String feature() {
+                    return null;
+                }
+
+                @Override
                 public List<PluginDependency> dependencies() {
                     return null;
                 }
