@@ -63,6 +63,7 @@
         <module>gravitee-plugin-identityprovider</module>
         <module>gravitee-plugin-cockpit</module>
         <module>gravitee-plugin-connector</module>
+        <module>gravitee-plugin-annotation-processors</module>
     </modules>
 
     <dependencyManagement>
@@ -134,6 +135,11 @@
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
                 <artifactId>gravitee-plugin-identityprovider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-annotation-processors</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
