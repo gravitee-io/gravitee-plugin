@@ -1,0 +1,12 @@
+            //Field {{fieldName}}
+            {{#toEval}}
+            toEval.add(
+            {{/toEval}}
+            {{^toEval}}
+                {{evaluatedConfigurationName}}.{{fieldSetter}}(
+            {{/toEval}}
+                eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), {{#fieldClass}}{{fieldClass}}.class,{{/fieldClass}} currentAttributePrefix, ctx)
+            {{#toEval}}
+                .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
+            {{/toEval}}
+            );

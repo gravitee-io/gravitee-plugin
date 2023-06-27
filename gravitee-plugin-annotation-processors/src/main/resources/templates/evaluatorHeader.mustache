@@ -1,0 +1,192 @@
+/**
+* Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*         http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+package {{packageName}};
+
+import io.gravitee.gateway.reactive.api.ExecutionFailure;
+import io.gravitee.gateway.reactive.api.context.ExecutionContext;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.hibernate.validator.HibernateValidator;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class {{evaluatorSimpleClassName}} {
+
+    private static final String FAILURE_CONFIGURATION_INVALID = "FAILURE_CONFIGURATION_INVALID";
+
+    private final Logger logger = LoggerFactory.getLogger({{evaluatorSimpleClassName}}.class);
+
+    private final {{simpleClassName}} configuration;
+
+    private static final Validator validator;
+
+    private final String attributePrefix = "{{attributePrefix}}";
+
+    private final String internalId;
+
+    static {
+        ValidatorFactory factory = Validation.byProvider(HibernateValidator.class).configure()
+            .messageInterpolator(new ParameterMessageInterpolator()).buildValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    public {{evaluatorSimpleClassName}} (
+        {{simpleClassName}} configuration)
+    {
+        this.configuration = configuration;
+        this.internalId = UUID.randomUUID().toString();
+    }
+
+    // Utility methods
+    private String buildAttributeName(String attributePrefix, String name) {
+        return attributePrefix.concat(".").concat(name);
+    }
+
+    private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, ExecutionContext ctx) {
+        //First check attributes
+        String attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            value = attribute;
+        }
+
+        //Then check EL
+        return ctx.getTemplateEngine().eval(value, String.class);
+    }
+
+    private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, ExecutionContext ctx) {
+        String attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            return T.valueOf(enumClass, attribute);
+        }
+        return value;
+    }
+
+    private Integer evalIntegerProperty(String name, int value, String attributePrefix, ExecutionContext ctx) {
+        Integer attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            return attribute;
+        }
+        return value;
+    }
+
+    private Long evalLongProperty(String name, long value, String attributePrefix, ExecutionContext ctx) {
+        Long attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            return attribute;
+        }
+        return value;
+    }
+
+    private boolean evalBooleanProperty(String name, boolean value, String attributePrefix, ExecutionContext ctx) {
+        Object attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            return (boolean) attribute;
+        }
+        return value;
+    }
+
+    private <T> Set<T> evalSetProperty(String name, Set<T> value, String attributePrefix, ExecutionContext ctx) {
+        //Try to get a Set and if it fails try to get a String and split it
+        try {
+            Set<T> attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+            if (attribute != null) {
+                return attribute;
+            }
+        } catch (ClassCastException cce) {
+            List<T> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
+            if(attribute != null) {
+                return Set.copyOf(attribute);
+            }
+        }
+
+        return value;
+    }
+
+    private <T> List<T> evalListProperty(String name, List<T> value, String attributePrefix, ExecutionContext ctx) {
+        List<T> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            return attribute;
+        }
+
+        return value;
+    }
+
+    private <T> void validateConfiguration(T configuration) {
+        Set<ConstraintViolation<T>> constraintViolations = validator.validate(configuration);
+
+        if (!constraintViolations.isEmpty()) {
+            StringBuilder exceptionMessage = new StringBuilder(constraintViolations.size() + " constraint violations found : ");
+            constraintViolations.forEach(violation ->
+                exceptionMessage
+                    .append("[attribute[")
+                    .append(violation.getPropertyPath())
+                    .append("] reason[")
+                    .append(violation.getMessage())
+                    .append("]]")
+            );
+
+            //LOG
+            logger.error(exceptionMessage.toString());
+
+            //Throw exception with info
+            throw new IllegalStateException(exceptionMessage.toString());
+        }
+    }
+
+    /**
+    * Blocking eval method (see {@link #eval(ExecutionContext)} Eval})
+    * <b>Caution when using this method if the evaluation involves EL expressions that trigger blocking fetches</b>
+    * @param ctx the current context
+    * @return configuration with all dynamic configuration parameters updated
+    */
+    public {{simpleClassName}} evalNow(ExecutionContext ctx) {
+        return eval(ctx).blockingGet();
+    }
+
+    /**
+    * Evaluates the configuration using the context to update parameters using attributes or EL
+    * and stores it as an internal attributes to avoid multiple evaluation
+    * @param ctx the current context
+    * @return configuration with all dynamic configuration parameters updated
+    */
+    public Single<{{simpleClassName}}> eval(ExecutionContext ctx) {
+
+        //First check if the configuration has not been already evaluated
+        {{simpleClassName}} evaluatedConf = ctx.getInternalAttribute("{{evaluatedConfigurationName}}-"+this.internalId);
+        if(evaluatedConf != null) {
+            return Single.just(evaluatedConf);
+        }
+
+        {{simpleClassName}} evaluatedConfiguration = new {{simpleClassName}}();
+        String currentAttributePrefix = attributePrefix;
+
+        List<Maybe<String>> toEval = new ArrayList<>();
+
