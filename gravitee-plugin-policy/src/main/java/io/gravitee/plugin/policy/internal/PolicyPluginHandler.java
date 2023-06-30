@@ -19,8 +19,19 @@ import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.policy.PolicyPlugin;
+import io.gravitee.policy.api.annotations.OnRequest;
+import io.gravitee.policy.api.annotations.OnRequestContent;
+import io.gravitee.policy.api.annotations.OnResponse;
+import io.gravitee.policy.api.annotations.OnResponseContent;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URLClassLoader;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.reflections.ReflectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -48,8 +59,40 @@ public class PolicyPluginHandler extends AbstractSimplePluginHandler<PolicyPlugi
         policyPlugin.setConfiguration(new PolicyConfigurationClassFinder().lookupFirst(pluginClass));
         policyPlugin.setContext(new PolicyContextClassFinder().lookupFirst(pluginClass, policyPlugin.policy().getClassLoader()));
 
+        determineProxyPhases(pluginClass, policyPlugin);
+
         return policyPlugin;
     }
+
+    private void determineProxyPhases(Class policyClass, PolicyPluginImpl entity) {
+        if (!entity.manifest().properties().containsKey("proxy") && !entity.manifest().properties().containsKey("message")) {
+            Set<String> proxyPhases = new HashSet<>();
+            if (methodFoundFor(REQUEST_ANNOTATIONS, policyClass)) {
+                proxyPhases.add("REQUEST");
+            }
+            if (methodFoundFor(RESPONSE_ANNOTATIONS, policyClass)) {
+                proxyPhases.add("RESPONSE");
+            }
+            entity.manifest().properties().put("proxy", proxyPhases.stream().collect(Collectors.joining(",")));
+        }
+    }
+
+    private boolean methodFoundFor(Class<? extends Annotation>[] annotations, Class policyClass) {
+        for (Class<? extends Annotation> annot : annotations) {
+            Set<Method> resolved = ReflectionUtils.getAllMethods(
+                policyClass,
+                ReflectionUtils.withModifier(Modifier.PUBLIC),
+                ReflectionUtils.withAnnotation(annot)
+            );
+            if (!resolved.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final Class<? extends Annotation>[] REQUEST_ANNOTATIONS = new Class[] { OnRequest.class, OnRequestContent.class };
+    private static final Class<? extends Annotation>[] RESPONSE_ANNOTATIONS = new Class[] { OnResponse.class, OnResponseContent.class };
 
     @Override
     protected void register(PolicyPlugin policyPlugin) {
