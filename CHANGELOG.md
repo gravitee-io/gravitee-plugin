@@ -1,3 +1,15 @@
+# [2.0.0-alpha.3](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.2...2.0.0-alpha.3) (2023-07-03)
+
+
+### Features
+
+* load plugin based on manifest feature ([44734ef](https://github.com/gravitee-io/gravitee-plugin/commit/44734ef18100152a28f0235d71cc188fd6f52559))
+
+
+### BREAKING CHANGES
+
+* AbstractPluginHandler now relies on the plugin manifest to check the license
+
 # [2.0.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.1...2.0.0-alpha.2) (2023-06-27)
 
 
