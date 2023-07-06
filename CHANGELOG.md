@@ -1,3 +1,10 @@
+# [2.0.0-alpha.4](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.3...2.0.0-alpha.4) (2023-07-06)
+
+
+### Features
+
+* autodetect the execution phase for policies not migrated to V4 engine ([017cfbc](https://github.com/gravitee-io/gravitee-plugin/commit/017cfbcefcce10a2e1eeba8a30289419b9b6aaf1))
+
 # [2.0.0-alpha.3](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.2...2.0.0-alpha.3) (2023-07-03)
 
 
