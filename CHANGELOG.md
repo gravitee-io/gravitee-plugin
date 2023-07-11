@@ -1,3 +1,10 @@
+# [2.0.0-alpha.5](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.4...2.0.0-alpha.5) (2023-07-11)
+
+
+### Features
+
+* allow plugin override based on .zip file date (most recent wins) ([2660421](https://github.com/gravitee-io/gravitee-plugin/commit/266042190dc18c3a8d0e651a15c7ed360da3a06f))
+
 # [2.0.0-alpha.4](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.3...2.0.0-alpha.4) (2023-07-06)
 
 
