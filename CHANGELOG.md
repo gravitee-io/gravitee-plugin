@@ -1,3 +1,10 @@
+# [2.0.0-alpha.6](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.5...2.0.0-alpha.6) (2023-07-11)
+
+
+### Bug Fixes
+
+* remove lombok annotation failing for javadoc ([51bdd56](https://github.com/gravitee-io/gravitee-plugin/commit/51bdd562af6daff1207befe7a88ee9a28032ea37))
+
 # [2.0.0-alpha.5](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.4...2.0.0-alpha.5) (2023-07-11)
 
 
