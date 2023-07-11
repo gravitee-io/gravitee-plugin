@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 @Slf4j
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
 public class PluginEventListener extends AbstractService<PluginEventListener> implements EventListener<PluginEvent, Plugin> {
 
     /**

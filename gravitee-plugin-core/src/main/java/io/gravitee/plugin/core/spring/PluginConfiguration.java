@@ -20,7 +20,6 @@ import io.gravitee.plugin.core.api.*;
 import io.gravitee.plugin.core.internal.*;
 import java.util.Collection;
 import java.util.concurrent.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,7 +61,6 @@ public class PluginConfiguration {
     }
 
     @Bean
-    @Autowired
     public PluginEventListener pluginEventListener(Collection<PluginHandler> pluginHandlers, EventManager eventManager) {
         return new PluginEventListener(pluginHandlers, eventManager);
     }
