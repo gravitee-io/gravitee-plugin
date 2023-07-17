@@ -1,3 +1,15 @@
+# [2.0.0-alpha.7](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.6...2.0.0-alpha.7) (2023-07-17)
+
+
+### chore
+
+* **deps:** update gravitee-parent ([104da9a](https://github.com/gravitee-io/gravitee-plugin/commit/104da9a3c702abf1ad15c4385ad1b1ab6ae5dd00))
+
+
+### BREAKING CHANGES
+
+* **deps:** require Java17
+
 # [2.0.0-alpha.6](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.5...2.0.0-alpha.6) (2023-07-11)
 
 
