@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,20 +15,23 @@
  */
 package io.gravitee.plugin.core.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Yann TAVERNIER (yann.tavernier at graviteesource.com)
@@ -69,21 +72,21 @@ class AbstractConfigurablePluginManagerTest {
     void should_get_first_schema_file() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getSchema(FAKE_PLUGIN);
-        assertEquals("{\n  \"schema\": \"configuration\"\n}", schema);
+        assertEquals("{\n    \"schema\": \"configuration\"\n}\n", schema);
     }
 
     @Test
     void should_get_first_schema_file_in_sub_folder1() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getSchema(FAKE_PLUGIN, "subfolder_1");
-        assertEquals("{\n  \"schema\": \"subfolder_1\"\n}", schema);
+        assertEquals("{\n    \"schema\": \"subfolder_1\"\n}\n", schema);
     }
 
     @Test
     void should_get_first_schema_file_in_sub_folder2() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getSchema(FAKE_PLUGIN, "subfolder_1/subfolder_2");
-        assertEquals("{\n  \"schema\": \"subfolder_2\"\n}", schema);
+        assertEquals("{\n    \"schema\": \"subfolder_2\"\n}\n", schema);
     }
 
     @Test
