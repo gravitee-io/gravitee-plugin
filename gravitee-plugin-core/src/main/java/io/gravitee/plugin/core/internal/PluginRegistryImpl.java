@@ -17,7 +17,13 @@ package io.gravitee.plugin.core.internal;
 
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginEvent;
+import io.gravitee.plugin.core.api.PluginManifest;
+import io.gravitee.plugin.core.api.PluginManifestFactory;
+import io.gravitee.plugin.core.api.PluginManifestValidator;
+import io.gravitee.plugin.core.api.PluginRegistry;
 import io.gravitee.plugin.core.utils.FileUtils;
 import io.gravitee.plugin.core.utils.GlobMatchingFileVisitor;
 import io.reactivex.rxjava3.core.Flowable;
@@ -26,20 +32,27 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -115,26 +128,28 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
         if (workspacesPath != null) {
             pluginsPath = workspacesPath;
         }
-
-        this.plugins.addAll(
-                Flowable
-                    .fromArray(pluginsPath)
-                    .doOnSubscribe(s -> this.init = true)
-                    .flatMap(this::loadPluginsFromPath)
-                    // reserve sort
-                    .sorted((p1, p2) -> Math.negateExact(((Long) p1.getArchiveTimestamp()).compareTo(p2.getArchiveTimestamp())))
-                    // As plugins arrive sorted by reverse file date
-                    // we can exclude duplicates and keep the most recent one
-                    .distinct()
-                    .doOnNext(plugin -> eventManager.publishEvent(PluginEvent.DEPLOYED, plugin))
-                    .cast(Plugin.class)
-                    .toList()
-                    .doOnSuccess(list -> {
-                        printPlugins(list);
-                        eventManager.publishEvent(PluginEvent.ENDED, null);
-                    })
-                    .blockingGet()
-            );
+        synchronized (this) {
+            this.plugins()
+                .addAll(
+                    Flowable
+                        .fromArray(pluginsPath)
+                        .doOnSubscribe(s -> this.init = true)
+                        .flatMap(this::loadPluginsFromPath)
+                        // reserve sort
+                        .sorted((p1, p2) -> Math.negateExact(((Long) p1.getArchiveTimestamp()).compareTo(p2.getArchiveTimestamp())))
+                        // As plugins arrive sorted by reverse file date
+                        // we can exclude duplicates and keep the most recent one
+                        .distinct()
+                        .doOnNext(plugin -> eventManager.publishEvent(PluginEvent.DEPLOYED, plugin))
+                        .cast(Plugin.class)
+                        .toList()
+                        .doOnSuccess(list -> {
+                            printPlugins(list);
+                            eventManager.publishEvent(PluginEvent.ENDED, null);
+                        })
+                        .blockingGet()
+                );
+        }
     }
 
     private Flowable<PluginImpl> loadPluginsFromPath(final String pluginPathAsString) throws IOException {
@@ -368,13 +383,13 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
     }
 
     @Override
-    public Collection<Plugin> plugins() {
+    public synchronized Collection<Plugin> plugins() {
         return plugins;
     }
 
     @Override
     public Collection<Plugin> plugins(String type) {
-        return plugins.stream().filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type())).collect(Collectors.toSet());
+        return this.plugins().stream().filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type())).collect(Collectors.toSet());
     }
 
     static class PluginManifestVisitor extends SimpleFileVisitor<Path> {
