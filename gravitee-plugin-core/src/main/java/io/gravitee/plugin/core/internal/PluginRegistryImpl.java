@@ -129,12 +129,12 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
                     .doOnNext(plugin -> eventManager.publishEvent(PluginEvent.DEPLOYED, plugin))
                     .cast(Plugin.class)
                     .toList()
-                    .doOnSuccess(list -> {
-                        printPlugins(list);
-                        eventManager.publishEvent(PluginEvent.ENDED, null);
-                    })
+                    .doOnSuccess(PluginRegistryImpl::printPlugins)
                     .blockingGet()
             );
+
+        // Publish the ENDED event when the plugins list is ready
+        eventManager.publishEvent(PluginEvent.ENDED, null);
     }
 
     private Flowable<PluginImpl> loadPluginsFromPath(final String pluginPathAsString) throws IOException {
