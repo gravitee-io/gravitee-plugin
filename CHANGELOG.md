@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0...2.0.1) (2023-07-19)
+
+
+### Bug Fixes
+
+* PluginEvent ended sent before plugins list in PluginRegistryImpl ready ([e1f6297](https://github.com/gravitee-io/gravitee-plugin/commit/e1f62975fd98cc9db1441e0fa16ff42ad577818d))
+
 # [2.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.26.1...2.0.0) (2023-07-17)
 
 
