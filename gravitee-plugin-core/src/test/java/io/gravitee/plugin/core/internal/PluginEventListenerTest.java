@@ -16,27 +16,33 @@
 package io.gravitee.plugin.core.internal;
 
 import static io.gravitee.plugin.core.api.PluginEvent.DEPLOYED;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
-import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginEvent;
+import io.gravitee.plugin.core.api.PluginHandler;
+import io.gravitee.plugin.core.api.PluginManifestFactory;
 import java.util.*;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+
+@ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class PluginEventListenerTest {
 
@@ -45,6 +51,9 @@ class PluginEventListenerTest {
     EventManager eventManager;
 
     private List<Plugin> handledPlugins;
+
+    @Mock
+    Environment environment;
 
     @BeforeEach
     void setup() throws Exception {
@@ -64,7 +73,7 @@ class PluginEventListenerTest {
         );
         handledPlugins = new ArrayList<>();
         eventManager = new EventManagerImpl();
-        this.eventListener = new PluginEventListener(pluginHandlers, eventManager);
+        this.eventListener = new PluginEventListener(pluginHandlers, eventManager, environment);
         this.eventListener.doStart();
     }
 
@@ -97,6 +106,49 @@ class PluginEventListenerTest {
 
         // handled from leaf to trunk
         assertThat(handledPlugins).containsExactly(plugin3, plugin2, plugin1);
+    }
+
+    @Test
+    void should_load_secret_provider_first() {
+        final Plugin plugin_1 = createPlugin("plugin1", "secret-provider", null);
+        final Plugin plugin_2 = createPlugin("plugin2", "cluster", null);
+        final Plugin plugin_3 = createPlugin("plugin3", "foo", null);
+
+        // publish in random order
+        final ArrayList<Plugin> plugins = new ArrayList<>(List.of(plugin_1, plugin_2, plugin_3));
+        Collections.shuffle(plugins);
+        for (Plugin plugin : plugins) {
+            eventManager.publishEvent(DEPLOYED, plugin);
+        }
+
+        assertThat(eventListener.getPlugins()).containsValues(plugin_1, plugin_2, plugin_3);
+
+        eventManager.publishEvent(PluginEvent.ENDED, null);
+
+        assertThat(handledPlugins).containsExactly(plugin_1, plugin_2, plugin_3);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "plugin1,plugin2,plugin3", "plugin2,plugin1,plugin3", "plugin3,plugin2,plugin1" })
+    void should_load_specific_secret_provider_first(String firstPlugin, String secondPlugin, String thirdPlugin) {
+        final Plugin plugin_1 = createPlugin(firstPlugin, "secret-provider", null);
+        final Plugin plugin_2 = createPlugin(secondPlugin, "secret-provider", null);
+        final Plugin plugin_3 = createPlugin(thirdPlugin, "secret-provider", null);
+        when(environment.getProperty("secrets.loadFirst")).thenReturn("plugin1");
+
+        // publish in random order
+        final ArrayList<Plugin> plugins = new ArrayList<>(List.of(plugin_1, plugin_2, plugin_3));
+        Collections.shuffle(plugins);
+        for (Plugin plugin : plugins) {
+            eventManager.publishEvent(DEPLOYED, plugin);
+        }
+
+        assertThat(eventListener.getPlugins()).containsValues(plugin_1, plugin_2, plugin_3);
+
+        eventManager.publishEvent(PluginEvent.ENDED, null);
+
+        assertThat(handledPlugins).hasSize(3);
+        assertThat(handledPlugins.get(0).id()).isEqualTo("plugin1");
     }
 
     private static Plugin createPlugin(String id, String type, String dependency) {

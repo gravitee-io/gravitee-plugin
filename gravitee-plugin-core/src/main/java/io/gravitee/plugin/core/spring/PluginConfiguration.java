@@ -61,8 +61,12 @@ public class PluginConfiguration {
     }
 
     @Bean
-    public PluginEventListener pluginEventListener(Collection<PluginHandler> pluginHandlers, EventManager eventManager) {
-        return new PluginEventListener(pluginHandlers, eventManager);
+    public PluginEventListener pluginEventListener(
+        Collection<PluginHandler> pluginHandlers,
+        EventManager eventManager,
+        Environment environment
+    ) {
+        return new PluginEventListener(pluginHandlers, eventManager, environment);
     }
 
     @Bean
