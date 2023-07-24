@@ -66,14 +66,22 @@ public class PolicyPluginHandler extends AbstractSimplePluginHandler<PolicyPlugi
 
     private void determineProxyPhases(Class policyClass, PolicyPluginImpl entity) {
         if (!entity.manifest().properties().containsKey("proxy") && !entity.manifest().properties().containsKey("message")) {
-            Set<String> proxyPhases = new HashSet<>();
-            if (methodFoundFor(REQUEST_ANNOTATIONS, policyClass)) {
-                proxyPhases.add("REQUEST");
+            try {
+                Set<String> proxyPhases = new HashSet<>();
+                if (methodFoundFor(REQUEST_ANNOTATIONS, policyClass)) {
+                    proxyPhases.add("REQUEST");
+                }
+                if (methodFoundFor(RESPONSE_ANNOTATIONS, policyClass)) {
+                    proxyPhases.add("RESPONSE");
+                }
+                entity.manifest().properties().put("proxy", proxyPhases.stream().collect(Collectors.joining(",")));
+            } catch (NoClassDefFoundError e) {
+                // If the plugin use object that are only present in the GW classpath,
+                // methodFoundFor will fail with ClassNotFound error
+                // this shouldn't prevent the load of the plugin as the description of
+                // proxy & message attributes in the manifest is only useful for APIM
+                logger.debug("Unable to autodetect the execution phases for the plugin {}.", entity.id(), e);
             }
-            if (methodFoundFor(RESPONSE_ANNOTATIONS, policyClass)) {
-                proxyPhases.add("RESPONSE");
-            }
-            entity.manifest().properties().put("proxy", proxyPhases.stream().collect(Collectors.joining(",")));
         }
     }
 
