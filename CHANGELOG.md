@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.1...2.0.2) (2023-07-28)
+
+
+### Bug Fixes
+
+* avoid throwing exception during plugin loading if the introspect is failing ([f9f6838](https://github.com/gravitee-io/gravitee-plugin/commit/f9f6838d19bf6db357bc4630a05e02fabe053945))
+
 ## [2.0.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0...2.0.1) (2023-07-19)
 
 
