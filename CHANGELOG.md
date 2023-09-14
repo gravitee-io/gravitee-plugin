@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.2...2.0.3) (2023-09-14)
+
+
+### Bug Fixes
+
+* bump gravitee-common to 3.3.3 ([3d51cf9](https://github.com/gravitee-io/gravitee-plugin/commit/3d51cf96f086c2c039183a18dceeebce9e015fea))
+
 ## [2.0.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.1...2.0.2) (2023-07-28)
 
 
