@@ -129,8 +129,8 @@ public class PluginRegistryTest {
 
     @Test
     public void startWithValidWorkspace_withOneDependencyWithAliasDisabled() throws Exception {
-        when(environment.containsProperty("policies.my-policy-1.enabled")).thenReturn(true);
-        when(environment.getProperty("policies.my-policy-1.enabled", Boolean.class, true)).thenReturn(false);
+        lenient().when(environment.containsProperty("policies.my-policy-1.enabled")).thenReturn(true);
+        lenient().when(environment.getProperty("policies.my-policy-1.enabled", Boolean.class, true)).thenReturn(false);
 
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
         pluginRegistry.start();

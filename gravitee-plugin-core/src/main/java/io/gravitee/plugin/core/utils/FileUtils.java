@@ -17,6 +17,7 @@ package io.gravitee.plugin.core.utils;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
@@ -46,8 +47,12 @@ public class FileUtils {
      */
     public static FileSystem createZipFileSystem(String zipFilename, boolean create) throws IOException {
         // convert the filename to a URI
-        final Path path = Paths.get(zipFilename);
-        final URI uri = URI.create("jar:file:" + path.toUri().getPath());
+        final URI uri;
+        try {
+            uri = new URI("jar", "file:///" + Paths.get(zipFilename), null);
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
 
         final Map<String, String> env = new HashMap<>();
         if (create) {
