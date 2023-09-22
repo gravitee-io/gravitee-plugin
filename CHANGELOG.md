@@ -1,3 +1,15 @@
+# [2.1.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.2...2.1.0-alpha.1) (2023-09-22)
+
+
+### Bug Fixes
+
+* bump gravitee-common to 3.3.3 ([9b77f12](https://github.com/gravitee-io/gravitee-plugin/commit/9b77f12a0a7f63c74978fb051fe270eec0b13431))
+
+
+### Features
+
+* order plugin so that secret-provider is always loaded first ([31d5edd](https://github.com/gravitee-io/gravitee-plugin/commit/31d5edd416918903d59574450a88a36bc663c3b8))
+
 ## [2.0.3](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.2...2.0.3) (2023-09-14)
 
 
