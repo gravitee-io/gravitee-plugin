@@ -1,3 +1,10 @@
+# [2.1.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.0-alpha.1...2.1.0-alpha.2) (2023-10-16)
+
+
+### Features
+
+* add new annotation and annotation processor to generate an evaluator for configuration bean ([8d0b168](https://github.com/gravitee-io/gravitee-plugin/commit/8d0b168b654a5a7c794cd3818c2364021788647b))
+
 # [2.1.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.2...2.1.0-alpha.1) (2023-09-22)
 
 
