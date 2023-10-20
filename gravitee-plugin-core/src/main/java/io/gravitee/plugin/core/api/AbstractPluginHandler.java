@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,8 +15,9 @@
  */
 package io.gravitee.plugin.core.api;
 
+import io.gravitee.plugin.api.PluginDeploymentContext;
 import io.gravitee.plugin.api.PluginDeploymentContextFactory;
-import io.gravitee.plugin.api.PluginDeploymentLifecycle;
+import io.gravitee.plugin.core.internal.PluginImpl;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import org.slf4j.Logger;
@@ -50,22 +51,16 @@ public abstract class AbstractPluginHandler implements PluginHandler {
 
                 final Class<?> pluginClass = classloader.loadClass(plugin.clazz());
 
-                io.gravitee.plugin.api.annotations.Plugin ann = pluginClass.getAnnotation(io.gravitee.plugin.api.annotations.Plugin.class);
+                PluginDeploymentContext pluginDeploymentContext = pluginDeploymentContextFactory.create();
 
-                if (ann != null) {
-                    Class<? extends PluginDeploymentLifecycle> deploymentClass = ann.deployment();
+                PluginManifest pluginManifest = plugin.manifest();
 
-                    // Load deployment lifecycle implementation from plugin classloader
-                    PluginDeploymentLifecycle pluginDeploymentLifecycle = deploymentClass.getDeclaredConstructor().newInstance();
-
-                    if (pluginDeploymentLifecycle.isDeployable(pluginDeploymentContextFactory.create())) {
-                        handle(plugin, pluginClass);
-                    } else {
-                        logger.warn("Plugin {} can't be deployed", plugin.id());
-                    }
-                } else {
-                    // Not all plugins have io.gravitee.plugin.api.annotations.Plugin annotation
+                if (pluginDeploymentContext.isPluginDeployable(pluginManifest.feature())) {
                     handle(plugin, pluginClass);
+                } else {
+                    ((PluginImpl) plugin).setDeployed(false);
+                    handle(plugin, pluginClass);
+                    logger.warn("Plugin {} detected but not activated", plugin.id());
                 }
             } catch (Throwable t) {
                 logger.error("An error occurs while installing plugin: {} [{}]", plugin.id(), plugin.clazz(), t);

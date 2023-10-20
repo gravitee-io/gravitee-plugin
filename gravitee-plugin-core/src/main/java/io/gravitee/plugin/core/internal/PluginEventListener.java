@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,55 +22,48 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginEvent;
 import io.gravitee.plugin.core.api.PluginHandler;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PluginEventListener extends AbstractService implements EventListener<PluginEvent, Plugin> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PluginEventListener.class);
+@Slf4j
+@RequiredArgsConstructor
+public class PluginEventListener extends AbstractService<PluginEventListener> implements EventListener<PluginEvent, Plugin> {
 
     /**
      * Allows to define priority between the different plugin types.
      */
     private static final List<String> pluginPriority = Arrays.asList("cluster", "cache", "repository", "alert", "cockpit");
 
-    @Value("${plugins.failOnDuplicate:true}")
-    private boolean failOnDuplicate;
+    private final Collection<PluginHandler> pluginHandlers;
 
-    @Autowired
-    private Collection<PluginHandler> pluginHandlers;
+    private final EventManager eventManager;
 
-    @Autowired
-    private EventManager eventManager;
-
+    @Getter(AccessLevel.PACKAGE)
     private final Map<PluginKey, Plugin> plugins = new ConcurrentHashMap<>();
 
     @Override
     public void onEvent(Event<PluginEvent, Plugin> event) {
         switch (event.type()) {
             case DEPLOYED:
-                LOGGER.debug("Receive an event for plugin {} [{}]", event.content().id(), event.type());
+                log.debug("Receive an event for plugin {} [{}]", event.content().id(), event.type());
                 addPlugin(event.content());
                 break;
             case ENDED:
-                LOGGER.info("All plugins have been loaded. Installing...");
+                log.info("All plugins have been loaded. Installing...");
                 deployPlugins();
+                break;
+            case UNDEPLOYED:
+                // no op
                 break;
         }
     }
@@ -80,23 +73,7 @@ public class PluginEventListener extends AbstractService implements EventListene
 
         if (plugins.containsKey(pluginKey)) {
             Plugin installed = plugins.get(pluginKey);
-            if (failOnDuplicate) {
-                throw new IllegalStateException(
-                    String.format(
-                        "Plugin '%s' [%s] is already loaded [%s]",
-                        plugin.id(),
-                        plugin.manifest().version(),
-                        installed.manifest().version()
-                    )
-                );
-            } else {
-                LOGGER.warn(
-                    "Plugin '{}' [{}] is already loaded [{}]",
-                    plugin.id(),
-                    plugin.manifest().version(),
-                    installed.manifest().version()
-                );
-            }
+            log.warn("Plugin '{}' [{}] is already loaded [{}]", plugin.id(), plugin.manifest().version(), installed.manifest().version());
         } else {
             plugins.put(pluginKey, plugin);
         }
@@ -113,15 +90,15 @@ public class PluginEventListener extends AbstractService implements EventListene
 
         plugins
             .values()
-            .forEach(p -> {
+            .forEach(p ->
                 plugins
                     .values()
                     .forEach(other -> {
                         if (p.manifest().dependencies().stream().anyMatch(d -> d.matches(other))) {
                             resolvedDependencies.computeIfAbsent(p.type() + p.id(), s -> new ArrayList<>()).add(other);
                         }
-                    });
-            });
+                    })
+            );
 
         List<Plugin> deployedPlugins = new ArrayList<>(this.plugins.size());
 
@@ -138,12 +115,12 @@ public class PluginEventListener extends AbstractService implements EventListene
             .getOrDefault(plugin.type() + plugin.id(), Collections.emptyList())
             .forEach(dependencyPlugin -> deployPlugin(dependencyPlugin, resolvedDependencies, deployedPlugins));
 
-        LOGGER.debug("Installing {} plugins...", plugin.id());
+        log.debug("Installing {} plugins...", plugin.id());
         pluginHandlers
             .stream()
             .filter(pluginHandler -> pluginHandler.canHandle(plugin))
             .forEach(pluginHandler -> {
-                LOGGER.debug("Plugin {} has been managed by {}", plugin.id(), pluginHandler.getClass());
+                log.debug("Plugin {} has been managed by {}", plugin.id(), pluginHandler.getClass());
                 pluginHandler.handle(plugin);
             });
 
@@ -155,10 +132,6 @@ public class PluginEventListener extends AbstractService implements EventListene
         super.doStart();
 
         eventManager.subscribeForEvents(this, PluginEvent.class);
-    }
-
-    public void setFailOnDuplicate(boolean failOnDuplicate) {
-        this.failOnDuplicate = failOnDuplicate;
     }
 
     private static class PluginKey {

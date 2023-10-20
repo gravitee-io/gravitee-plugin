@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,17 +15,15 @@
  */
 package io.gravitee.plugin.core.spring;
 
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginConfigurationResolver;
-import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.api.PluginRegistry;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.plugin.core.api.*;
 import io.gravitee.plugin.core.internal.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.Collection;
+import java.util.concurrent.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -42,13 +40,19 @@ public class PluginConfiguration {
     }
 
     @Bean
-    public PluginRegistry pluginRegistry() {
-        return new PluginRegistryImpl();
+    public PluginRegistry pluginRegistry(
+        PluginRegistryConfiguration pluginRegistryConfiguration,
+        Environment environement,
+        @Qualifier("corePluginExecutor") ExecutorService executorService,
+        EventManager eventManager
+    ) {
+        return new PluginRegistryImpl(pluginRegistryConfiguration, environement, executorService, eventManager);
     }
 
     @Bean(name = "pluginClassLoaderFactory")
+    @SuppressWarnings("rawtypes")
     public PluginClassLoaderFactory classLoaderFactory() {
-        return new CachedPluginClassLoaderFactory();
+        return new CachedPluginClassLoaderFactory<>();
     }
 
     @Bean
@@ -57,8 +61,8 @@ public class PluginConfiguration {
     }
 
     @Bean
-    public PluginEventListener pluginEventListener() {
-        return new PluginEventListener();
+    public PluginEventListener pluginEventListener(Collection<PluginHandler> pluginHandlers, EventManager eventManager) {
+        return new PluginEventListener(pluginHandlers, eventManager);
     }
 
     @Bean

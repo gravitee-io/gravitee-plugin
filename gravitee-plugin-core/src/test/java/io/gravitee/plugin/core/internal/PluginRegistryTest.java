@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,74 +15,88 @@
  */
 package io.gravitee.plugin.core.internal;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 import io.gravitee.common.event.EventManager;
 import io.gravitee.plugin.core.api.Plugin;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
  */
-@RunWith(MockitoJUnitRunner.class)
-public class PluginRegistryTest {
+@ExtendWith(MockitoExtension.class)
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+class PluginRegistryTest {
 
-    private static ExecutorService executor;
+    static ExecutorService executor;
 
     @Mock
-    private Environment environment;
+    Environment environment;
 
-    @BeforeClass
-    public static void beforeClass() {
+    @BeforeAll
+    static void beforeClass() {
         executor = Executors.newFixedThreadPool(2);
     }
 
-    @AfterClass
-    public static void afterClass() {
+    @AfterAll
+    static void afterClass() {
         executor.shutdown();
     }
 
-    @Before
-    public void setUp() {
-        when(environment.getProperty(anyString(), any(), any())).thenReturn(true);
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void startWithInvalidWorkspace() throws Exception {
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl();
-        pluginRegistry.start();
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void startWithInexistantWorkspace() throws Exception {
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl("/io/gravitee/plugin/invalid/");
-        pluginRegistry.start();
+    @BeforeEach
+    void setUp() {
+        lenient().when(environment.getProperty(anyString(), any(), any())).thenReturn(true);
     }
 
     @Test
-    public void startWithEmptyWorkspace() throws Exception {
+    void start_with_invalid_workspace() {
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(
+            mock(PluginRegistryConfiguration.class),
+            environment,
+            executor,
+            mock(EventManager.class)
+        );
+        assertThatCode(pluginRegistry::start).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void start_with_not_existing_workspace() {
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(
+            mock(PluginRegistryConfiguration.class),
+            environment,
+            executor,
+            mock(EventManager.class)
+        );
+        assertThatCode(pluginRegistry::start).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void start_with_empty_workspace() throws Exception {
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/empty-workspace/");
         pluginRegistry.start();
-
-        Assert.assertTrue(pluginRegistry.plugins().isEmpty());
+        assertThat(pluginRegistry.plugins()).isEmpty();
     }
 
     @Test
-    public void startTwiceWorkspace() throws Exception {
+    void start_twice_workspace() throws Exception {
         PluginRegistryImpl pluginRegistry = spy(initPluginRegistry("/io/gravitee/plugin/workspace/"));
         pluginRegistry.start();
         verify(pluginRegistry, atMost(1)).init();
@@ -92,71 +106,126 @@ public class PluginRegistryTest {
     }
 
     @Test
-    public void startWithWorkspace_noJar() throws Exception {
+    void start_with_workspace_no_jar() throws Exception {
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/invalid-workspace-nojar/");
+
         pluginRegistry.start();
 
-        Assert.assertTrue(pluginRegistry.plugins().isEmpty());
+        assertThat(pluginRegistry.plugins()).isEmpty();
     }
 
     @Test
-    public void startWithValidWorkspace_onePolicyDefinition() throws Exception {
+    void start_with_valid_workspace_one_policy_definition() throws Exception {
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/workspace/");
+
         pluginRegistry.start();
 
-        Assert.assertEquals(1, pluginRegistry.plugins().size());
+        assertThat(pluginRegistry.plugins()).hasSize(1);
     }
 
     @Test
-    public void startWithValidWorkspace_checkPluginDescriptor() throws Exception {
+    void start_with_valid_workspace_check_plugin_descriptor() throws Exception {
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/workspace/");
         pluginRegistry.start();
 
-        Assert.assertEquals(1, pluginRegistry.plugins().size());
+        assertThat(pluginRegistry.plugins()).hasSize(1);
 
         Plugin plugin = pluginRegistry.plugins().iterator().next();
-        Assert.assertEquals("my-policy", plugin.id());
-        Assert.assertEquals("my.project.gravitee.policies.MyPolicy", plugin.clazz());
+        assertThat(plugin.id()).isEqualTo("my-policy");
+        assertThat(plugin.clazz()).isEqualTo("my.project.gravitee.policies.MyPolicy");
     }
 
     @Test
-    public void startWithValidWorkspace_withDependencies() throws Exception {
+    void start_with_valid_workspace_with_dependencies() throws Exception {
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
         pluginRegistry.start();
 
-        Assert.assertEquals(4, pluginRegistry.plugins().size());
+        assertThat(pluginRegistry.plugins()).hasSize(4);
     }
 
     @Test
-    public void startWithValidWorkspace_withOneDependencyWithAliasDisabled() throws Exception {
-        lenient().when(environment.containsProperty("policies.my-policy-1.enabled")).thenReturn(true);
-        lenient().when(environment.getProperty("policies.my-policy-1.enabled", Boolean.class, true)).thenReturn(false);
+    void start_with_valid_workspace_with_one_dependency_with_alias_disabled() throws Exception {
+        when(environment.containsProperty("policies.my-policy-1.enabled")).thenReturn(true);
+        when(environment.getProperty("policies.my-policy-1.enabled", Boolean.class, true)).thenReturn(false);
 
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
         pluginRegistry.start();
 
-        Assert.assertEquals(3, pluginRegistry.plugins().size());
-        Assert.assertTrue(pluginRegistry.plugins().stream().noneMatch(p -> p.id().equals("my-policy-1")));
+        assertThat(pluginRegistry.plugins()).hasSize(3);
+        assertThat(pluginRegistry.plugins()).noneMatch(p -> p.id().equals("my-policy-1"));
     }
 
     @Test
-    public void startWithValidWorkspace_withOneDependencyWithoutAliasDisabled() throws Exception {
+    void start_with_valid_workspace_with_one_dependency_without_alias_disabled() throws Exception {
         when(environment.getProperty("custom.custom-plugin.enabled", Boolean.class, true)).thenReturn(false);
 
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
         pluginRegistry.start();
 
-        Assert.assertEquals(3, pluginRegistry.plugins().size());
-        Assert.assertTrue(pluginRegistry.plugins().stream().noneMatch(p -> p.id().equals("custom-plugin")));
+        assertThat(pluginRegistry.plugins()).hasSize(3);
+        assertThat(pluginRegistry.plugins()).noneMatch(p -> p.id().equals("custom-plugin"));
     }
 
-    private PluginRegistryImpl initPluginRegistry(String path) throws UnsupportedEncodingException {
-        URL dir = PluginRegistryTest.class.getResource(path);
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(URLDecoder.decode(dir.getPath(), "UTF-8"));
-        pluginRegistry.setEventManager(mock(EventManager.class));
-        pluginRegistry.setConfiguration(mock(PluginRegistryConfiguration.class));
-        pluginRegistry.setExecutor(executor);
-        pluginRegistry.setEnvironment(environment);
+    @Test
+    void start_with_valid_workspace_with_duplication() throws Exception {
+        String path = "/io/gravitee/plugin/with-duplication/";
+
+        // we are using different version to assert which one is loaded
+        updateModifiedTimestampCustomPlugin2();
+
+        PluginRegistryImpl pluginRegistry = initPluginRegistry(path);
+        pluginRegistry.start();
+
+        assertThat(pluginRegistry.plugins()).hasSize(1);
+        assertThat(pluginRegistry.plugins()).first().extracting(Plugin::id).isEqualTo("custom-plugin");
+        assertThat(pluginRegistry.plugins()).first().extracting(p -> p.manifest().version()).isEqualTo("2.0.0-SNAPSHOT");
+    }
+
+    @Test
+    void start_several_workspaces_with_duplication() throws Exception {
+        String path1 = "/io/gravitee/plugin/with-duplication/";
+        String path2 = "/io/gravitee/plugin/with-dependencies/";
+
+        // need to the empty constructor thus redo all the config
+        PluginRegistryConfiguration configuration = new PluginRegistryConfiguration();
+        configuration.setPluginsPath(new String[] { getActualPath(path1), getActualPath(path2) });
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(configuration, environment, executor, mock(EventManager.class));
+
+        updateModifiedTimestampCustomPlugin2();
+        pluginRegistry.start();
+
+        assertThat(pluginRegistry.plugins()).hasSize(4);
+        assertThat(pluginRegistry.plugins())
+            .extracting(Plugin::id)
+            .containsExactlyInAnyOrder("my-policy-1", "my-policy-2", "my-policy-3", "custom-plugin");
+        assertThat(pluginRegistry.plugins())
+            .filteredOn(p -> p.id().equals("custom-plugin"))
+            .extracting(p -> p.manifest().version())
+            .contains("2.0.0-SNAPSHOT");
+    }
+
+    private PluginRegistryImpl initPluginRegistry(String path) {
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(
+            mock(PluginRegistryConfiguration.class),
+            environment,
+            executor,
+            mock(EventManager.class)
+        );
+        pluginRegistry.setWorkspacesPath(getActualPath(path));
         return pluginRegistry;
+    }
+
+    private static String getActualPath(String path) {
+        URL dir = PluginRegistryTest.class.getResource(path);
+        assertThat(dir).isNotNull();
+        return URLDecoder.decode(dir.getPath(), StandardCharsets.UTF_8);
+    }
+
+    private static void updateModifiedTimestampCustomPlugin2() throws IOException, InterruptedException {
+        String path = "/io/gravitee/plugin/with-duplication/";
+        Path pluginFileOlder = Paths.get(getActualPath(path)).resolve("custom-plugin-1.0.0-SNAPSHOT.zip");
+        Path pluginFile = Paths.get(getActualPath(path)).resolve("custom-plugin-2.0.0-SNAPSHOT.zip");
+        Files.setLastModifiedTime(pluginFile, FileTime.from(Instant.now()));
+        assertThat(PluginRegistryImpl.getFileTimestamp(pluginFile)).isGreaterThan(PluginRegistryImpl.getFileTimestamp(pluginFileOlder));
     }
 }

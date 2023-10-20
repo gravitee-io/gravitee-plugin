@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,9 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -26,9 +29,20 @@ import java.nio.file.Path;
  */
 public class PluginImpl implements Plugin {
 
+    @Setter
     private Path path;
+
     private final PluginManifest manifest;
+
+    @Setter
     private URL[] dependencies;
+
+    @Setter
+    private boolean deployed = true;
+
+    @Getter
+    @Setter
+    private long archiveTimestamp;
 
     PluginImpl(PluginManifest manifest) {
         this.manifest = manifest;
@@ -64,12 +78,13 @@ public class PluginImpl implements Plugin {
         return dependencies;
     }
 
-    public void setPath(Path path) {
-        this.path = path;
+    @Override
+    public boolean deployed() {
+        return deployed;
     }
 
-    public void setDependencies(URL[] dependencies) {
-        this.dependencies = dependencies;
+    public boolean valid() {
+        return id() != null && !Objects.equals(id(), "");
     }
 
     @Override

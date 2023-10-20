@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,15 +29,18 @@ public abstract class AbstractSpringPluginHandler<T> extends AbstractPluginHandl
 
     @Override
     protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            ApplicationContext context = pluginContextFactory.create(plugin);
-            T pluginInst = (T) context.getBean(pluginClass);
-            register(pluginInst);
-        } catch (Exception ex) {
-            logger.error("Unexpected error while creating {}", plugin.id(), ex);
+        // Do not register when plugin is not deployed since AbstractSpringPluginHandler is used to register different kind of Plugin like : Alert, Reporter, Cockpit and Service
+        if (plugin.deployed()) {
+            try {
+                ApplicationContext context = pluginContextFactory.create(plugin);
+                T pluginInst = (T) context.getBean(pluginClass);
+                register(pluginInst);
+            } catch (Exception ex) {
+                logger.error("Unexpected error while creating {}", plugin.id(), ex);
 
-            // Be sure that the context does not exist anymore.
-            pluginContextFactory.remove(plugin);
+                // Be sure that the context does not exist anymore.
+                pluginContextFactory.remove(plugin);
+            }
         }
     }
 

@@ -1,3 +1,111 @@
+## [2.0.3](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.2...2.0.3) (2023-09-14)
+
+
+### Bug Fixes
+
+* bump gravitee-common to 3.3.3 ([3d51cf9](https://github.com/gravitee-io/gravitee-plugin/commit/3d51cf96f086c2c039183a18dceeebce9e015fea))
+
+## [2.0.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.1...2.0.2) (2023-07-28)
+
+
+### Bug Fixes
+
+* avoid throwing exception during plugin loading if the introspect is failing ([f9f6838](https://github.com/gravitee-io/gravitee-plugin/commit/f9f6838d19bf6db357bc4630a05e02fabe053945))
+
+## [2.0.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0...2.0.1) (2023-07-19)
+
+
+### Bug Fixes
+
+* PluginEvent ended sent before plugins list in PluginRegistryImpl ready ([e1f6297](https://github.com/gravitee-io/gravitee-plugin/commit/e1f62975fd98cc9db1441e0fa16ff42ad577818d))
+
+# [2.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/1.26.1...2.0.0) (2023-07-17)
+
+
+### Bug Fixes
+
+* bump platform repository api version ([136d4ff](https://github.com/gravitee-io/gravitee-plugin/commit/136d4ff762f8cfb0133a81d5979b77b0c6f846ef))
+* remove lombok annotation failing for javadoc ([51bdd56](https://github.com/gravitee-io/gravitee-plugin/commit/51bdd562af6daff1207befe7a88ee9a28032ea37))
+* wrong classloader is used on some spring resolver ([4dcf218](https://github.com/gravitee-io/gravitee-plugin/commit/4dcf218fd4d77e71881f8bd543d8beb29222cb91))
+
+
+### chore
+
+* **deps:** update gravitee-parent ([104da9a](https://github.com/gravitee-io/gravitee-plugin/commit/104da9a3c702abf1ad15c4385ad1b1ab6ae5dd00))
+
+
+### Features
+
+* add new cache plugin ([1ce83e1](https://github.com/gravitee-io/gravitee-plugin/commit/1ce83e178af2dace8c090afab7c73104b02d93a3))
+* add new plugin type for cluster ([7336c9f](https://github.com/gravitee-io/gravitee-plugin/commit/7336c9f8137df52aa1765ce91932646914605e22))
+* allow plugin override based on .zip file date (most recent wins) ([2660421](https://github.com/gravitee-io/gravitee-plugin/commit/266042190dc18c3a8d0e651a15c7ed360da3a06f))
+* allow plugins to be registered when not deployed ([e022030](https://github.com/gravitee-io/gravitee-plugin/commit/e0220301ab4b605c7f61502c4ec0e7c88f603d3c))
+* allow to deploy repositories based on license ([bd39e0f](https://github.com/gravitee-io/gravitee-plugin/commit/bd39e0fea336d5f7470bb488d391d45108b57d70))
+* autodetect the execution phase for policies not migrated to V4 engine ([017cfbc](https://github.com/gravitee-io/gravitee-plugin/commit/017cfbcefcce10a2e1eeba8a30289419b9b6aaf1))
+* handle optional repository scopes ([5ff0b63](https://github.com/gravitee-io/gravitee-plugin/commit/5ff0b635abb77510cdce4a595bf02e74c33da38b))
+* load plugin based on manifest feature ([44734ef](https://github.com/gravitee-io/gravitee-plugin/commit/44734ef18100152a28f0235d71cc188fd6f52559))
+
+
+### BREAKING CHANGES
+
+* **deps:** require Java17
+* AbstractPluginHandler now relies on the plugin manifest to check the license
+* added new deployed status on Plugin and change the plugin handler behavior
+to call handle on all plugins except the one that extends AbstractSpringPluginHandler
+
+# [2.0.0-alpha.6](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.5...2.0.0-alpha.6) (2023-07-11)
+
+
+### Bug Fixes
+
+* remove lombok annotation failing for javadoc ([51bdd56](https://github.com/gravitee-io/gravitee-plugin/commit/51bdd562af6daff1207befe7a88ee9a28032ea37))
+
+# [2.0.0-alpha.5](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.4...2.0.0-alpha.5) (2023-07-11)
+
+
+### Features
+
+* allow plugin override based on .zip file date (most recent wins) ([2660421](https://github.com/gravitee-io/gravitee-plugin/commit/266042190dc18c3a8d0e651a15c7ed360da3a06f))
+
+# [2.0.0-alpha.4](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.3...2.0.0-alpha.4) (2023-07-06)
+
+
+### Features
+
+* autodetect the execution phase for policies not migrated to V4 engine ([017cfbc](https://github.com/gravitee-io/gravitee-plugin/commit/017cfbcefcce10a2e1eeba8a30289419b9b6aaf1))
+
+# [2.0.0-alpha.3](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.2...2.0.0-alpha.3) (2023-07-03)
+
+
+### Features
+
+* load plugin based on manifest feature ([44734ef](https://github.com/gravitee-io/gravitee-plugin/commit/44734ef18100152a28f0235d71cc188fd6f52559))
+
+
+### BREAKING CHANGES
+
+* AbstractPluginHandler now relies on the plugin manifest to check the license
+
+# [2.0.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.0-alpha.1...2.0.0-alpha.2) (2023-06-27)
+
+
+### Features
+
+* allow to deploy repositories based on license ([bd39e0f](https://github.com/gravitee-io/gravitee-plugin/commit/bd39e0fea336d5f7470bb488d391d45108b57d70))
+
+# [2.0.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.4...2.0.0-alpha.1) (2023-06-15)
+
+
+### Features
+
+* allow plugins to be registered when not deployed ([e022030](https://github.com/gravitee-io/gravitee-plugin/commit/e0220301ab4b605c7f61502c4ec0e7c88f603d3c))
+
+
+### BREAKING CHANGES
+
+* added new deployed status on Plugin and change the plugin handler behavior
+to call handle on all plugins except the one that extends AbstractSpringPluginHandler
+
 # [1.27.0-alpha.4](https://github.com/gravitee-io/gravitee-plugin/compare/1.27.0-alpha.3...1.27.0-alpha.4) (2023-05-30)
 
 
