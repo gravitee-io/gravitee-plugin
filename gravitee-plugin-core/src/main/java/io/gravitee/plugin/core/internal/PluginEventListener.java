@@ -24,12 +24,11 @@ import io.gravitee.plugin.core.api.PluginEvent;
 import io.gravitee.plugin.core.api.PluginHandler;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -39,14 +38,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RequiredArgsConstructor
 public class PluginEventListener extends AbstractService<PluginEventListener> implements EventListener<PluginEvent, Plugin> {
 
+    public static final String SECRET_PROVIDER = "secret-provider";
     /**
      * Allows to define priority between the different plugin types.
      */
-    private static final List<String> pluginPriority = Arrays.asList("cluster", "cache", "repository", "alert", "cockpit");
+    private static final List<String> pluginPriority = Arrays.asList(SECRET_PROVIDER, "cluster", "cache", "repository", "alert", "cockpit");
 
     private final Collection<PluginHandler> pluginHandlers;
 
     private final EventManager eventManager;
+
+    private final Environment environment;
 
     @Getter(AccessLevel.PACKAGE)
     private final Map<PluginKey, Plugin> plugins = new ConcurrentHashMap<>();
@@ -85,8 +87,13 @@ public class PluginEventListener extends AbstractService<PluginEventListener> im
         final List<Plugin> sortedByPriority =
             this.plugins.values()
                 .stream()
-                .sorted(Comparator.<Plugin>comparingInt(o -> o.manifest().priority()).thenComparing(new PluginComparator()))
-                .collect(Collectors.toList());
+                .sorted(
+                    Comparator
+                        .<Plugin>comparingInt(o -> o.manifest().priority())
+                        .thenComparing(new PluginComparator())
+                        .thenComparing(new SecretProviderPluginComparator())
+                )
+                .toList();
 
         plugins
             .values()
@@ -186,6 +193,23 @@ public class PluginEventListener extends AbstractService<PluginEventListener> im
             }
 
             // Both plugins are not in the priority list, keep the order unchanged.
+            return 0;
+        }
+    }
+
+    private class SecretProviderPluginComparator implements Comparator<Plugin> {
+
+        private final String loadedFirst;
+
+        public SecretProviderPluginComparator() {
+            this.loadedFirst = environment.getProperty("secrets.loadFirst");
+        }
+
+        @Override
+        public int compare(Plugin o1, Plugin o2) {
+            if (loadedFirst != null && Objects.equals(o1.manifest().type(), SECRET_PROVIDER) && o1.manifest().id().equals(loadedFirst)) {
+                return -1;
+            }
             return 0;
         }
     }

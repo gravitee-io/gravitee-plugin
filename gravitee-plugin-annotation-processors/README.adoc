@@ -1,0 +1,181 @@
+= Annotation processors
+
+== ConfigurationEvaluator
+
+=== Goal
+
+This annotation is used to generate an evaluator at compile time for a specific configuration bean. This evaluator can then be used instead of the configuration bean to add the business logic needed to add dynamic evaluation of the properties contained in the configuration bean. The evaluator checks for every property if an attribute is present in the execution context to override its value and if the parameter is a string type, it also tries to evaluate its content using the template engine in case an EL was defined for this parameter.
+
+=== Parameters
+
+This annotation only takes one parameter which is `attributePrefix`. A string that represent the prefix the evaluator will use to determine if an attribute exist in the context to override a property. This prefix needs to respect the convention as explained below.
+
+As an example, here is how to use the annotation for the KafkaEndpointConnectorConfiguration.
+
+[source,java]
+----
+import io.gravitee.plugin.annotation.ConfigurationEvaluator;
+
+@ConfigurationEvaluator(attributePrefix = "gravitee.attributes.endpoint.kafka")
+public class KafkaEndpointConnectorConfiguration implements EndpointConnectorConfiguration {
+
+    private String bootstrapServers;
+}
+----
+
+==== Override configuration properties by attributes
+
+As describe above, using the evaluator generated instead of the classic configuration bean, we add the possibility for a user to override any property using an attribute (via the assign-attribute policy). In order to do so, we are using this convention for naming attribute: *[prefix].[type].[name].[field]*
+
+* Prefix: value is “gravitee.attributes”
+* Type : endpoint, entrypoint
+* Name : the name of the connector (ie : “kafka”)
+* Field : the name of the property to override (in lower camel case) or the path to it (ie: “bootstrapServers” or “consumer.topics” or “security.ssl.trustStore.type”)
+
+So if we want for example override the `bootstrapServers` attribute of the Kafka Endpoint, which is declared like this :
+
+[source, json]
+----
+"configuration": {
+    "bootstrapServers": "localhost:9094"
+}
+----
+
+You need to assign an attribute named `gravitee.attributes.endpoint.kafka.bootstrapServers`
+
+The annotation processor supports these types: String, Integer, Boolean, Enum, Set and List.
+
+==== Evaluate EL on string type properties
+
+If the property type is `string` and no attribute were found to override the original value, then the original value is evaluated using the template engine to transform it if it is an EL using the current context.
+
+So if we take the same example as before, we could override the bootstrapServers of our Kafka endpoint connector by using this configuration :
+
+[source, json]
+----
+"configuration": {
+    "bootstrapServers": "{#request.headers['mybootstrap'][0]}"
+}
+----
+
+In this example, if the request contains one header `mybootstrap`, then it will be used.
+
+==== Validate the dynamic configuration
+
+If you add in the configuration class of your plugin, Jakarta Bean Validation annotation on the fields that are not string type, you can ensure that the value we are trying to use dynamically for this property is valid and avoid unwanted issues.
+You can check the schema-form.json of your plugin to see actual constraint that are already used when validating the configuration and find the equivalent in the list of annotation (https://docs.jboss.org/hibernate/stable/validator/reference/en-US/html_single/#validator-defineconstraints-spec[List of annotations]).
+
+When validation fails, a log is produced containing the list of constraint violations (for each violation, you can see the name of the property and the reason of the failure), and an exception is thrown which is caught by the evaluator to interrupt the chain with a 500 status using this message `Invalid configuration` and this key `FAILURE_CONFIGURATION_INVALID`.
+
+Note that to avoid having a dependency on a Jakarta Expression Language implementation, the annotation does not support EL in the message. If you put one, the message in the log will be displayed without the EL being interpolated.
+
+**Warning : the generated evaluator is using `jakarta.validation` package and not `javax.validation`.**
+
+=== How to
+
+. Add the dependency to this module in your plugin project (do not forget to replace *VERSION*)
+
+[source, xml]
+----
+<dependency>
+    <groupId>io.gravitee.plugin</groupId>
+    <artifactId>gravitee-plugin-annotation-processors</artifactId>
+    <version>VERSION</version>
+    <scope>provided</scope>
+</dependency>
+----
+[start=2]
+. Add Hibernate Validator to your dependencies with a scope `provided` (this dependency was added in the Gateway to avoid duplication in each plugin using this annotation)
+
+[source, xml]
+----
+<dependency>
+    <groupId>org.hibernate.validator</groupId>
+    <artifactId>hibernate-validator</artifactId>
+    <version>8.0.1.Final</version>
+    <scope>provided</scope>
+</dependency>
+----
+[start=3]
+. Add this plugin in your pom.xml to define the generated sources as source file, so you can use them in your code in your IDE)
+
+[source, xml]
+----
+<plugin>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>build-helper-maven-plugin</artifactId>
+    <version>1.7</version>
+    <executions>
+        <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>add-source</goal>
+            </goals>
+            <configuration>
+                <sources>
+                    <source>generated-sources</source>
+                </sources>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+----
+[start=4]
+. Add the annotation `@ConfigurationEvaluator` at the class level of your plugin configuration classes (ie: KafkaEndpointConnectorConfiguration, KafkaEndpointConnectorSharedConfiguration) with the right value for the parameter `attributePrefix`
+. Add the validation annotations in your configuration classes as described in <<_validate_the_dynamic_configuration>>
+. Build your project to generate the new "ConfigurationEvaluator" classes (you can find them in the folder target/generated-sources/annotations)
+. Create all `evaluators` necessary in your constructor (only one attribute is required by the evaluator constructor which is the configuration bean) and call the `eval` method to generate the dynamic configuration object or retrieved it from the context if it has already been called once (it is stored in the context using an internal attribute to avoid multiple evaluation). Here you have an example for an endpoint :
+
+[source, java]
+----
+    // parts of the code are missing to focus on what needs to be changed
+
+    private final KafkaEndpointConnectorConfigurationEvaluator kafkaEndpointConnectorConfigurationEvaluator;
+
+    public KafkaEndpointConnector(
+        KafkaEndpointConnectorConfiguration configuration,
+        KafkaEndpointConnectorSharedConfiguration sharedConfiguration,
+        QosStrategyFactory qosStrategyFactory
+    ) {
+        this.configuration = configuration;
+        this.sharedConfiguration = sharedConfiguration;
+        this.qosStrategyFactory = qosStrategyFactory;
+        this.kafkaEndpointConnectorConfigurationEvaluator = new KafkaEndpointConnectorConfigurationEvaluator(configuration);
+    }
+
+    @Override
+    public Completable subscribe(final ExecutionContext ctx) {
+        return kafkaEndpointConnectorConfigurationEvaluator
+            .eval(ctx)
+            .flatMapCompletable(evaluatedConfiguration ->
+                // use the evaluated configuration in your code
+            );
+    }
+----
+[start=8]
+. Update your unit tests and you should be done
+
+=== Methods available in evaluator class
+
+The generated evaluator provides 3 methods that you can use :
+
+* public Single<ConfigurationClass> eval(ExecutionContext ctx) : default method to use which parse the original configuration using the given context and evaluate it in a reactive way then return the evaluated configuration
+* public ConfigurationClass evalNow() : equivalent to eval but *blocking*
+
+=== Contribute
+
+The annotation processor is working by parsing the configuration bean. For each field of the bean, a type is define (a simple field, an inner class or an object). Depending on this type, some information are gathered and passed to a Mustache template (the templates are in the directory src/main/resources/templates). These templates generate part of the Evaluator created for the configuration bean the annotation has been used on.
+If you want to add some logic in the Evaluator generated, you will certainly need to modify one of these templates. They are named to reflect what they are used for. The structure is the following:
+
+- evaluatorHeader: manage the generation of the first part of the evaluator (imports, class, constructor, all utility methods needed for each supported Java type like String, Enum etc and the validation).
+- evalClass/evalClose: manage object and inner class by adding around the field the necessary code
+- evalField: manage the code for a field
+- evaluatorFooter: manage the footer of the evaluator (the end of the eval method)
+
+We only call evaluatorHeader and evaluatorFooter templates once, but we loop on all fields/classes/objects and call the other templates if needed each time.
+
+To validate the generated code, unit tests have been developed with two classes:
+
+- ConfigurationEvaluatorProcessorTest: in charge of verifying that the code generated is the one expected by invoking the annotation processor on the class src/test/java/io/gravitee/plugin/annotation/processor/result/TestConfiguration.java and comparing the evaluator generated with the expected result in src/test/resources/test/TestConfigurationEvaluator.java. So if you change the code generated, you need to ensure that you also update this file to reflect the changes you were expected.
+- ConfigurationEvaluatorGeneratedTest: in charge of validating the logic of the code generated for the evaluator (for example, validate that if an attribute exist in the context to override a field which is an Enum in the configuration, the configuration evaluated is reflecting this).
