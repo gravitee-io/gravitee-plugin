@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.0...2.1.1) (2023-11-03)
+
+
+### Bug Fixes
+
+* allow constant in configuration bean ([d0e934b](https://github.com/gravitee-io/gravitee-plugin/commit/d0e934b02ad724fba7660e0418093b0880ccead0))
+
 # [2.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.3...2.1.0) (2023-10-31)
 
 
