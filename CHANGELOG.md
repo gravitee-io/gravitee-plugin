@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.1...2.1.2) (2023-11-03)
+
+
+### Bug Fixes
+
+* **annotation-processor:** prevent exception if String property ([a9d26fe](https://github.com/gravitee-io/gravitee-plugin/commit/a9d26fed9d19143a190f34c9eb68ba1674d3e76f))
+
 ## [2.1.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.0...2.1.1) (2023-11-03)
 
 
