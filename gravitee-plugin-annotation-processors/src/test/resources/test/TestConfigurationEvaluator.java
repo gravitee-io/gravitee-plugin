@@ -75,8 +75,17 @@ public class TestConfigurationEvaluator {
             value = attribute;
         }
 
+        //If value is null, return empty
+        if (value == null) {
+            return Maybe.empty();
+        }
+
         //Then check EL
-        return ctx.getTemplateEngine().eval(value, String.class);
+        String finalValue = value;
+        return ctx
+            .getTemplateEngine()
+            .eval(value, String.class)
+            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue));
     }
 
     private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, ExecutionContext ctx) {
@@ -202,6 +211,11 @@ public class TestConfigurationEvaluator {
             evaluatedConfiguration
                 .getConsumer()
                 .setTopics(evalSetProperty("topics", configuration.getConsumer().getTopics(), currentAttributePrefix, ctx));
+            //Field topicPattern
+            toEval.add(
+                evalStringProperty("topicPattern", configuration.getConsumer().getTopicPattern(), currentAttributePrefix, ctx)
+                    .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setTopicPattern(value))
+            );
             //Field attributes
             evaluatedConfiguration
                 .getConsumer()
