@@ -111,6 +111,9 @@ public class TestConfiguration {
         @Size(min = 1)
         private Set<String> topics;
 
+        //Added to validate proper behavior when a String attribute is null
+        private String topicPattern;
+
         private TrustStore trustStore;
 
         private List<String> attributes;
@@ -146,6 +149,14 @@ public class TestConfiguration {
 
         public void setTopics(Set<String> topics) {
             this.topics = topics;
+        }
+
+        public String getTopicPattern() {
+            return topicPattern;
+        }
+
+        public void setTopicPattern(String topicPattern) {
+            this.topicPattern = topicPattern;
         }
 
         public TrustStore getTrustStore() {
