@@ -29,6 +29,8 @@ import java.util.Set;
 @ConfigurationEvaluator(attributePrefix = "gravitee.attributes.endpoint.test")
 public class TestConfiguration {
 
+    private static final String CONSTANT = "my_constant_should_be_ignored";
+
     //Enum
     private SecurityProtocol protocol = SecurityProtocol.PLAINTEXT;
 
