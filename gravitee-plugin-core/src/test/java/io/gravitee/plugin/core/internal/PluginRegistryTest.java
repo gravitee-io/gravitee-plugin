@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.plugin.core.api.Plugin;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.*;
@@ -202,6 +202,58 @@ class PluginRegistryTest {
             .filteredOn(p -> p.id().equals("custom-plugin"))
             .extracting(p -> p.manifest().version())
             .contains("2.0.0-SNAPSHOT");
+    }
+
+    @Test
+    void should_get_plugin_by_id() throws Exception {
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.start();
+
+        final Plugin policy = pluginRegistry.get("policy", "my-policy-3");
+        assertThat(policy).isNotNull();
+        assertThat(policy.id()).isEqualTo("my-policy-3");
+        assertThat(policy.type()).isEqualTo("policy");
+    }
+
+    @Test
+    void should_return_null_when_getting_unknown_plugin_by_id() throws Exception {
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.start();
+
+        final Plugin policy = pluginRegistry.get("policy", "unknown");
+        assertThat(policy).isNull();
+    }
+
+    @Test
+    void should_return_plugins_by_type() throws Exception {
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.start();
+
+        final Collection<Plugin> plugins = pluginRegistry.plugins("policy");
+        assertThat(plugins).isNotNull();
+        assertThat(plugins).hasSize(3);
+        assertThat(plugins).allMatch(plugin -> plugin.type().equals("policy"));
+    }
+
+    @Test
+    void should_have_all_plugin_and_plugins_by_type_equivalent() throws Exception {
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.start();
+
+        final Collection<Plugin> allPlugins = pluginRegistry.plugins();
+        assertThat(allPlugins).hasSize(4);
+
+        allPlugins.forEach(plugin -> assertThat(allPlugins).containsAll(pluginRegistry.plugins(plugin.type())));
+    }
+
+    @Test
+    void should_return_empty_when_no_plugins_for_type() throws Exception {
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.start();
+
+        final Collection<Plugin> plugins = pluginRegistry.plugins("unknown");
+        assertThat(plugins).isNotNull();
+        assertThat(plugins).isEmpty();
     }
 
     private PluginRegistryImpl initPluginRegistry(String path) {
