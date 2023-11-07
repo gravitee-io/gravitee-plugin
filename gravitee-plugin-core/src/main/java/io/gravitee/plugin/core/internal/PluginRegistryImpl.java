@@ -29,6 +29,7 @@ import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
@@ -84,6 +85,7 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
     private boolean init = false;
 
     private final List<Plugin> plugins = new ArrayList<>();
+    private final Map<String, Map<String, Plugin>> pluginByType = new ConcurrentHashMap<>();
 
     private String[] workspacesPath;
 
@@ -130,6 +132,11 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
                     .cast(Plugin.class)
                     .toList()
                     .doOnSuccess(PluginRegistryImpl::printPlugins)
+                    .doOnSuccess(allPlugins ->
+                        allPlugins.forEach(plugin ->
+                            pluginByType.computeIfAbsent(plugin.type(), k -> new ConcurrentHashMap<>()).put(plugin.id(), plugin)
+                        )
+                    )
                     .blockingGet()
             );
 
@@ -374,7 +381,15 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
 
     @Override
     public Collection<Plugin> plugins(String type) {
-        return plugins.stream().filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type())).collect(Collectors.toSet());
+        final Map<String, Plugin> plugins = pluginByType.get(type);
+        return plugins != null ? plugins.values() : Collections.emptySet();
+    }
+
+    @Override
+    public Plugin get(String type, String id) {
+        final Map<String, Plugin> plugins = pluginByType.get(type);
+
+        return plugins != null ? plugins.get(id) : null;
     }
 
     static class PluginManifestVisitor extends SimpleFileVisitor<Path> {

@@ -26,4 +26,6 @@ public interface PluginRegistry extends Service<PluginRegistry> {
     Collection<Plugin> plugins();
 
     Collection<Plugin> plugins(String type);
+
+    Plugin get(String type, String id);
 }
