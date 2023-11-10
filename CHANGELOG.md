@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.2...2.2.0) (2023-11-10)
+
+
+### Features
+
+* add way to get plugin by id from plugin registry ([1cf892a](https://github.com/gravitee-io/gravitee-plugin/commit/1cf892aa266400774dc8cdc4320c5d2b91eb2341))
+
 ## [2.1.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.1...2.1.2) (2023-11-03)
 
 
