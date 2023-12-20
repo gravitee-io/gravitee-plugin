@@ -15,28 +15,27 @@
  */
 package io.gravitee.plugin.annotation.processor;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.gravitee.gateway.reactive.api.context.ExecutionContext;
 import io.gravitee.plugin.annotation.processor.result.SecurityProtocol;
 import io.gravitee.plugin.annotation.processor.result.TestConfiguration;
 import io.gravitee.plugin.annotation.processor.result.TestConfigurationEvaluator;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
-import java.util.List;
-import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Remi Baptiste (remi.baptiste at graviteesource.com)
@@ -48,9 +47,6 @@ public class ConfigurationEvaluatorGeneratedTest {
     TestConfigurationEvaluator evaluator;
 
     @Mock
-    ExecutionContext context;
-
-    @Mock
     ExecutionContext.TemplateEngine templateEngine;
 
     @Before
@@ -59,20 +55,12 @@ public class ConfigurationEvaluatorGeneratedTest {
         configuration.getConsumer().setEnabled(true);
         configuration.getConsumer().setAutoOffsetReset("none");
         evaluator = new TestConfigurationEvaluator(configuration);
-
-        when(context.getTemplateEngine()).thenReturn(templateEngine);
-
-        when(context.interruptWith(any()))
-            .thenAnswer(invocation ->
-                Completable.defer(() ->
-                    Completable.error(new IllegalStateException(((ExecutionFailure) invocation.getArgument(0)).message()))
-                )
-            );
     }
 
     @Test
     public void should_interrupt_with_error_on_validation() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("result"));
+        var context = new ExecutionContext(templateEngine);
 
         TestObserver<TestConfiguration> testObserver = evaluator.eval(context).test();
 
@@ -86,40 +74,65 @@ public class ConfigurationEvaluatorGeneratedTest {
     @Test
     public void should_return_evaluated_configuration() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
-        when(context.getAttribute("gravitee.attributes.endpoint.test.protocol")).thenReturn("SSL");
-        when(context.getAttribute("gravitee.attributes.endpoint.test.consumer.topics")).thenReturn("topic1,topic2");
-        when(context.getAttributeAsList("gravitee.attributes.endpoint.test.consumer.topics")).thenReturn(List.of("topic1", "topic2"));
+        var context = new ExecutionContext(
+            templateEngine,
+            Map.ofEntries(
+                Map.entry("gravitee.attributes.endpoint.test.protocol", "SSL"),
+                Map.entry("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2")
+            )
+        );
 
-        TestObserver<TestConfiguration> testObserver = evaluator.eval(context).test();
+        evaluator
+            .eval(context)
+            .test()
+            .assertComplete()
+            .assertValue(testConfiguration -> {
+                assertThat(testConfiguration.getConsumer().getAutoOffsetReset()).isEqualTo("latest");
+                assertThat(testConfiguration.getProtocol()).isEqualTo(SecurityProtocol.SSL);
+                assertThat(testConfiguration.getConsumer().getTopics()).isEqualTo(Set.of("topic1", "topic2"));
+                return true;
+            });
+    }
 
-        testObserver.assertComplete();
+    @Test
+    public void should_cache_evaluated_configuration() {
+        when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
+        var context = new ExecutionContext(
+            templateEngine,
+            Map.ofEntries(
+                Map.entry("gravitee.attributes.endpoint.test.protocol", "SSL"),
+                Map.entry("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2")
+            )
+        );
+        evaluator
+            .eval(context)
+            .test()
+            .assertComplete()
+            .assertValue(testConfiguration -> {
+                assertThat(testConfiguration.getConsumer().getAutoOffsetReset()).isEqualTo("latest");
+                assertThat(testConfiguration.getProtocol()).isEqualTo(SecurityProtocol.SSL);
+                assertThat(testConfiguration.getConsumer().getTopics()).isEqualTo(Set.of("topic1", "topic2"));
 
-        testObserver.assertValue(testConfiguration -> {
-            assertThat(testConfiguration.getConsumer().getAutoOffsetReset()).isEqualTo("latest");
-            assertThat(testConfiguration.getProtocol()).isEqualTo(SecurityProtocol.SSL);
-            assertThat(testConfiguration.getConsumer().getTopics()).isEqualTo(Set.of("topic1", "topic2"));
-            return true;
-        });
-
-        verify(context).getAttributeAsList("gravitee.attributes.endpoint.test.consumer.topics");
-        verify(context).setInternalAttribute(anyString(), any(TestConfiguration.class));
+                assertThat(context.getInternalAttributes().values()).hasSize(1).containsExactly(testConfiguration);
+                return true;
+            });
     }
 
     @Test
     public void should_return_evaluated_configuration_from_internal_attribute() {
-        TestConfiguration configuration = new TestConfiguration();
-        configuration.getConsumer().setAutoOffsetReset("earliest");
-        when(context.getInternalAttribute(anyString())).thenReturn(configuration);
+        var spiedContext = spy(new ExecutionContext());
+        TestConfiguration expectedConfiguration = new TestConfiguration();
+        when(spiedContext.getInternalAttribute(anyString())).thenReturn(expectedConfiguration);
 
-        TestObserver<TestConfiguration> testObserver = evaluator.eval(context).test();
+        evaluator
+            .eval(spiedContext)
+            .test()
+            .assertComplete()
+            .assertValue(testConfiguration -> {
+                assertThat(testConfiguration).isSameAs(expectedConfiguration);
+                return true;
+            });
 
-        testObserver.assertComplete();
-
-        testObserver.assertValue(testConfiguration -> {
-            assertThat(testConfiguration.getConsumer().getAutoOffsetReset()).isEqualTo("earliest");
-            return true;
-        });
-
-        verify(context, times(0)).setInternalAttribute(anyString(), any(TestConfiguration.class));
+        verify(spiedContext, times(0)).setInternalAttribute(anyString(), any(TestConfiguration.class));
     }
 }
