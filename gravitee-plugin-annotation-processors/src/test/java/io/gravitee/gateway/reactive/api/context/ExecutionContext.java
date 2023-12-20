@@ -18,7 +18,11 @@ package io.gravitee.gateway.reactive.api.context;
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import lombok.Getter;
 
 /**
  * @author Remi Baptiste (remi.baptiste at graviteesource.com)
@@ -26,26 +30,62 @@ import java.util.List;
  */
 public class ExecutionContext {
 
-    public TemplateEngine getTemplateEngine() {
-        return null;
+    @Getter
+    private final TemplateEngine templateEngine;
+
+    private final Map<String, Object> attributes;
+
+    @Getter
+    private final Map<String, Object> internalAttributes;
+
+    public ExecutionContext() {
+        this(new TemplateEngine(), new HashMap<>());
+    }
+
+    public ExecutionContext(TemplateEngine templateEngine) {
+        this(templateEngine, new HashMap<>());
+    }
+
+    public ExecutionContext(Map<String, Object> attributes) {
+        this(new TemplateEngine(), attributes);
+    }
+
+    public ExecutionContext(TemplateEngine templateEngine, Map<String, Object> attributes) {
+        this.templateEngine = templateEngine;
+        this.attributes = attributes;
+        this.internalAttributes = new HashMap<>();
     }
 
     public <T> T getAttribute(String attribute) {
-        return null;
+        return (T) attributes.get(attribute);
     }
 
     public <T> List<T> getAttributeAsList(String name) {
-        return null;
+        var value = this.attributes.get(name);
+
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof List) {
+            return (List<T>) value;
+        }
+        if (value instanceof String) {
+            return (List<T>) Arrays.stream(((String) value).split(",")).toList();
+        }
+
+        return List.of((T) value);
     }
 
-    public void setInternalAttribute(String var1, Object var2) {}
+    public void setInternalAttribute(String var1, Object var2) {
+        internalAttributes.put(var1, var2);
+    }
 
     public <T> T getInternalAttribute(String attribute) {
-        return null;
+        return (T) internalAttributes.get(attribute);
     }
 
     public Completable interruptWith(final ExecutionFailure failure) {
-        return Completable.complete();
+        return Completable.defer(() -> Completable.error(new IllegalStateException((failure.message()))));
     }
 
     public static class TemplateEngine {
