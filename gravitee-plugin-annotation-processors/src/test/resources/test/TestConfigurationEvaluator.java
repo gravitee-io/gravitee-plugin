@@ -15,6 +15,7 @@
  */
 package io.gravitee.plugin.annotation.processor.result;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.gravitee.gateway.reactive.api.context.ExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
@@ -39,6 +40,8 @@ public class TestConfigurationEvaluator {
     private static final String FAILURE_CONFIGURATION_INVALID = "FAILURE_CONFIGURATION_INVALID";
 
     private final Logger logger = LoggerFactory.getLogger(TestConfigurationEvaluator.class);
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final TestConfiguration configuration;
 
@@ -179,7 +182,13 @@ public class TestConfigurationEvaluator {
             return Single.just(evaluatedConf);
         }
 
-        TestConfiguration evaluatedConfiguration = new TestConfiguration();
+        TestConfiguration evaluatedConfiguration;
+        try {
+            evaluatedConfiguration = objectMapper.readValue(objectMapper.writeValueAsString(configuration), TestConfiguration.class);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            logger.error("Unable to clone configuration", e);
+            return Single.error(e);
+        }
         String currentAttributePrefix = attributePrefix;
 
         List<Maybe<String>> toEval = new ArrayList<>();

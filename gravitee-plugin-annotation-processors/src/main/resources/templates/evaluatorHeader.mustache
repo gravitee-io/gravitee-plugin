@@ -15,13 +15,14 @@
 */
 package {{packageName}};
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.gravitee.gateway.reactive.api.context.ExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -42,6 +43,8 @@ public class {{evaluatorSimpleClassName}} {
     private static final String FAILURE_CONFIGURATION_INVALID = "FAILURE_CONFIGURATION_INVALID";
 
     private final Logger logger = LoggerFactory.getLogger({{evaluatorSimpleClassName}}.class);
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final {{simpleClassName}} configuration;
 
@@ -194,8 +197,14 @@ public class {{evaluatorSimpleClassName}} {
             return Single.just(evaluatedConf);
         }
 
-        {{simpleClassName}} evaluatedConfiguration = new {{simpleClassName}}();
+        {{simpleClassName}} evaluatedConfiguration;
+        try {
+            evaluatedConfiguration = objectMapper.readValue(objectMapper.writeValueAsString(configuration), {{simpleClassName}}.class);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            logger.error("Unable to clone configuration", e);
+            return Single.error(e);
+        }
+
         String currentAttributePrefix = attributePrefix;
 
         List<Maybe<String>> toEval = new ArrayList<>();
-
