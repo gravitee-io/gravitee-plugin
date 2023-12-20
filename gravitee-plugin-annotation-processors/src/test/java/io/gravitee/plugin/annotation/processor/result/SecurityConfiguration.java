@@ -15,6 +15,13 @@
  */
 package io.gravitee.plugin.annotation.processor.result;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class SecurityConfiguration {
 
     private String property;

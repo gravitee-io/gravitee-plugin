@@ -24,18 +24,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.gravitee.gateway.reactive.api.context.ExecutionContext;
+import io.gravitee.plugin.annotation.processor.result.KeyStore;
+import io.gravitee.plugin.annotation.processor.result.SecurityConfiguration;
 import io.gravitee.plugin.annotation.processor.result.SecurityProtocol;
+import io.gravitee.plugin.annotation.processor.result.Ssl;
 import io.gravitee.plugin.annotation.processor.result.TestConfiguration;
 import io.gravitee.plugin.annotation.processor.result.TestConfigurationEvaluator;
+import io.gravitee.plugin.annotation.processor.result.TrustStore;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Remi Baptiste (remi.baptiste at graviteesource.com)
@@ -134,5 +139,40 @@ public class ConfigurationEvaluatorGeneratedTest {
             });
 
         verify(spiedContext, times(0)).setInternalAttribute(anyString(), any(TestConfiguration.class));
+    }
+
+    @Test
+    public void should_return_original_configuration() {
+        var consumer = TestConfiguration.Consumer
+            .builder()
+            .enabled(true)
+            .autoOffsetReset("none")
+            .attributes(List.of("attribute1"))
+            .topics(Set.of("topic1"))
+            .build();
+        consumer.setTopicPattern("topic-pattern");
+        consumer.setTrustStore(TrustStore.builder().key("my-key").build());
+        var securityConfiguration = SecurityConfiguration.builder().property("my-prop").build();
+        var ssl = Ssl.builder().keyStore(KeyStore.builder().key("keystore-key").build()).timeout(10L).build();
+
+        var originalConfiguration = new TestConfiguration(SecurityProtocol.SASL_SSL, ssl, securityConfiguration, consumer);
+        evaluator = new TestConfigurationEvaluator(originalConfiguration);
+
+        TestObserver<TestConfiguration> testObserver = evaluator.eval(new ExecutionContext()).test();
+
+        testObserver.assertComplete();
+
+        testObserver.assertValue(testConfiguration -> {
+            assertThat(testConfiguration.getConsumer().isEnabled()).isTrue();
+            assertThat(testConfiguration.getConsumer().getAutoOffsetReset()).isEqualTo("none");
+            assertThat(testConfiguration.getConsumer().getAttributes()).isEqualTo(List.of("attribute1"));
+            assertThat(testConfiguration.getConsumer().getTopics()).isEqualTo(Set.of("topic1"));
+            assertThat(testConfiguration.getConsumer().getTopicPattern()).isEqualTo("topic-pattern");
+            assertThat(testConfiguration.getConsumer().getTrustStore().getKey()).isEqualTo("my-key");
+            assertThat(testConfiguration.getSecurity().getProperty()).isEqualTo("my-prop");
+            assertThat(testConfiguration.getSsl().getKeyStore().getKey()).isEqualTo("keystore-key");
+            assertThat(testConfiguration.getSsl().getTimeout()).isEqualTo(10L);
+            return true;
+        });
     }
 }
