@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.0...2.2.1) (2024-01-08)
+
+
+### Bug Fixes
+
+* clone configuration instead of creating a new one ([80b3989](https://github.com/gravitee-io/gravitee-plugin/commit/80b3989161b10ad7ee6ff13d6131b7d4c76d11e9))
+
 # [2.2.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.2...2.2.0) (2023-11-10)
 
 
