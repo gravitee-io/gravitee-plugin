@@ -16,10 +16,11 @@
 package io.gravitee.plugin.core.spring;
 
 import io.gravitee.common.event.EventManager;
-import io.gravitee.plugin.core.api.*;
-import io.gravitee.plugin.core.internal.*;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import io.gravitee.plugin.core.api.PluginHandler;
+import io.gravitee.plugin.core.internal.PluginContextFactoryImpl;
+import io.gravitee.plugin.core.internal.PluginEventListener;
 import java.util.Collection;
-import java.util.concurrent.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,29 +33,6 @@ import org.springframework.core.env.Environment;
 @Configuration
 public class PluginConfiguration {
 
-    public static final int PARALLELISM = Runtime.getRuntime().availableProcessors() * 2;
-
-    @Bean
-    public PluginRegistryConfiguration pluginRegistryConfiguration() {
-        return new PluginRegistryConfiguration();
-    }
-
-    @Bean
-    public PluginRegistry pluginRegistry(
-        PluginRegistryConfiguration pluginRegistryConfiguration,
-        Environment environement,
-        @Qualifier("corePluginExecutor") ExecutorService executorService,
-        EventManager eventManager
-    ) {
-        return new PluginRegistryImpl(pluginRegistryConfiguration, environement, executorService, eventManager);
-    }
-
-    @Bean(name = "pluginClassLoaderFactory")
-    @SuppressWarnings("rawtypes")
-    public PluginClassLoaderFactory classLoaderFactory() {
-        return new CachedPluginClassLoaderFactory<>();
-    }
-
     @Bean
     public PluginContextFactory pluginContextFactory() {
         return new PluginContextFactoryImpl();
@@ -63,42 +41,9 @@ public class PluginConfiguration {
     @Bean
     public PluginEventListener pluginEventListener(
         Collection<PluginHandler> pluginHandlers,
-        EventManager eventManager,
+        @Qualifier("pluginEventManager") EventManager eventManager,
         Environment environment
     ) {
         return new PluginEventListener(pluginHandlers, eventManager, environment);
-    }
-
-    @Bean
-    public PluginConfigurationResolver pluginConfigurationResolver() {
-        return new ReflectionBasedPluginConfigurationResolver();
-    }
-
-    @Bean
-    public static PluginHandlerBeanFactoryPostProcessor pluginHandlerBeanFactoryPostProcessor() {
-        return new PluginHandlerBeanFactoryPostProcessor();
-    }
-
-    @Bean("corePluginExecutor")
-    public ThreadPoolExecutor syncExecutor() {
-        final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-            PARALLELISM,
-            PARALLELISM,
-            60L,
-            TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(),
-            new ThreadFactory() {
-                private int counter = 0;
-
-                @Override
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, "gio.core-plugin-" + counter++);
-                }
-            }
-        );
-
-        threadPoolExecutor.allowCoreThreadTimeOut(true);
-
-        return threadPoolExecutor;
     }
 }

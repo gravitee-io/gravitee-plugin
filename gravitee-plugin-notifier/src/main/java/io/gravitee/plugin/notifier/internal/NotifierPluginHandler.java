@@ -19,14 +19,17 @@ import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.notifier.NotifierPlugin;
+import io.gravitee.plugin.notifier.spring.NotifierPluginConfiguration;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Import(NotifierPluginConfiguration.class)
 public class NotifierPluginHandler extends AbstractSimplePluginHandler<NotifierPlugin> {
 
     @Autowired

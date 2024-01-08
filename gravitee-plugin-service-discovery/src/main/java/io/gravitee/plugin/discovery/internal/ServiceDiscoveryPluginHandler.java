@@ -19,13 +19,16 @@ import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.discovery.ServiceDiscoveryPlugin;
+import io.gravitee.plugin.discovery.spring.ServiceDiscoveryPluginConfiguration;
 import java.net.URLClassLoader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Import(ServiceDiscoveryPluginConfiguration.class)
 public class ServiceDiscoveryPluginHandler extends AbstractSimplePluginHandler<ServiceDiscoveryPlugin> {
 
     @Autowired

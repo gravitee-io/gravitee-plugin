@@ -18,15 +18,18 @@ package io.gravitee.plugin.repository.internal;
 import io.gravitee.platform.repository.api.RepositoryProvider;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.platform.repository.api.Scope;
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -39,7 +42,7 @@ import org.springframework.util.Assert;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RepositoryPluginHandler extends AbstractPluginHandler implements InitializingBean {
+public class RepositoryPluginHandler extends AbstractPluginHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryPluginHandler.class);
     public static final int RETRY_DELAY_MS = 5000;
@@ -58,19 +61,22 @@ public class RepositoryPluginHandler extends AbstractPluginHandler implements In
     @Autowired
     private ApplicationContext applicationContext;
 
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
+
     private final Map<Scope, RepositoryProvider> repositories = new HashMap<>();
 
-    @Override
-    public void afterPropertiesSet() {
-        RepositoryScopeProvider scopeProvider = applicationContext.getBean(RepositoryScopeProvider.class);
+    private void initialize() {
+        if (initialized.compareAndSet(false, true)) {
+            RepositoryScopeProvider scopeProvider = applicationContext.getBean(RepositoryScopeProvider.class);
 
-        // Get all the scope handled by the plugin and check there is an associated configuration.
-        for (Scope scope : scopeProvider.getHandledScopes()) {
-            checkRepositoryConfig(scope, true);
-        }
+            // Get all the scope handled by the plugin and check there is an associated configuration.
+            for (Scope scope : scopeProvider.getHandledScopes()) {
+                checkRepositoryConfig(scope, true);
+            }
 
-        for (Scope scope : scopeProvider.getOptionalHandledScopes()) {
-            checkRepositoryConfig(scope, false);
+            for (Scope scope : scopeProvider.getOptionalHandledScopes()) {
+                checkRepositoryConfig(scope, false);
+            }
         }
     }
 
@@ -91,6 +97,7 @@ public class RepositoryPluginHandler extends AbstractPluginHandler implements In
 
     @Override
     protected void handle(Plugin plugin, Class<?> repositoryClass) {
+        initialize();
         if (plugin.deployed()) {
             try {
                 LOGGER.info("Register a new repository: {} [{}]", plugin.id(), plugin.clazz());

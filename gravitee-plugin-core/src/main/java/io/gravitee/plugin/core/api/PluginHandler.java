@@ -16,11 +16,24 @@
 package io.gravitee.plugin.core.api;
 
 /**
+ * A {@link PluginHandler} is responsible for handling the initialization of a particular plugin.
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface PluginHandler {
+    /**
+     * Indicate if the initialization of the specified plugin can be handled or not.
+     *
+     * @param plugin the plugin to handle.
+     * @return <code>true</code> if the plugin can be handled by this instance of {@link PluginHandler}, <code>false</code> otherwise.
+     */
     boolean canHandle(Plugin plugin);
 
+    /**
+     * Handle the initialization of the provided plugin.
+     *
+     * @param plugin the plugin to handle.
+     */
     void handle(Plugin plugin);
 }
