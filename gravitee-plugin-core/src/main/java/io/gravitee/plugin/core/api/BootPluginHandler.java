@@ -16,12 +16,9 @@
 package io.gravitee.plugin.core.api;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * Special {@link PluginHandler} interface that can be implemented to deal with plugin initialization that needs to occur during boot phase.
+ *
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
+ * @author GraviteeSource Team
  */
-public enum PluginEvent {
-    DEPLOYED,
-    UNDEPLOYED,
-    ENDED,
-    BOOT_DEPLOYED,
-    BOOT_ENDED,
-}
+public interface BootPluginHandler extends PluginHandler {}

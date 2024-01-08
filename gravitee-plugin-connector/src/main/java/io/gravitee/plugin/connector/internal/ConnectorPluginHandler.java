@@ -16,17 +16,20 @@
 package io.gravitee.plugin.connector.internal;
 
 import io.gravitee.plugin.connector.ConnectorPlugin;
+import io.gravitee.plugin.connector.spring.ConnectorPluginConfiguration;
 import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Import(ConnectorPluginConfiguration.class)
 public class ConnectorPluginHandler extends AbstractSimplePluginHandler<ConnectorPlugin> {
 
     @Autowired

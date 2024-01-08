@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.core.api;
+package io.gravitee.plugin.core.spring;
+
+import io.gravitee.plugin.core.api.BootPluginHandler;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * Specialized Spring post processor that detects and register {@link BootPluginHandler}.
+ *
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
+ * @author GraviteeSource Team
  */
-public enum PluginEvent {
-    DEPLOYED,
-    UNDEPLOYED,
-    ENDED,
-    BOOT_DEPLOYED,
-    BOOT_ENDED,
+@Slf4j
+public class BootPluginHandlerBeanRegistryPostProcessor extends AbstractPluginHandlerBeanRegistryPostProcessor<BootPluginHandler> {
+
+    public BootPluginHandlerBeanRegistryPostProcessor() {
+        super(BootPluginHandler.class);
+    }
 }

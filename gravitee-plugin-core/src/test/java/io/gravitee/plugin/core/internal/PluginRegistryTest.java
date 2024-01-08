@@ -20,7 +20,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 import io.gravitee.common.event.EventManager;
+import io.gravitee.plugin.core.api.BootPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginEvent;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -30,9 +32,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -51,6 +56,11 @@ class PluginRegistryTest {
     @Mock
     Environment environment;
 
+    @Mock
+    EventManager eventManager;
+
+    private List<BootPluginHandler> bootPluginHandlers;
+
     @BeforeAll
     static void beforeClass() {
         executor = Executors.newFixedThreadPool(2);
@@ -63,6 +73,7 @@ class PluginRegistryTest {
 
     @BeforeEach
     void setUp() {
+        bootPluginHandlers = new ArrayList<>();
         lenient().when(environment.getProperty(anyString(), any(), any())).thenReturn(true);
     }
 
@@ -72,7 +83,8 @@ class PluginRegistryTest {
             mock(PluginRegistryConfiguration.class),
             environment,
             executor,
-            mock(EventManager.class)
+            eventManager,
+            bootPluginHandlers
         );
         assertThatCode(pluginRegistry::start).isInstanceOf(IllegalArgumentException.class);
     }
@@ -83,7 +95,8 @@ class PluginRegistryTest {
             mock(PluginRegistryConfiguration.class),
             environment,
             executor,
-            mock(EventManager.class)
+            eventManager,
+            bootPluginHandlers
         );
         assertThatCode(pluginRegistry::start).isInstanceOf(IllegalArgumentException.class);
     }
@@ -92,17 +105,23 @@ class PluginRegistryTest {
     void start_with_empty_workspace() throws Exception {
         PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/empty-workspace/");
         pluginRegistry.start();
+
         assertThat(pluginRegistry.plugins()).isEmpty();
+        verify(eventManager).publishEvent(eq(PluginEvent.ENDED), any());
     }
 
     @Test
     void start_twice_workspace() throws Exception {
         PluginRegistryImpl pluginRegistry = spy(initPluginRegistry("/io/gravitee/plugin/workspace/"));
         pluginRegistry.start();
-        verify(pluginRegistry, atMost(1)).init();
+        assertThat(pluginRegistry.plugins()).hasSize(1);
+
+        verify(eventManager, times(pluginRegistry.plugins().size())).publishEvent(eq(PluginEvent.DEPLOYED), any());
+        verify(eventManager).publishEvent(eq(PluginEvent.ENDED), any());
 
         pluginRegistry.start();
-        verify(pluginRegistry, atMost(1)).init();
+        assertThat(pluginRegistry.plugins()).hasSize(1);
+        verifyNoMoreInteractions(eventManager);
     }
 
     @Test
@@ -189,7 +208,13 @@ class PluginRegistryTest {
         // need to the empty constructor thus redo all the config
         PluginRegistryConfiguration configuration = new PluginRegistryConfiguration();
         configuration.setPluginsPath(new String[] { getActualPath(path1), getActualPath(path2) });
-        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(configuration, environment, executor, mock(EventManager.class));
+        PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(
+            configuration,
+            environment,
+            executor,
+            mock(EventManager.class),
+            bootPluginHandlers
+        );
 
         updateModifiedTimestampCustomPlugin2();
         pluginRegistry.start();
@@ -256,12 +281,59 @@ class PluginRegistryTest {
         assertThat(plugins).isEmpty();
     }
 
+    @Test
+    void should_do_nothing_when_bootstrap_with_no_boot_plugin_handler() throws Exception {
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+        pluginRegistry.bootstrap();
+
+        verify(eventManager, never()).publishEvent(eq(PluginEvent.BOOT_DEPLOYED), any());
+        verify(eventManager).publishEvent(eq(PluginEvent.BOOT_ENDED), any());
+    }
+
+    @Test
+    void should_emit_no_boot_deployed_event_when_bootstrap_with_plugins_not_handled() throws Exception {
+        bootPluginHandlers.add(new FakeBootPluginHandler(false));
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+
+        pluginRegistry.bootstrap();
+
+        verify(eventManager, never()).publishEvent(eq(PluginEvent.BOOT_DEPLOYED), any());
+        verify(eventManager).publishEvent(eq(PluginEvent.BOOT_ENDED), any());
+    }
+
+    @Test
+    void should_emit_boot_deployed_event_when_bootstrap_with_plugins() throws Exception {
+        bootPluginHandlers.add(new FakeBootPluginHandler(true));
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+
+        pluginRegistry.bootstrap();
+
+        verify(eventManager, times(pluginRegistry.plugins().size())).publishEvent(eq(PluginEvent.BOOT_DEPLOYED), any());
+        verify(eventManager).publishEvent(eq(PluginEvent.BOOT_ENDED), any());
+    }
+
+    @Test
+    void should_emit_boot_ended_event_only_once_when_bootstrap_and_then_start() throws Exception {
+        bootPluginHandlers.add(new FakeBootPluginHandler(false));
+        PluginRegistryImpl pluginRegistry = initPluginRegistry("/io/gravitee/plugin/with-dependencies/");
+
+        pluginRegistry.bootstrap();
+        pluginRegistry.start();
+
+        verify(eventManager, never()).publishEvent(eq(PluginEvent.BOOT_DEPLOYED), any());
+        verify(eventManager).publishEvent(eq(PluginEvent.BOOT_ENDED), any());
+
+        verify(eventManager, times(pluginRegistry.plugins().size())).publishEvent(eq(PluginEvent.DEPLOYED), any());
+        verify(eventManager).publishEvent(eq(PluginEvent.ENDED), any());
+    }
+
     private PluginRegistryImpl initPluginRegistry(String path) {
         PluginRegistryImpl pluginRegistry = new PluginRegistryImpl(
             mock(PluginRegistryConfiguration.class),
             environment,
             executor,
-            mock(EventManager.class)
+            eventManager,
+            bootPluginHandlers
         );
         pluginRegistry.setWorkspacesPath(getActualPath(path));
         return pluginRegistry;
@@ -279,5 +351,21 @@ class PluginRegistryTest {
         Path pluginFile = Paths.get(getActualPath(path)).resolve("custom-plugin-2.0.0-SNAPSHOT.zip");
         Files.setLastModifiedTime(pluginFile, FileTime.from(Instant.now()));
         assertThat(PluginRegistryImpl.getFileTimestamp(pluginFile)).isGreaterThan(PluginRegistryImpl.getFileTimestamp(pluginFileOlder));
+    }
+
+    @AllArgsConstructor
+    private static class FakeBootPluginHandler implements BootPluginHandler {
+
+        private final boolean canHandle;
+
+        @Override
+        public boolean canHandle(Plugin plugin) {
+            return canHandle;
+        }
+
+        @Override
+        public void handle(Plugin plugin) {
+            // Ignore.
+        }
     }
 }

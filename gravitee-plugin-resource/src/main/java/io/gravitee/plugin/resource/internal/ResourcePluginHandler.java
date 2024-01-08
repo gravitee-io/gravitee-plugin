@@ -19,14 +19,17 @@ import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.resource.ResourcePlugin;
+import io.gravitee.plugin.resource.spring.ResourcePluginConfiguration;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Import(ResourcePluginConfiguration.class)
 public class ResourcePluginHandler extends AbstractSimplePluginHandler<ResourcePlugin> {
 
     @Autowired

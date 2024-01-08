@@ -25,30 +25,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * Plugin event listener that listens to {@link PluginEvent#BOOT_DEPLOYED} and {@link PluginEvent#BOOT_ENDED} to deploy plugins during boot phase.
+ *
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Slf4j
-public class PluginEventListener extends AbstractPluginEventListener {
+public class BootPluginEventListener extends AbstractPluginEventListener {
 
-    public PluginEventListener(Collection<PluginHandler> pluginHandlers, EventManager eventManager, Environment environment) {
+    public BootPluginEventListener(Collection<PluginHandler> pluginHandlers, EventManager eventManager, Environment environment) {
         super(pluginHandlers, eventManager, environment);
     }
 
     @Override
     public void onEvent(Event<PluginEvent, Plugin> event) {
         switch (event.type()) {
-            case DEPLOYED:
-                log.debug("Receive an event for plugin {} [{}]", event.content().id(), event.type());
+            case BOOT_DEPLOYED -> {
+                log.debug("Receive an event for boot plugin {} [{}]", event.content().id(), event.type());
                 addPlugin(event.content());
-                break;
-            case ENDED:
-                log.info("All plugins have been loaded. Installing...");
+            }
+            case BOOT_ENDED -> {
+                log.info("All boot plugins have been loaded. Installing...");
                 deployPlugins();
-                break;
-            case UNDEPLOYED:
-                // no op
-                break;
+            }
         }
     }
 }

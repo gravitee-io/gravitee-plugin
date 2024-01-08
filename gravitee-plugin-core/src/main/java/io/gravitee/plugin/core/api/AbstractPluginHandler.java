@@ -57,23 +57,29 @@ public abstract class AbstractPluginHandler implements PluginHandler {
 
                 if (pluginDeploymentContext.isPluginDeployable(pluginManifest.feature())) {
                     handle(plugin, pluginClass);
+                    logger.info("Plugin '{}' installed.", plugin.id());
                 } else {
                     ((PluginImpl) plugin).setDeployed(false);
                     handle(plugin, pluginClass);
-                    logger.warn("Plugin {} detected but not activated", plugin.id());
+                    logger.warn("Plugin '{}' detected but not activated.", plugin.id());
                 }
             } catch (Throwable t) {
-                logger.error("An error occurs while installing plugin: {} [{}]", plugin.id(), plugin.clazz(), t);
                 if (classloader instanceof URLClassLoader) {
                     try {
                         ((URLClassLoader) classloader).close();
-                    } catch (IOException e) {}
+                    } catch (IOException e) {
+                        // Ignored.
+                    }
                 }
                 if (classloader instanceof PluginClassLoader) {
                     try {
                         ((PluginClassLoader) classloader).close();
-                    } catch (IOException e) {}
+                    } catch (IOException e) {
+                        // Ignored.
+                    }
                 }
+
+                throw new RuntimeException("An error occurred while installing plugin: " + plugin.id() + " [" + plugin.clazz() + " ]", t);
             }
         } else {
             logger.info("Installation skipped for: {} [{}]", plugin.id(), plugin.clazz());
@@ -82,7 +88,7 @@ public abstract class AbstractPluginHandler implements PluginHandler {
 
     private boolean isEnabled(Plugin plugin) {
         boolean enabled = environment.getProperty(type() + '.' + plugin.id() + ".enabled", Boolean.class, true);
-        logger.debug("Plugin {} is enabled: {}", plugin.id(), enabled);
+        logger.debug("Plugin '{}' is enabled: {}", plugin.id(), enabled);
         return enabled;
     }
 

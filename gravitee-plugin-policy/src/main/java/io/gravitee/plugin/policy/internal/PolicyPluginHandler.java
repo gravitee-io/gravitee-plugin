@@ -19,6 +19,7 @@ import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.policy.PolicyPlugin;
+import io.gravitee.plugin.policy.spring.PolicyPluginConfiguration;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnRequestContent;
 import io.gravitee.policy.api.annotations.OnResponse;
@@ -33,11 +34,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.reflections.ReflectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Import(PolicyPluginConfiguration.class)
 public class PolicyPluginHandler extends AbstractSimplePluginHandler<PolicyPlugin> {
 
     @Autowired
