@@ -1,3 +1,17 @@
+# [3.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.1...3.0.0) (2024-01-16)
+
+
+### Features
+
+* introduce boot plugin concept ([20902a6](https://github.com/gravitee-io/gravitee-plugin/commit/20902a644aa822e7e5fb096f0bcf17aa839f6a4e))
+
+
+### BREAKING CHANGES
+
+* works with gravitee-node >= 6
+
+https://gravitee.atlassian.net/browse/ARCHI-297
+
 ## [2.2.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.0...2.2.1) (2024-01-08)
 
 
