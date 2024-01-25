@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/3.0.0...3.1.0) (2024-01-25)
+
+
+### Features
+
+* use latest bom version ([90a6269](https://github.com/gravitee-io/gravitee-plugin/commit/90a62691744076fb3ef95a3638f0240bf493e639))
+
 # [3.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.1...3.0.0) (2024-01-16)
 
 
