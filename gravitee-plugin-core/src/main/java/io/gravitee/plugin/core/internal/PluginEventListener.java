@@ -90,8 +90,7 @@ public class PluginEventListener extends AbstractService<PluginEventListener> im
                 .sorted(
                     Comparator
                         .<Plugin>comparingInt(o -> o.manifest().priority())
-                        .thenComparing(new PluginComparator())
-                        .thenComparing(new SecretProviderPluginComparator())
+                        .thenComparing(new PluginComparator(environment.getProperty("secrets.loadFirst")))
                 )
                 .toList();
 
@@ -170,17 +169,31 @@ public class PluginEventListener extends AbstractService<PluginEventListener> im
         }
     }
 
-    private static class PluginComparator implements Comparator<Plugin> {
+    protected static class PluginComparator implements Comparator<Plugin> {
+
+        private final String loadFirst;
+
+        public PluginComparator(String loadFirst) {
+            this.loadFirst = loadFirst;
+        }
 
         @Override
         public int compare(Plugin o1, Plugin o2) {
-            Integer pos1 = pluginPriority.indexOf(o1.type());
-            Integer pos2 = pluginPriority.indexOf(o2.type());
+            if (loadFirst != null && o1.manifest().type().equalsIgnoreCase(SECRET_PROVIDER)) {
+                if (o1.manifest().id().equals(loadFirst)) {
+                    return -1;
+                } else if (o2.manifest().id().equals(loadFirst)) {
+                    return 1;
+                }
+            }
+
+            int pos1 = pluginPriority.indexOf(o1.type());
+            int pos2 = pluginPriority.indexOf(o2.type());
 
             if (pos1 >= 0) {
                 if (pos2 >= 0) {
                     // The plugin are both defined in the priority list. Respect the order defined.
-                    return pos1.compareTo(pos2);
+                    return Integer.compare(pos1, pos2);
                 }
 
                 // The second plugin is not defined in the priority list, plugin 1 takes precedence.
@@ -193,23 +206,6 @@ public class PluginEventListener extends AbstractService<PluginEventListener> im
             }
 
             // Both plugins are not in the priority list, keep the order unchanged.
-            return 0;
-        }
-    }
-
-    private class SecretProviderPluginComparator implements Comparator<Plugin> {
-
-        private final String loadedFirst;
-
-        public SecretProviderPluginComparator() {
-            this.loadedFirst = environment.getProperty("secrets.loadFirst");
-        }
-
-        @Override
-        public int compare(Plugin o1, Plugin o2) {
-            if (loadedFirst != null && Objects.equals(o1.manifest().type(), SECRET_PROVIDER) && o1.manifest().id().equals(loadedFirst)) {
-                return -1;
-            }
             return 0;
         }
     }
