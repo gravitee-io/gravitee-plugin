@@ -16,6 +16,7 @@
 package io.gravitee.plugin.core.internal;
 
 import static io.gravitee.plugin.core.api.PluginEvent.DEPLOYED;
+import static io.gravitee.plugin.core.internal.PluginEventListener.SECRET_PROVIDER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +30,7 @@ import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -110,7 +112,7 @@ class PluginEventListenerTest {
 
     @Test
     void should_load_secret_provider_first() {
-        final Plugin plugin_1 = createPlugin("plugin1", "secret-provider", null);
+        final Plugin plugin_1 = createPlugin("plugin1", SECRET_PROVIDER, null);
         final Plugin plugin_2 = createPlugin("plugin2", "cluster", null);
         final Plugin plugin_3 = createPlugin("plugin3", "foo", null);
 
@@ -131,9 +133,9 @@ class PluginEventListenerTest {
     @ParameterizedTest
     @CsvSource({ "plugin1,plugin2,plugin3", "plugin2,plugin1,plugin3", "plugin3,plugin2,plugin1" })
     void should_load_specific_secret_provider_first(String firstPlugin, String secondPlugin, String thirdPlugin) {
-        final Plugin plugin_1 = createPlugin(firstPlugin, "secret-provider", null);
-        final Plugin plugin_2 = createPlugin(secondPlugin, "secret-provider", null);
-        final Plugin plugin_3 = createPlugin(thirdPlugin, "secret-provider", null);
+        final Plugin plugin_1 = createPlugin(firstPlugin, SECRET_PROVIDER, null);
+        final Plugin plugin_2 = createPlugin(secondPlugin, SECRET_PROVIDER, null);
+        final Plugin plugin_3 = createPlugin(thirdPlugin, SECRET_PROVIDER, null);
         when(environment.getProperty("secrets.loadFirst")).thenReturn("plugin1");
 
         // publish in random order
@@ -162,5 +164,37 @@ class PluginEventListenerTest {
             manifestProperties.put(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, dependency);
         }
         return new PluginImpl(PluginManifestFactory.create(manifestProperties));
+    }
+
+    @Test
+    /*
+     In some not well identified cases, the plugins sort ends with this exception: 'java.lang.IllegalArgumentException: Comparison method violates its general contract!'
+     We managed to reproduce this exception with a list of plugins containing multiple times the same entities.
+     To avoid this, we had to fix the SecretProviderPluginComparator, so it returns also positive values
+     */
+    void should_compare_secret_provider_plugin() {
+        final Plugin plugin_01 = createPlugin("plugin_01", SECRET_PROVIDER, null);
+        final Plugin plugin_02 = createPlugin("plugin_02", SECRET_PROVIDER, null);
+        final Plugin plugin_03 = createPlugin("plugin_03", "cache", null);
+        final ArrayList<Plugin> plugins = new ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            plugins.add(plugin_01);
+            plugins.add(plugin_02);
+            plugins.add(plugin_03);
+        }
+
+        List<Plugin> sortedList = plugins
+            .stream()
+            .sorted(
+                Comparator
+                    .<Plugin>comparingInt(o -> o.manifest().priority())
+                    .thenComparing(new PluginEventListener.PluginComparator("plugin_01"))
+            )
+            .toList();
+
+        assertThat(sortedList).hasSize(90);
+        for (int i = 0; i < 30; i++) {
+            assertThat(sortedList.get(i).id()).isEqualTo("plugin_01");
+        }
     }
 }
