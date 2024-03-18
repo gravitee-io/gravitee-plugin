@@ -1,3 +1,10 @@
+# [3.2.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/3.1.0...3.2.0-alpha.1) (2024-03-18)
+
+
+### Features
+
+* add new integration provider plugin type ([d7d814c](https://github.com/gravitee-io/gravitee-plugin/commit/d7d814c0dddd0cf2a4133db618c50a17d802993c))
+
 # [3.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/3.0.0...3.1.0) (2024-01-25)
 
 
