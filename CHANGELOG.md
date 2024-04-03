@@ -1,3 +1,15 @@
+# [4.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/3.1.0...4.0.0) (2024-04-03)
+
+
+### chore
+
+* update cockpit api version ([181413b](https://github.com/gravitee-io/gravitee-plugin/commit/181413b5cc4774414db8e24479c27fcea0529013))
+
+
+### BREAKING CHANGES
+
+* this requires to use latest cockpit connector plugin
+
 # [3.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/3.0.0...3.1.0) (2024-01-25)
 
 
