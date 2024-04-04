@@ -29,6 +29,7 @@ import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
@@ -76,35 +77,59 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
     private final PluginRegistryConfiguration configuration;
 
     private final Environment environment;
-
     private final ExecutorService executor;
-
     private final EventManager eventManager;
-
-    private boolean init = false;
+    private final List<BootPluginHandler> bootPluginHandlerList;
 
     private final List<Plugin> plugins = new ArrayList<>();
+    private final Map<String, Map<String, Plugin>> pluginByType = new ConcurrentHashMap<>();
 
     private String[] workspacesPath;
+    private boolean init = false;
 
     public void setWorkspacesPath(String workspacePath) {
         this.workspacesPath = new String[] { workspacePath };
     }
 
     @Override
-    protected void doStart() throws Exception {
-        super.doStart();
+    public void bootstrap() throws Exception {
+        init();
 
-        if (!init) {
-            log.info("Initializing plugin registry.");
-            this.init();
-            log.info("Plugins have been loaded and installed.");
-        } else {
-            log.warn("Plugin registry has already been initialized.");
-        }
+        // Publish deploy and end events for boot plugins only.
+        plugins
+            .stream()
+            .filter(plugin -> bootPluginHandlerList.stream().anyMatch(bootPluginHandler -> bootPluginHandler.canHandle(plugin)))
+            .forEach(plugin -> eventManager.publishEvent(PluginEvent.BOOT_DEPLOYED, plugin));
+
+        eventManager.publishEvent(PluginEvent.BOOT_ENDED, null);
     }
 
-    public void init() throws Exception {
+    @Override
+    protected void doStart() throws Exception {
+        if (lifecycle.started()) {
+            return;
+        }
+
+        super.doStart();
+
+        init();
+
+        // Publish deploy and end events for all remaining plugins.
+        plugins
+            .stream()
+            .filter(plugin -> bootPluginHandlerList.stream().noneMatch(bootPluginHandler -> bootPluginHandler.canHandle(plugin)))
+            .forEach(plugin -> eventManager.publishEvent(PluginEvent.DEPLOYED, plugin));
+
+        // Publish the ENDED event when the plugins list is ready
+        eventManager.publishEvent(PluginEvent.ENDED, null);
+    }
+
+    private void init() throws Exception {
+        if (init) {
+            // Skip the initialization if already done.
+            return;
+        }
+
         String[] pluginsPath = configuration.getPluginsPath();
         if ((pluginsPath == null || pluginsPath.length == 0) && workspacesPath == null) {
             log.error("No plugin registry configured.");
@@ -119,22 +144,24 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
         this.plugins.addAll(
                 Flowable
                     .fromArray(pluginsPath)
-                    .doOnSubscribe(s -> this.init = true)
                     .flatMap(this::loadPluginsFromPath)
                     // reserve sort
                     .sorted((p1, p2) -> Math.negateExact(((Long) p1.getArchiveTimestamp()).compareTo(p2.getArchiveTimestamp())))
                     // As plugins arrive sorted by reverse file date
                     // we can exclude duplicates and keep the most recent one
                     .distinct()
-                    .doOnNext(plugin -> eventManager.publishEvent(PluginEvent.DEPLOYED, plugin))
                     .cast(Plugin.class)
                     .toList()
                     .doOnSuccess(PluginRegistryImpl::printPlugins)
+                    .doOnSuccess(allPlugins ->
+                        allPlugins.forEach(plugin ->
+                            pluginByType.computeIfAbsent(plugin.type(), k -> new ConcurrentHashMap<>()).put(plugin.id(), plugin)
+                        )
+                    )
                     .blockingGet()
             );
 
-        // Publish the ENDED event when the plugins list is ready
-        eventManager.publishEvent(PluginEvent.ENDED, null);
+        init = true;
     }
 
     private Flowable<PluginImpl> loadPluginsFromPath(final String pluginPathAsString) throws IOException {
@@ -236,7 +263,7 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
     /**
      * Check if plugin is enabled.
      * First, check in {@link PluginRegistryImpl#PLUGIN_TYPE_PROPERTY_ALIASES} plugin type has an alias for properties.
-     * Alias matches the implementation of {@link AbstractPluginHandler#type()}: plugin.type will be "service" but pluginHandler.type will be "services".
+     * Alias matches the implementation of <code>AbstractPluginHandler.type()</code>: plugin.type will be "service" but pluginHandler.type will be "services".
      * If property is not contained based on alias, do a regular search of the property.
      *
      * @param pluginManifest the plugin manifest object
@@ -374,7 +401,15 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
 
     @Override
     public Collection<Plugin> plugins(String type) {
-        return plugins.stream().filter(pluginContext -> type.equalsIgnoreCase(pluginContext.type())).collect(Collectors.toSet());
+        final Map<String, Plugin> plugins = pluginByType.get(type);
+        return plugins != null ? plugins.values() : Collections.emptySet();
+    }
+
+    @Override
+    public Plugin get(String type, String id) {
+        final Map<String, Plugin> plugins = pluginByType.get(type);
+
+        return plugins != null ? plugins.get(id) : null;
     }
 
     static class PluginManifestVisitor extends SimpleFileVisitor<Path> {

@@ -1,3 +1,77 @@
+# [4.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/3.1.0...4.0.0) (2024-04-03)
+
+
+### chore
+
+* update cockpit api version ([181413b](https://github.com/gravitee-io/gravitee-plugin/commit/181413b5cc4774414db8e24479c27fcea0529013))
+
+
+### BREAKING CHANGES
+
+* this requires to use latest cockpit connector plugin
+
+# [3.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/3.0.0...3.1.0) (2024-01-25)
+
+
+### Features
+
+* use latest bom version ([90a6269](https://github.com/gravitee-io/gravitee-plugin/commit/90a62691744076fb3ef95a3638f0240bf493e639))
+
+# [3.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.1...3.0.0) (2024-01-16)
+
+
+### Features
+
+* introduce boot plugin concept ([20902a6](https://github.com/gravitee-io/gravitee-plugin/commit/20902a644aa822e7e5fb096f0bcf17aa839f6a4e))
+
+
+### BREAKING CHANGES
+
+* works with gravitee-node >= 6
+
+https://gravitee.atlassian.net/browse/ARCHI-297
+
+## [2.2.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.0...2.2.1) (2024-01-08)
+
+
+### Bug Fixes
+
+* clone configuration instead of creating a new one ([80b3989](https://github.com/gravitee-io/gravitee-plugin/commit/80b3989161b10ad7ee6ff13d6131b7d4c76d11e9))
+
+# [2.2.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.2...2.2.0) (2023-11-10)
+
+
+### Features
+
+* add way to get plugin by id from plugin registry ([1cf892a](https://github.com/gravitee-io/gravitee-plugin/commit/1cf892aa266400774dc8cdc4320c5d2b91eb2341))
+
+## [2.1.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.1...2.1.2) (2023-11-03)
+
+
+### Bug Fixes
+
+* **annotation-processor:** prevent exception if String property ([a9d26fe](https://github.com/gravitee-io/gravitee-plugin/commit/a9d26fed9d19143a190f34c9eb68ba1674d3e76f))
+
+## [2.1.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.1.0...2.1.1) (2023-11-03)
+
+
+### Bug Fixes
+
+* allow constant in configuration bean ([d0e934b](https://github.com/gravitee-io/gravitee-plugin/commit/d0e934b02ad724fba7660e0418093b0880ccead0))
+
+# [2.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.3...2.1.0) (2023-10-31)
+
+
+### Bug Fixes
+
+* bump gravitee-common to 3.3.3 ([9b77f12](https://github.com/gravitee-io/gravitee-plugin/commit/9b77f12a0a7f63c74978fb051fe270eec0b13431))
+
+
+### Features
+
+* add new annotation and annotation processor to generate an evaluator for configuration bean ([8d0b168](https://github.com/gravitee-io/gravitee-plugin/commit/8d0b168b654a5a7c794cd3818c2364021788647b))
+* order plugin so that secret-provider is always loaded first ([31d5edd](https://github.com/gravitee-io/gravitee-plugin/commit/31d5edd416918903d59574450a88a36bc663c3b8))
+
 ## [2.0.3](https://github.com/gravitee-io/gravitee-plugin/compare/2.0.2...2.0.3) (2023-09-14)
 
 

@@ -17,3 +17,102 @@ The Gravitee.io plugin project contains a set of classes that are used in Gravit
 * Notifiers
 * Reporters
 * ...
+
+Additionally, the plugin project offer handy annotation processors that are helpful when developing policies.
+
+== Modules
+
+=== Alert
+
+The Gravitee Plugin Alert module provides a plugin handler that detects and loads the alert plugin. It also regroups all the interfaces needed for declaring alert triggers (kind of alert definition) and sending alert event.
+It allows working seamlessly with Alert Engine but can be used for any custom external system.
+
+=== Annotation Processors
+
+The Gravitee Plugin Annotation Processors module aims to provide useful set of annotations that can be used when developing new plugins such as policies.
+For now, it provides a `@ConfigurationEvaluator` that is useful for any plugin that needs to support dynamic configuration based on context attributes and wants to do it in a conventional ways. See the https://github.com/gravitee-io/gravitee-plugin/blob/master/gravitee-plugin-annotation-processors/README.adoc[dedicated README] for details.
+
+=== Api
+
+The Gravitee Plugin Api module exposes some handy interfaces that can be implemented to influence the plugin deployments.
+
+=== Cockpit
+
+The Gravitee Plugin Cockpit module provides a plugin handler capable to load and start a https://github.com/gravitee-io/gravitee-cockpit-connectors[Cockpit Connector plugin].
+
+=== Connector (_deprecated_)
+
+The Gravitee Plugin Connector module provides a specific plugin handler that loads Gravitee APIM v3 connector plugins.
+This module is now *_deprecated_* in favor of new Entrypoint and Endpoint Connector concept that are specific to Gravitee APIM and offer support for Event Native capabilities.
+
+These new concepts come with new plugin handlers. The specific https://github.com/gravitee-io/gravitee-api-management/tree/master/gravitee-apim-plugin/gravitee-apim-plugin-entrypoint/gravitee-apim-plugin-entrypoint-handler[Entrypoint plugin handler] and https://github.com/gravitee-io/gravitee-api-management/tree/master/gravitee-apim-plugin/gravitee-apim-plugin-endpoint/gravitee-apim-plugin-endpoint-handler[Endpoint plugin handler] are now located in the APIM repository.
+
+Here are some concrete examples of the kind of plugins that can be loaded by the new plugin endpoint and entrypoint handlers:
+
+ * https://github.com/gravitee-io/gravitee-api-management/tree/master/gravitee-apim-plugin/gravitee-apim-plugin-entrypoint/gravitee-apim-plugin-entrypoint-http-proxy[Http Proxy entrypoint]
+ * https://github.com/gravitee-io/gravitee-api-management/tree/master/gravitee-apim-plugin/gravitee-apim-plugin-endpoint[Http Proxy endpoint]
+ * https://github.com/gravitee-io/gravitee-api-management/tree/master/gravitee-apim-plugin/gravitee-apim-plugin-endpoint/gravitee-apim-plugin-endpoint-mock[Mock endpoint]
+ * Kafka endpoint
+ * Mqtt5 endpoint
+ * SSE entrypoint
+ * Websocket entrypoint
+
+=== Core
+
+The Gravitee Plugin Core module offers all the core capabilities needed to load and register the plugins.
+
+=== Fetcher
+
+The Gravitee Plugin Fetcher module provides a plugin handler capable to load and start a fetcher plugin. A fetcher allows retrieving content from an external source. It is mainly intended for use on management side and is not supposed to be used by gateways.
+
+Here are some examples of concrete fetcher plugins the plugin handler can load:
+
+ * https://github.com/gravitee-io/gravitee-fetcher-git[Git fetcher]
+ * https://github.com/gravitee-io/gravitee-fetcher-github[GitHub fetcher]
+ * https://github.com/gravitee-io/gravitee-fetcher-http[HTTP fetcher]
+ * https://github.com/gravitee-io/gravitee-fetcher-gitlab[GitLab fetcher]
+ * https://github.com/gravitee-io/gravitee-fetcher-bitbucket[BitBucket fetcher]
+
+NOTE: A concrete example on how fetchers are used in Gravitee API Management is accessible in the https://documentation.gravitee.io/apim/guides/developer-portal/advanced-developer-portal-configuration/documentation#configure-a-fetcher[online documentation].
+
+=== Identity Provider
+
+The Gravitee Plugin Identity Provider module brings the ability to load identity provider plugins that can be used to implement authentication.
+
+=== Notifier
+
+The Gravitee Plugin Notifier module provides a handler to load notifier plugins. Notifier are used to send notification to a remote system.
+
+Here are some examples of notifier plugins that can be loaded by the notifier plugin handler:
+
+ * https://github.com/gravitee-io/gravitee-notifier-email[Email]
+ * https://github.com/gravitee-io/gravitee-notifier-slack[Slack]
+ * https://github.com/gravitee-io/gravitee-notifier-webhook[Webhook]
+
+NOTE: You can find how to use notifiers with Gravitee APIM in the https://documentation.gravitee.io/apim/getting-started/configuration/configure-alerts-and-notifications[online documentation].
+
+=== Policy
+
+The Gravitee Plugin Policy module provides a specific handler capable of loading all the policy plugin that are detected.
+
+There a many policy plugins that are implemented and can be loaded by the policy plugin handler.
+
+NOTE: You can find a list of all the policies available for APIM https://documentation.gravitee.io/apim/reference/policy-reference[in the online documentation].
+
+=== Repository
+
+The Gravitee Plugin Repository module implement a plugin handler that aims to detect and load repository plugins.
+
+Gravitee products rely on a repository layer to store all the necessary data. They are implemented as repository plugin that allows for implementing support for different database technologies such as MongoDB or JDBC.
+
+=== Resource
+
+The Gravitee Plugin Resource module provides a resource plugin handler in charge of detecting and loading all the resource plugins.
+
+A resource plugin is a generic concept that can be implemented by each product. For example, APIM makes use of cache resources or oauth2 resources. There can be several implementations for each type of resource. For example, oauth2 resource can have a generic implementation as well as a Gravitee AM implementation or a KeyCloack implementation.
+
+=== Service Discovery
+
+The Gravitee Plugin Service Discovery module allows for loading service discovery plugin by providing a specific plugin handler.
+
+Service discovery plugins are useful to dynamically register or deregister endpoints. There is currently one implementation supporting Consul.

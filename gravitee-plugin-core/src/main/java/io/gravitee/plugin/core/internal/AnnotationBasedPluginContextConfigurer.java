@@ -126,7 +126,9 @@ public class AnnotationBasedPluginContextConfigurer implements PluginContextConf
     @Override
     public void registerBeanFactoryPostProcessor() {
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
-        configurer.setIgnoreUnresolvablePlaceholders(true);
+
+        // We cannot ignore unresolvable placeholders unless custom converter are ignored and it becomes impossible to evaluate some properties (e.g: secret).
+        configurer.setIgnoreUnresolvablePlaceholders(false);
         configurer.setEnvironment(pluginContext.getEnvironment());
         pluginContext.addBeanFactoryPostProcessor(configurer);
     }

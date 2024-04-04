@@ -19,13 +19,16 @@ import io.gravitee.plugin.core.api.AbstractSimplePluginHandler;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.fetcher.FetcherPlugin;
+import io.gravitee.plugin.fetcher.spring.FetcherPluginConfiguration;
 import java.net.URLClassLoader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Import(FetcherPluginConfiguration.class)
 public class FetcherPluginHandler extends AbstractSimplePluginHandler<FetcherPlugin> {
 
     @Autowired

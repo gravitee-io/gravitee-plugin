@@ -22,4 +22,6 @@ public enum PluginEvent {
     DEPLOYED,
     UNDEPLOYED,
     ENDED,
+    BOOT_DEPLOYED,
+    BOOT_ENDED,
 }
