@@ -1,3 +1,11 @@
+## [4.0.2](https://github.com/gravitee-io/gravitee-plugin/compare/4.0.1...4.0.2) (2024-04-04)
+
+
+### Bug Fixes
+
+* **deps:** update dependency io.gravitee:gravitee-bom to v7.0.18 ([7e989bf](https://github.com/gravitee-io/gravitee-plugin/commit/7e989bf894008f5011f4d66fe743786b4eae2e35))
+* **deps:** update dependency io.gravitee.cockpit:gravitee-cockpit-api to v3.0.8 ([c7186ef](https://github.com/gravitee-io/gravitee-plugin/commit/c7186ef17f12901c687c3b982cb24f02d3eb2d1b))
+
 ## [4.0.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.0.0...4.0.1) (2024-04-04)
 
 
