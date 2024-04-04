@@ -29,14 +29,14 @@
 
     <groupId>io.gravitee.plugin</groupId>
     <artifactId>gravitee-plugin</artifactId>
-    <version>3.1.0</version>
+    <version>4.0.0</version>
     <packaging>pom</packaging>
     <name>Gravitee.io APIM - Plugin</name>
 
     <properties>
         <gravitee-bom.version>7.0.0</gravitee-bom.version>
         <gravitee-common.version>3.3.3</gravitee-common.version>
-        <gravitee-gateway-api.version>3.1.0</gravitee-gateway-api.version>
+        <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
         <gravitee-policy-api.version>1.11.0</gravitee-policy-api.version>
         <gravitee-resource-api.version>1.1.0</gravitee-resource-api.version>
         <gravitee-fetcher-api.version>1.4.0</gravitee-fetcher-api.version>
@@ -46,7 +46,7 @@
         <gravitee-platform-repository-api.version>1.3.0</gravitee-platform-repository-api.version>
         <reflections.version>0.9.11</reflections.version>
         <gravitee-identityprovider-api.version>1.0.0</gravitee-identityprovider-api.version>
-        <gravitee-cockpit-api.version>2.0.0</gravitee-cockpit-api.version>
+        <gravitee-cockpit-api.version>3.0.6</gravitee-cockpit-api.version>
         <gravitee-connector-api.version>1.1.4</gravitee-connector-api.version>
     </properties>
 
