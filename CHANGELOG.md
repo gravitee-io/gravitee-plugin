@@ -1,3 +1,10 @@
+## [2.2.2](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.1...2.2.2) (2024-04-09)
+
+
+### Bug Fixes
+
+* simplify plugins comparison ([212771c](https://github.com/gravitee-io/gravitee-plugin/commit/212771ca9525f5d54cb86e08c9af2f4dbe880ca6))
+
 ## [2.2.1](https://github.com/gravitee-io/gravitee-plugin/compare/2.2.0...2.2.1) (2024-01-08)
 
 
