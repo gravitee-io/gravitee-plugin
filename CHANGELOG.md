@@ -1,3 +1,10 @@
+# [4.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.0.3...4.1.0) (2024-06-19)
+
+
+### Features
+
+* add new integration provider plugin type ([7b8e478](https://github.com/gravitee-io/gravitee-plugin/commit/7b8e47844bb6b06fe1cae21825603399b862cfa5))
+
 ## [4.0.3](https://github.com/gravitee-io/gravitee-plugin/compare/4.0.2...4.0.3) (2024-04-09)
 
 
