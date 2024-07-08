@@ -33,7 +33,7 @@
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <auto-service.version>1.1.1</auto-service.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
-        <mustache.version>0.9.10</mustache.version>
+        <mustache.version>0.9.14</mustache.version>
         <compile-testing.version>0.21.0</compile-testing.version>
     </properties>
 
