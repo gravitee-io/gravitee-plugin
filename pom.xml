@@ -49,6 +49,7 @@
         <gravitee-cockpit-api.version>3.0.8</gravitee-cockpit-api.version>
         <gravitee-connector-api.version>1.1.4</gravitee-connector-api.version>
         <gravitee-integration-api.version>1.0.0</gravitee-integration-api.version>
+        <gravitee-cloudservice-api.version>1.0.0-SNAPSHOT</gravitee-cloudservice-api.version>
     </properties>
 
     <modules>
@@ -66,6 +67,7 @@
         <module>gravitee-plugin-connector</module>
         <module>gravitee-plugin-annotation-processors</module>
         <module>gravitee-plugin-integrationprovider</module>
+        <module>gravitee-plugin-cloudserviceprovider</module>
     </modules>
 
     <dependencyManagement>
@@ -142,6 +144,11 @@
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
                 <artifactId>gravitee-plugin-annotation-processors</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-cloudserviceprovider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -222,6 +229,12 @@
                 <groupId>io.gravitee.integration</groupId>
                 <artifactId>gravitee-integration-api</artifactId>
                 <version>${gravitee-integration-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.cloudservice</groupId>
+                <artifactId>gravitee-cloudservice-api</artifactId>
+                <version>${gravitee-cloudservice-api.version}</version>
             </dependency>
 
             <!-- Reflection utils -->
