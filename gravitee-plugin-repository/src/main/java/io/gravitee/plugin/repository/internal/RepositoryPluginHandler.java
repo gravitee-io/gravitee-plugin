@@ -65,6 +65,8 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
 
     private final Map<Scope, RepositoryProvider> repositories = new HashMap<>();
 
+    private final RepositoryTypeReader repositoryTypeReader = new RepositoryTypeReader();
+
     private void initialize() {
         if (initialized.compareAndSet(false, true)) {
             RepositoryScopeProvider scopeProvider = applicationContext.getBean(RepositoryScopeProvider.class);
@@ -211,7 +213,7 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
     }
 
     private String getRepositoryType(Scope scope) {
-        return environment.getProperty(scope.getName() + ".type");
+        return repositoryTypeReader.getRepositoryType(environment, scope);
     }
 
     private <T> T createInstance(Class<T> clazz) throws Exception {

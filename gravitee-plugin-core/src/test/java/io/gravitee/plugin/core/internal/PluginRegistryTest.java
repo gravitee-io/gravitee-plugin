@@ -164,6 +164,8 @@ class PluginRegistryTest {
 
     @Test
     void start_with_valid_workspace_with_one_dependency_with_alias_disabled() throws Exception {
+        when(environment.containsProperty("policies.my-policy-2.enabled")).thenReturn(true);
+        when(environment.containsProperty("policies.my-policy-3.enabled")).thenReturn(true);
         when(environment.containsProperty("policies.my-policy-1.enabled")).thenReturn(true);
         when(environment.getProperty("policies.my-policy-1.enabled", Boolean.class, true)).thenReturn(false);
 
