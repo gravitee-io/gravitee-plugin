@@ -1,3 +1,10 @@
+# [4.2.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.1.0...4.2.0) (2024-09-13)
+
+
+### Features
+
+* introduced 'repository' prefix for its properties ([d0d16ef](https://github.com/gravitee-io/gravitee-plugin/commit/d0d16ef6e6e75e82ae571636365e98004f702abf))
+
 # [4.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.0.3...4.1.0) (2024-06-19)
 
 
