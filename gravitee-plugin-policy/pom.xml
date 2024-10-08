@@ -35,7 +35,6 @@
         <dependency>
             <groupId>io.gravitee.plugin</groupId>
             <artifactId>gravitee-plugin-core</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
