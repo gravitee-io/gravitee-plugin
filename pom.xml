@@ -81,37 +81,17 @@
             <!-- Self import modules -->
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-policy</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-connector</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-resource</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-fetcher</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.gravitee.plugin</groupId>
                 <artifactId>gravitee-plugin-alert</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-annotation-processors</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -121,17 +101,17 @@
             </dependency>
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-service-discovery</artifactId>
+                <artifactId>gravitee-plugin-connector</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-notifier</artifactId>
+                <artifactId>gravitee-plugin-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-repository</artifactId>
+                <artifactId>gravitee-plugin-fetcher</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -141,7 +121,32 @@
             </dependency>
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
-                <artifactId>gravitee-plugin-annotation-processors</artifactId>
+                <artifactId>gravitee-plugin-integrationprovider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-notifier</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-policy</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-repository</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-resource</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-service-discovery</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
