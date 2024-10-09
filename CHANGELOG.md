@@ -1,3 +1,10 @@
+## [4.2.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.2.0...4.2.1) (2024-10-09)
+
+
+### Bug Fixes
+
+* declare all modules in dependency management ([d1f9b7c](https://github.com/gravitee-io/gravitee-plugin/commit/d1f9b7c6ab7987fd032b7b34d7f8b45bf7ef7a7b))
+
 # [4.2.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.1.0...4.2.0) (2024-09-13)
 
 
