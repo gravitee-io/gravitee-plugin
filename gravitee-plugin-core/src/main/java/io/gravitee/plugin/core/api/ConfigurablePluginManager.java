@@ -22,9 +22,22 @@ import java.io.IOException;
  * @author GraviteeSource Team
  */
 public interface ConfigurablePluginManager<T extends ConfigurablePlugin> extends PluginManager<T> {
+    /**
+     * Get the schema with the property key `PluginManifestProperties.SCHEMA_PROPERTY`. If the property does not exist, the first file found in the `schemas` folder will be returned.
+     * @param pluginId the plugin id
+     * @return the schema as a {@link String}
+     * @throws IOException
+     */
     String getSchema(String pluginId) throws IOException;
 
-    String getSchema(String pluginId, boolean includeDisabled) throws IOException;
+    /**
+     * Get the schema with the property key `PluginManifestProperties.SCHEMA_PROPERTY`. If the property does not exist, the first file found in the `schemas` folder will be returned.
+     * @param pluginId the plugin id
+     * @param includeNotDeployed whether to check for not deployed plugins
+     * @return the schema as a {@link String}
+     * @throws IOException
+     */
+    String getSchema(String pluginId, boolean includeNotDeployed) throws IOException;
 
     /**
      * Get schema in a subfolder.
@@ -32,8 +45,27 @@ public interface ConfigurablePluginManager<T extends ConfigurablePlugin> extends
      * @param subFolder is the sub folder on which looks for the schema. Example: <code>getSchema("webhook", "subscriptions")</code>
      * @return the schema as a {@link String}
      * @throws IOException
+     * @deprecated use {@link #getSchema(String pluginId, String property, boolean fallbackToSchema, boolean includeNotDeployed)} instead.
+     * We prefer not to link the folder structure but a property key with the main product. This allows to have a plugin.properties file containing a visible configuration for the plugin.
      */
+    @Deprecated
     String getSchema(String pluginId, String subFolder) throws IOException;
 
-    String getSchema(String pluginId, String subFolder, boolean includeDisabled) throws IOException;
+    /**
+     * @deprecated use {@link #getSchema(String pluginId, String property, boolean fallbackToSchema, boolean includeNotDeployed)} instead.
+     * We prefer not to link the folder structure but a property key with the main product. This allows to have a plugin.properties file containing a visible configuration for the plugin.
+     */
+    @Deprecated
+    String getSchema(String pluginId, String subFolder, boolean includeNotDeployed) throws IOException;
+
+    /**
+     * Get the schema with the specified propertyKey.
+     * @param pluginId the plugin id
+     * @param propertyKey is the property key on which looks for the schema. ex: `native_kafka.schemas` or `schema.subscriptions`
+     * @param fallbackToSchema if true and the propertyKey does not exist, the default {@link #getSchema(String, boolean)} will be called.
+     * @param includeNotDeployed whether to check for not deployed plugins
+     * @return
+     * @throws IOException
+     */
+    String getSchema(String pluginId, String propertyKey, boolean fallbackToSchema, boolean includeNotDeployed) throws IOException;
 }

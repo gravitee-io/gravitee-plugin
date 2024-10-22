@@ -15,6 +15,7 @@
  */
 package io.gravitee.plugin.core.api;
 
+import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -37,9 +38,34 @@ public interface PluginManager<T extends Plugin> {
 
     String getIcon(String pluginId, boolean includeNotDeployed) throws IOException;
 
+    /**
+     * Get the schema with the property key `PluginManifestProperties.DOCUMENTATION_PROPERTY`. If the property does not exist, the first file found in the `docs` folder will be returned.
+     * @param pluginId the plugin id
+     * @return the documentation as a {@link String}
+     * @throws IOException
+     */
     String getDocumentation(String pluginId) throws IOException;
 
+    /**
+     * Get the schema with the property key `PluginManifestProperties.DOCUMENTATION_PROPERTY`. If the property does not exist, the first file found in the `docs` folder will be returned.
+     * @param pluginId the plugin id
+     * @param includeNotDeployed whether to check for not deployed plugins
+     * @return the documentation as a {@link String}
+     * @throws IOException
+     */
     String getDocumentation(String pluginId, boolean includeNotDeployed) throws IOException;
+
+    /**
+     * Get documentation with a specific propertyKey.
+     * @param pluginId the plugin id
+     * @param propertyKey the property key to look for the documentation. e.g. `native_kafka.documentation`
+     * @param fallbackToDocumentation if true and the propertyKey does not exist, the default {@link #getDocumentation(String, boolean)} will be called.
+     * @param includeNotDeployed whether to check for not deployed plugins
+     * @return the documentation as a {@link String}
+     * @throws IOException
+     */
+    String getDocumentation(String pluginId, String propertyKey, boolean fallbackToDocumentation, boolean includeNotDeployed)
+        throws IOException;
 
     String getCategory(String pluginId) throws IOException;
 

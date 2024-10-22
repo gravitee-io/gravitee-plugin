@@ -43,10 +43,11 @@ class AbstractConfigurablePluginManagerTest {
 
     static final String FAKE_PLUGIN = "fake-plugin";
     AbstractConfigurablePluginManager<FakePlugin> cut;
-    static Map<String, String> properties = new HashMap<>();
+    static Map<String, String> properties;
 
     @BeforeEach
     public void setUp() {
+        properties = new HashMap<>();
         cut =
             new AbstractConfigurablePluginManager<>() {
                 @Override
@@ -66,6 +67,15 @@ class AbstractConfigurablePluginManagerTest {
     void should_get_plugin_if_plugin_not_deployed_but_include_not_deployed() {
         cut.register(new FakePlugin(false));
         Assertions.assertNotNull(cut.get(FAKE_PLUGIN, true));
+    }
+
+    @Test
+    void should_get_schema_file_with_default_property() throws IOException {
+        properties.put("schema", "subfolder_A/schema-form-v1.json");
+
+        cut.register(new FakePlugin());
+        final String schema = cut.getSchema(FAKE_PLUGIN);
+        assertEquals("{\n    \"schema\": \"subfolder_A / BIS configuration\"\n}\n", schema);
     }
 
     @Test
@@ -90,9 +100,52 @@ class AbstractConfigurablePluginManagerTest {
     }
 
     @Test
+    void should_get_schema_file_with_property_key() throws IOException {
+        properties.put("schema.sharedConfiguration", "subfolder_A/schema-form-v1.json");
+
+        cut.register(new FakePlugin());
+        final String schema = cut.getSchema(FAKE_PLUGIN, "schema.sharedConfiguration", false, false);
+        assertEquals("{\n    \"schema\": \"subfolder_A / BIS configuration\"\n}\n", schema);
+    }
+
+    @Test
+    void should_get_schema_file_with_property_key_and_fallback() throws IOException {
+        properties.put("schema", "subfolder_1/subfolder_2/schema-form.json");
+
+        cut.register(new FakePlugin());
+        final String schema = cut.getSchema(FAKE_PLUGIN, "http_message.schema", true, false);
+        assertEquals("{\n    \"schema\": \"subfolder_2\"\n}\n", schema);
+    }
+
+    @Test
+    void should_get_documentation_file_with_default_property() throws IOException {
+        properties.put("documentation", "doc_bis.md");
+
+        cut.register(new FakePlugin());
+        final String schema = cut.getDocumentation(FAKE_PLUGIN);
+        assertEquals("plugin BIS documentation", schema);
+    }
+
+    @Test
     void should_get_first_documentation_file() throws IOException {
         cut.register(new FakePlugin());
         final String schema = cut.getDocumentation(FAKE_PLUGIN);
+        assertEquals("plugin documentation", schema);
+    }
+
+    @Test
+    void should_get_documentation_file_with_property_key() throws IOException {
+        properties.put("native_kafka.documentation", "doc_bis.md");
+
+        cut.register(new FakePlugin());
+        final String schema = cut.getDocumentation(FAKE_PLUGIN, "native_kafka.documentation", true, false);
+        assertEquals("plugin BIS documentation", schema);
+    }
+
+    @Test
+    void should_get_documentation_file_with_property_key_and_fallback() throws IOException {
+        cut.register(new FakePlugin());
+        final String schema = cut.getDocumentation(FAKE_PLUGIN, "http_message.documentation", true, false);
         assertEquals("plugin documentation", schema);
     }
 
