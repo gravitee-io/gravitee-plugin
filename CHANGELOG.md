@@ -1,3 +1,10 @@
+# [4.3.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.2.1...4.3.0) (2024-10-28)
+
+
+### Features
+
+* improve getDocumentation & getSchema with default or custom propertyKey from plugin.properties ([bda5be4](https://github.com/gravitee-io/gravitee-plugin/commit/bda5be4ef45b541fc9ae30e3d1f197a65dc17f92))
+
 ## [4.2.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.2.0...4.2.1) (2024-10-09)
 
 
