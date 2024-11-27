@@ -49,6 +49,9 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     @Override
     public String getSchema(String pluginId, boolean includeNotDeployed) throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
+        if (plugin == null) {
+            return null;
+        }
         String schemaProperty = plugin.manifest().properties().get(PluginManifestProperties.SCHEMA_PROPERTY);
 
         if (schemaProperty != null) {
@@ -71,6 +74,9 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     @Override
     public String getSchema(String pluginId, String propertyKey, boolean fallbackToSchema, boolean includeNotDeployed) throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
+        if (plugin == null) {
+            return null;
+        }
 
         String schemaProperty = plugin.manifest().properties().get(propertyKey);
         if (schemaProperty != null) {
@@ -106,6 +112,9 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     @Override
     public String getDocumentation(String pluginId, boolean includeNotDeployed) throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
+        if (plugin == null) {
+            return null;
+        }
 
         var documentationProperty = plugin.manifest().properties().get(PluginManifestProperties.DOCUMENTATION_PROPERTY);
         if (documentationProperty != null) {
@@ -119,6 +128,9 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     public String getDocumentation(String pluginId, String propertyKey, boolean fallbackToDocumentation, boolean includeNotDeployed)
         throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
+        if (plugin == null) {
+            return null;
+        }
 
         String documentationProperty = plugin.manifest().properties().get(propertyKey);
         if (documentationProperty != null) {

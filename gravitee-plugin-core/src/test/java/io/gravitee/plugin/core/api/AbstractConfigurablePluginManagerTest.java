@@ -70,6 +70,12 @@ class AbstractConfigurablePluginManagerTest {
     }
 
     @Test
+    void should_get_schema_null_for_non_existing_plugin() throws IOException {
+        final String schema = cut.getSchema(FAKE_PLUGIN);
+        assertNull(schema);
+    }
+
+    @Test
     void should_get_schema_file_with_default_property() throws IOException {
         properties.put("schema", "subfolder_A/schema-form-v1.json");
 
@@ -124,6 +130,12 @@ class AbstractConfigurablePluginManagerTest {
         cut.register(new FakePlugin());
         final String schema = cut.getDocumentation(FAKE_PLUGIN);
         assertEquals("plugin BIS documentation", schema);
+    }
+
+    @Test
+    void should_get_documentation_null_for_non_existing_plugin() throws IOException {
+        final String schema = cut.getDocumentation(FAKE_PLUGIN);
+        assertNull(schema);
     }
 
     @Test
