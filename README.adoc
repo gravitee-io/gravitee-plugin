@@ -116,3 +116,9 @@ A resource plugin is a generic concept that can be implemented by each product. 
 The Gravitee Plugin Service Discovery module allows for loading service discovery plugin by providing a specific plugin handler.
 
 Service discovery plugins are useful to dynamically register or deregister endpoints. There is currently one implementation supporting Consul.
+
+=== Datasources
+
+The Gravitee Plugin Datasource module provides a datasource plugin handler in charge of detecting and loading all the datasource plugins.
+
+Datasource plugins are useful to provide a common connection pool or client to a data storage. There is currently one implementation supporting Redis.
