@@ -1,3 +1,10 @@
+## [4.3.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.3.0...4.3.1) (2024-11-27)
+
+
+### Bug Fixes
+
+* fix resource access for null plugins ([c1b9262](https://github.com/gravitee-io/gravitee-plugin/commit/c1b92620c56ba2e4e63248b10d5ac4a99bfc1b82))
+
 # [4.3.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.2.1...4.3.0) (2024-10-28)
 
 
