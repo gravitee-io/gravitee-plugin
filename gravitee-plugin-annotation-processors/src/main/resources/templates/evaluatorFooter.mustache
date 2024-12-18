@@ -1,14 +1,20 @@
 
         // Evaluate properties that needs EL, validate evaluatedConf and returns it
         return Maybe
-            .merge(Flowable.fromIterable(toEval))
+            .concat(Flowable.fromIterable(toEval))
             .ignoreElements()
             .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
-            .andThen(Completable.fromRunnable(() ->
-                ctx.setInternalAttribute("{{evaluatedConfigurationName}}-"+this.internalId, evaluatedConfiguration)))
-            .onErrorResumeWith(
-                ctx.interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID))
-            )
+            .andThen(Completable.fromRunnable(() -> {
+                if(baseExecutionContext != null) {
+                    baseExecutionContext.setInternalAttribute("{{evaluatedConfigurationName}}-"+this.internalId, evaluatedConfiguration);
+                }
+            }))
+            .onErrorResumeNext(t -> {
+                if(baseExecutionContext != null) {
+                    return ((HttpPlainExecutionContext)baseExecutionContext).interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
+                }
+                return Completable.error(t);
+            })
             .toSingle(() -> evaluatedConfiguration);
     }
 }

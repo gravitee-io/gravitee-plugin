@@ -16,8 +16,13 @@
 package io.gravitee.plugin.annotation.processor.result;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
-import io.gravitee.gateway.reactive.api.context.ExecutionContext;
+import io.gravitee.gateway.reactive.api.context.DeploymentContext;
+import io.gravitee.gateway.reactive.api.context.base.BaseExecutionContext;
+import io.gravitee.gateway.reactive.api.context.http.HttpPlainExecutionContext;
+import io.gravitee.secrets.api.el.FieldKind;
+import io.gravitee.secrets.api.el.SecretFieldAccessControl;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -30,8 +35,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,15 +59,14 @@ public class TestConfigurationEvaluator {
     private final String internalId;
 
     static {
-        ValidatorFactory factory = Validation
-            .byProvider(HibernateValidator.class)
-            .configure()
-            .messageInterpolator(new ParameterMessageInterpolator())
-            .buildValidatorFactory();
+        ValidatorFactory factory = Validation.byProvider(HibernateValidator.class).configure()
+                .messageInterpolator(new ParameterMessageInterpolator()).buildValidatorFactory();
         validator = factory.getValidator();
     }
 
-    public TestConfigurationEvaluator(TestConfiguration configuration) {
+    public TestConfigurationEvaluator (
+            TestConfiguration configuration)
+    {
         this.configuration = configuration;
         this.internalId = UUID.randomUUID().toString();
     }
@@ -70,28 +76,54 @@ public class TestConfigurationEvaluator {
         return attributePrefix.concat(".").concat(name);
     }
 
-    private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, ExecutionContext ctx) {
+    private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, BaseExecutionContext ctx, String secretKind) {
         //First check attributes
         String attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             //If a value is found for this attribute, override the original value with it
             value = attribute;
         }
-
         //If value is null, return empty
-        if (value == null) {
+        if(value == null) {
             return Maybe.empty();
+        }
+
+        SecretFieldAccessControl accessControl;
+        if(secretKind.isEmpty()) {
+            accessControl = new SecretFieldAccessControl(false, null, name);
+        } else {
+            accessControl = new SecretFieldAccessControl(true, FieldKind.valueOf(secretKind), name);
         }
 
         //Then check EL
         String finalValue = value;
         return ctx
-            .getTemplateEngine()
-            .eval(value, String.class)
-            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue));
+                .getTemplateEngine()
+                .eval(value, String.class)
+                .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
+                .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
+                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue));
     }
 
-    private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, ExecutionContext ctx) {
+    private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, DeploymentContext ctx, String secretKind) {
+        SecretFieldAccessControl accessControl;
+        if(secretKind.isEmpty()) {
+            accessControl = new SecretFieldAccessControl(false, null, name);
+        } else {
+            accessControl = new SecretFieldAccessControl(true, FieldKind.valueOf(secretKind), name);
+        }
+
+        //Then check EL
+        String finalValue = value;
+        return ctx
+                .getTemplateEngine()
+                .eval(value, String.class)
+                .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
+                .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
+                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue));
+    }
+
+    private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, BaseExecutionContext ctx) {
         String attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             return T.valueOf(enumClass, attribute);
@@ -99,7 +131,7 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private Integer evalIntegerProperty(String name, int value, String attributePrefix, ExecutionContext ctx) {
+    private Integer evalIntegerProperty(String name, int value, String attributePrefix, BaseExecutionContext ctx) {
         Integer attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             return attribute;
@@ -107,7 +139,7 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private Long evalLongProperty(String name, long value, String attributePrefix, ExecutionContext ctx) {
+    private Long evalLongProperty(String name, long value, String attributePrefix, BaseExecutionContext ctx) {
         Long attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             return attribute;
@@ -115,7 +147,7 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private boolean evalBooleanProperty(String name, boolean value, String attributePrefix, ExecutionContext ctx) {
+    private boolean evalBooleanProperty(String name, boolean value, String attributePrefix, BaseExecutionContext ctx) {
         Object attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             return (boolean) attribute;
@@ -123,7 +155,7 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private <T> Set<T> evalSetProperty(String name, Set<T> value, String attributePrefix, ExecutionContext ctx) {
+    private <T> Set<T> evalSetProperty(String name, Set<T> value, String attributePrefix, BaseExecutionContext ctx) {
         //Try to get a Set and if it fails try to get a String and split it
         try {
             Set<T> attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
@@ -132,7 +164,7 @@ public class TestConfigurationEvaluator {
             }
         } catch (ClassCastException cce) {
             List<T> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
-            if (attribute != null) {
+            if(attribute != null) {
                 return Set.copyOf(attribute);
             }
         }
@@ -140,7 +172,7 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private <T> List<T> evalListProperty(String name, List<T> value, String attributePrefix, ExecutionContext ctx) {
+    private <T> List<T> evalListProperty(String name, List<T> value, String attributePrefix, BaseExecutionContext ctx) {
         List<T> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             return attribute;
@@ -155,12 +187,12 @@ public class TestConfigurationEvaluator {
         if (!constraintViolations.isEmpty()) {
             StringBuilder exceptionMessage = new StringBuilder(constraintViolations.size() + " constraint violations found : ");
             constraintViolations.forEach(violation ->
-                exceptionMessage
-                    .append("[attribute[")
-                    .append(violation.getPropertyPath())
-                    .append("] reason[")
-                    .append(violation.getMessage())
-                    .append("]]")
+                    exceptionMessage
+                            .append("[attribute[")
+                            .append(violation.getPropertyPath())
+                            .append("] reason[")
+                            .append(violation.getMessage())
+                            .append("]]")
             );
 
             //LOG
@@ -171,15 +203,42 @@ public class TestConfigurationEvaluator {
         }
     }
 
-    public TestConfiguration evalNow(ExecutionContext ctx) {
+    /**
+     * Blocking eval method (see {@link #eval(BaseExecutionContext)} Eval})
+     * <b>Caution when using this method if the evaluation involves EL expressions that trigger blocking fetches</b>
+     * @param ctx the current context
+     * @return configuration with all dynamic configuration parameters updated
+     */
+    public TestConfiguration evalNow(BaseExecutionContext ctx) {
         return eval(ctx).blockingGet();
     }
 
-    public Single<TestConfiguration> eval(ExecutionContext ctx) {
-        //First check if the configuration has not been already evaluated
-        TestConfiguration evaluatedConf = ctx.getInternalAttribute("testConfiguration-" + this.internalId);
-        if (evaluatedConf != null) {
-            return Single.just(evaluatedConf);
+    public TestConfiguration evalNow(DeploymentContext ctx) {
+        return eval(ctx).blockingGet();
+    }
+
+    public Single<TestConfiguration> eval(BaseExecutionContext ctx) {
+        return eval(ctx, null);
+    }
+
+    public Single<TestConfiguration> eval(DeploymentContext ctx) {
+        return eval(null, ctx);
+    }
+
+    /**
+     * Evaluates the configuration using the context to update parameters using attributes or EL
+     * and stores it as an internal attributes to avoid multiple evaluation
+     * @param ctx the current context
+     * @return configuration with all dynamic configuration parameters updated
+     */
+    private Single<TestConfiguration> eval(BaseExecutionContext baseExecutionContext, DeploymentContext deploymentContext) {
+
+        if(baseExecutionContext != null) {
+            //First check if the configuration has not been already evaluated
+            TestConfiguration evaluatedConf = baseExecutionContext.getInternalAttribute("testConfiguration-"+this.internalId);
+            if(evaluatedConf != null) {
+                return Single.just(evaluatedConf);
+            }
         }
 
         TestConfiguration evaluatedConfiguration;
@@ -189,55 +248,80 @@ public class TestConfigurationEvaluator {
             logger.error("Unable to clone configuration", e);
             return Single.error(e);
         }
+
         String currentAttributePrefix = attributePrefix;
 
         List<Maybe<String>> toEval = new ArrayList<>();
-
         //Field protocol
-        evaluatedConfiguration.setProtocol(
-            evalEnumProperty(
-                "protocol",
-                configuration.getProtocol(),
-                io.gravitee.plugin.annotation.processor.result.SecurityProtocol.class,
-                currentAttributePrefix,
-                ctx
-            )
-        );
+        if(baseExecutionContext != null) {
+            evaluatedConfiguration.setProtocol(
+                    evalEnumProperty("protocol", configuration.getProtocol(), io.gravitee.plugin.annotation.processor.result.SecurityProtocol.class, currentAttributePrefix, baseExecutionContext)
+            );
+        } else if(deploymentContext != null) {
+        }
 
         //Consumer section begin
-        if (evaluatedConfiguration.getConsumer() != null) {
+        if(evaluatedConfiguration.getConsumer() != null) {
             currentAttributePrefix = attributePrefix.concat(".consumer");
             //Field enabled
-            evaluatedConfiguration
-                .getConsumer()
-                .setEnabled(evalBooleanProperty("enabled", configuration.getConsumer().isEnabled(), currentAttributePrefix, ctx));
+            if(baseExecutionContext != null) {
+                evaluatedConfiguration.getConsumer().setEnabled(
+                        evalBooleanProperty("enabled", configuration.getConsumer().isEnabled(), currentAttributePrefix, baseExecutionContext)
+                );
+            } else if(deploymentContext != null) {
+            }
             //Field autoOffsetReset
-            toEval.add(
-                evalStringProperty("autoOffsetReset", configuration.getConsumer().getAutoOffsetReset(), currentAttributePrefix, ctx)
-                    .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setAutoOffsetReset(value))
-            );
+            if(baseExecutionContext != null) {
+                toEval.add(
+                        evalStringProperty("autoOffsetReset", configuration.getConsumer().getAutoOffsetReset(), currentAttributePrefix, baseExecutionContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setAutoOffsetReset(value))
+                );
+            } else if(deploymentContext != null) {
+                toEval.add(
+                        evalStringProperty("autoOffsetReset", configuration.getConsumer().getAutoOffsetReset(), currentAttributePrefix, deploymentContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setAutoOffsetReset(value)));
+            }
             //Field topics
-            evaluatedConfiguration
-                .getConsumer()
-                .setTopics(evalSetProperty("topics", configuration.getConsumer().getTopics(), currentAttributePrefix, ctx));
+            if(baseExecutionContext != null) {
+                evaluatedConfiguration.getConsumer().setTopics(
+                        evalSetProperty("topics", configuration.getConsumer().getTopics(), currentAttributePrefix, baseExecutionContext)
+                );
+            } else if(deploymentContext != null) {
+            }
             //Field topicPattern
-            toEval.add(
-                evalStringProperty("topicPattern", configuration.getConsumer().getTopicPattern(), currentAttributePrefix, ctx)
-                    .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setTopicPattern(value))
-            );
+            if(baseExecutionContext != null) {
+                toEval.add(
+                        evalStringProperty("topicPattern", configuration.getConsumer().getTopicPattern(), currentAttributePrefix, baseExecutionContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setTopicPattern(value))
+                );
+            } else if(deploymentContext != null) {
+                toEval.add(
+                        evalStringProperty("topicPattern", configuration.getConsumer().getTopicPattern(), currentAttributePrefix, deploymentContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setTopicPattern(value)));
+            }
             //Field attributes
-            evaluatedConfiguration
-                .getConsumer()
-                .setAttributes(evalListProperty("attributes", configuration.getConsumer().getAttributes(), currentAttributePrefix, ctx));
+            if(baseExecutionContext != null) {
+                evaluatedConfiguration.getConsumer().setAttributes(
+                        evalListProperty("attributes", configuration.getConsumer().getAttributes(), currentAttributePrefix, baseExecutionContext)
+                );
+            } else if(deploymentContext != null) {
+            }
 
             //trustStore section begin
-            if (evaluatedConfiguration.getConsumer().getTrustStore() != null) {
+            if(evaluatedConfiguration.getConsumer().getTrustStore() != null) {
                 currentAttributePrefix = attributePrefix.concat(".consumer.trustStore");
                 //Field key
-                toEval.add(
-                    evalStringProperty("key", configuration.getConsumer().getTrustStore().getKey(), currentAttributePrefix, ctx)
-                        .doOnSuccess(value -> evaluatedConfiguration.getConsumer().getTrustStore().setKey(value))
-                );
+                if(baseExecutionContext != null) {
+                    toEval.add(
+                            evalStringProperty("key", configuration.getConsumer().getTrustStore().getKey(), currentAttributePrefix, baseExecutionContext, "PRIVATE_KEY")
+                                    .doOnSuccess(value -> evaluatedConfiguration.getConsumer().getTrustStore().setKey(value))
+                    );
+                } else if(deploymentContext != null) {
+                    toEval.add(
+                            evalStringProperty("key", configuration.getConsumer().getTrustStore().getKey(), currentAttributePrefix, deploymentContext, "PRIVATE_KEY")
+                                    .doOnSuccess(value -> evaluatedConfiguration.getConsumer().getTrustStore().setKey(value)));
+                }
+
             }
             //trustStore section end
 
@@ -245,21 +329,31 @@ public class TestConfigurationEvaluator {
         //Consumer section end
 
         //ssl section begin
-        if (evaluatedConfiguration.getSsl() != null) {
+        if(evaluatedConfiguration.getSsl() != null) {
             currentAttributePrefix = attributePrefix.concat(".ssl");
             //Field timeout
-            evaluatedConfiguration
-                .getSsl()
-                .setTimeout(evalLongProperty("timeout", configuration.getSsl().getTimeout(), currentAttributePrefix, ctx));
+            if(baseExecutionContext != null) {
+                evaluatedConfiguration.getSsl().setTimeout(
+                        evalLongProperty("timeout", configuration.getSsl().getTimeout(), currentAttributePrefix, baseExecutionContext)
+                );
+            } else if(deploymentContext != null) {
+            }
 
             //keyStore section begin
-            if (evaluatedConfiguration.getSsl().getKeyStore() != null) {
+            if(evaluatedConfiguration.getSsl().getKeyStore() != null) {
                 currentAttributePrefix = attributePrefix.concat(".ssl.keyStore");
                 //Field key
-                toEval.add(
-                    evalStringProperty("key", configuration.getSsl().getKeyStore().getKey(), currentAttributePrefix, ctx)
-                        .doOnSuccess(value -> evaluatedConfiguration.getSsl().getKeyStore().setKey(value))
-                );
+                if(baseExecutionContext != null) {
+                    toEval.add(
+                            evalStringProperty("key", configuration.getSsl().getKeyStore().getKey(), currentAttributePrefix, baseExecutionContext, "PRIVATE_KEY")
+                                    .doOnSuccess(value -> evaluatedConfiguration.getSsl().getKeyStore().setKey(value))
+                    );
+                } else if(deploymentContext != null) {
+                    toEval.add(
+                            evalStringProperty("key", configuration.getSsl().getKeyStore().getKey(), currentAttributePrefix, deploymentContext, "PRIVATE_KEY")
+                                    .doOnSuccess(value -> evaluatedConfiguration.getSsl().getKeyStore().setKey(value)));
+                }
+
             }
             //keyStore section end
 
@@ -267,27 +361,39 @@ public class TestConfigurationEvaluator {
         //ssl section end
 
         //security section begin
-        if (evaluatedConfiguration.getSecurity() != null) {
+        if(evaluatedConfiguration.getSecurity() != null) {
             currentAttributePrefix = attributePrefix.concat(".security");
             //Field property
-            toEval.add(
-                evalStringProperty("property", configuration.getSecurity().getProperty(), currentAttributePrefix, ctx)
-                    .doOnSuccess(value -> evaluatedConfiguration.getSecurity().setProperty(value))
-            );
+            if(baseExecutionContext != null) {
+                toEval.add(
+                        evalStringProperty("property", configuration.getSecurity().getProperty(), currentAttributePrefix, baseExecutionContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getSecurity().setProperty(value))
+                );
+            } else if(deploymentContext != null) {
+                toEval.add(
+                        evalStringProperty("property", configuration.getSecurity().getProperty(), currentAttributePrefix, deploymentContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getSecurity().setProperty(value)));
+            }
+
         }
         //security section end
 
         // Evaluate properties that needs EL, validate evaluatedConf and returns it
         return Maybe
-            .merge(Flowable.fromIterable(toEval))
-            .ignoreElements()
-            .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
-            .andThen(
-                Completable.fromRunnable(() -> ctx.setInternalAttribute("testConfiguration-" + this.internalId, evaluatedConfiguration))
-            )
-            .onErrorResumeWith(
-                ctx.interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID))
-            )
-            .toSingle(() -> evaluatedConfiguration);
+                .concat(Flowable.fromIterable(toEval))
+                .ignoreElements()
+                .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
+                .andThen(Completable.fromRunnable(() -> {
+                    if(baseExecutionContext != null) {
+                        baseExecutionContext.setInternalAttribute("testConfiguration-"+this.internalId, evaluatedConfiguration);
+                    }
+                }))
+                .onErrorResumeNext(t -> {
+                    if(baseExecutionContext != null) {
+                        return ((HttpPlainExecutionContext)baseExecutionContext).interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
+                    }
+                    return Completable.error(t);
+                })
+                .toSingle(() -> evaluatedConfiguration);
     }
 }
