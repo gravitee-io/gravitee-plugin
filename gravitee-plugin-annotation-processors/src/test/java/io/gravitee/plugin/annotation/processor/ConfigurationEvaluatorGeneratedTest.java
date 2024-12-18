@@ -23,7 +23,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.gravitee.gateway.reactive.api.context.ExecutionContext;
+import io.gravitee.el.TemplateContext;
+import io.gravitee.el.TemplateEngine;
+import io.gravitee.gateway.api.buffer.Buffer;
+import io.gravitee.gateway.reactive.api.ExecutionFailure;
+import io.gravitee.gateway.reactive.api.context.InternalContextAttributes;
+import io.gravitee.gateway.reactive.api.context.TlsSession;
+import io.gravitee.gateway.reactive.api.context.http.HttpPlainExecutionContext;
+import io.gravitee.gateway.reactive.api.context.http.HttpPlainRequest;
+import io.gravitee.gateway.reactive.api.context.http.HttpPlainResponse;
+import io.gravitee.gateway.reactive.api.tracing.Tracer;
 import io.gravitee.plugin.annotation.processor.result.KeyStore;
 import io.gravitee.plugin.annotation.processor.result.SecurityConfiguration;
 import io.gravitee.plugin.annotation.processor.result.SecurityProtocol;
@@ -31,8 +40,13 @@ import io.gravitee.plugin.annotation.processor.result.Ssl;
 import io.gravitee.plugin.annotation.processor.result.TestConfiguration;
 import io.gravitee.plugin.annotation.processor.result.TestConfigurationEvaluator;
 import io.gravitee.plugin.annotation.processor.result.TrustStore;
+import io.gravitee.reporter.api.v4.metric.Metrics;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,20 +66,27 @@ public class ConfigurationEvaluatorGeneratedTest {
     TestConfigurationEvaluator evaluator;
 
     @Mock
-    ExecutionContext.TemplateEngine templateEngine;
+    TemplateEngine templateEngine;
+
+    @Mock
+    TemplateContext templateContext;
 
     @Before
     public void before() {
         TestConfiguration configuration = new TestConfiguration();
         configuration.getConsumer().setEnabled(true);
         configuration.getConsumer().setAutoOffsetReset("none");
+        configuration.getConsumer().setTrustStore(new TrustStore());
+        configuration.getConsumer().getTrustStore().setKey("{#secrets.get('/vault/secret/test:password')}");
         evaluator = new TestConfigurationEvaluator(configuration);
     }
 
     @Test
     public void should_interrupt_with_error_on_validation() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("result"));
-        var context = new ExecutionContext(templateEngine);
+        when(templateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
+        when(templateEngine.getTemplateContext()).thenReturn(templateContext);
+        var context = new DefaultExecutionContext(templateEngine);
 
         TestObserver<TestConfiguration> testObserver = evaluator.eval(context).test();
 
@@ -78,14 +99,13 @@ public class ConfigurationEvaluatorGeneratedTest {
 
     @Test
     public void should_return_evaluated_configuration() {
-        when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
-        var context = new ExecutionContext(
-            templateEngine,
-            Map.ofEntries(
-                Map.entry("gravitee.attributes.endpoint.test.protocol", "SSL"),
-                Map.entry("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2")
-            )
-        );
+        var spiedTemplateEngine = spy(new DefaultTemplateEngine());
+        when(spiedTemplateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
+        when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
+        Map<String, Object> contextMap = new HashMap<>();
+        contextMap.put("gravitee.attributes.endpoint.test.protocol", "SSL");
+        contextMap.put("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2");
+        var context = new DefaultExecutionContext(spiedTemplateEngine, contextMap);
 
         evaluator
             .eval(context)
@@ -102,13 +122,12 @@ public class ConfigurationEvaluatorGeneratedTest {
     @Test
     public void should_cache_evaluated_configuration() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
-        var context = new ExecutionContext(
-            templateEngine,
-            Map.ofEntries(
-                Map.entry("gravitee.attributes.endpoint.test.protocol", "SSL"),
-                Map.entry("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2")
-            )
-        );
+        when(templateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
+        when(templateEngine.getTemplateContext()).thenReturn(templateContext);
+        Map<String, Object> contextMap = new HashMap<>();
+        contextMap.put("gravitee.attributes.endpoint.test.protocol", "SSL");
+        contextMap.put("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2");
+        var context = new DefaultExecutionContext(templateEngine, contextMap);
         evaluator
             .eval(context)
             .test()
@@ -125,7 +144,7 @@ public class ConfigurationEvaluatorGeneratedTest {
 
     @Test
     public void should_return_evaluated_configuration_from_internal_attribute() {
-        var spiedContext = spy(new ExecutionContext());
+        var spiedContext = spy(new DefaultExecutionContext());
         TestConfiguration expectedConfiguration = new TestConfiguration();
         when(spiedContext.getInternalAttribute(anyString())).thenReturn(expectedConfiguration);
 
@@ -158,7 +177,7 @@ public class ConfigurationEvaluatorGeneratedTest {
         var originalConfiguration = new TestConfiguration(SecurityProtocol.SASL_SSL, ssl, securityConfiguration, consumer);
         evaluator = new TestConfigurationEvaluator(originalConfiguration);
 
-        TestObserver<TestConfiguration> testObserver = evaluator.eval(new ExecutionContext()).test();
+        TestObserver<TestConfiguration> testObserver = evaluator.eval(new DefaultExecutionContext()).test();
 
         testObserver.assertComplete();
 
@@ -174,5 +193,215 @@ public class ConfigurationEvaluatorGeneratedTest {
             assertThat(testConfiguration.getSsl().getTimeout()).isEqualTo(10L);
             return true;
         });
+    }
+
+    static class DefaultTemplateContext implements TemplateContext {
+
+        Map<String, Object> variables = new HashMap<>();
+
+        @Override
+        public void setVariable(String s, Object o) {
+            variables.put(s, o);
+        }
+
+        @Override
+        public void setDeferredVariable(String s, Completable completable) {}
+
+        @Override
+        public void setDeferredVariable(String s, Maybe<?> maybe) {}
+
+        @Override
+        public void setDeferredVariable(String s, Single<?> single) {}
+
+        @Override
+        public Object lookupVariable(String s) {
+            return variables.get(s);
+        }
+    }
+
+    static class DefaultTemplateEngine implements TemplateEngine {
+
+        @Override
+        public <T> T getValue(String s, Class<T> aClass) {
+            return (T) s;
+        }
+
+        @Override
+        public <T> Maybe<T> eval(String s, Class<T> aClass) {
+            return Maybe.just((T) s);
+        }
+
+        @Override
+        public TemplateContext getTemplateContext() {
+            return new DefaultTemplateContext();
+        }
+    }
+
+    static class DefaultExecutionContext implements HttpPlainExecutionContext {
+
+        TemplateEngine templateEngine;
+
+        Map<String, Object> attributes = new HashMap<>();
+
+        Map<String, Object> internalAttributes;
+
+        DefaultExecutionContext() {
+            this(new DefaultTemplateEngine());
+        }
+
+        DefaultExecutionContext(TemplateEngine templateEngine) {
+            this(templateEngine, new HashMap<>());
+        }
+
+        DefaultExecutionContext(Map<String, Object> attributes) {
+            this(new DefaultTemplateEngine(), attributes);
+        }
+
+        DefaultExecutionContext(TemplateEngine templateEngine, Map<String, Object> attributes) {
+            this.templateEngine = templateEngine;
+            this.attributes = attributes;
+            this.internalAttributes = new HashMap<>();
+        }
+
+        @Override
+        public Metrics metrics() {
+            return null;
+        }
+
+        @Override
+        public <T> T getComponent(Class<T> aClass) {
+            return null;
+        }
+
+        @Override
+        public void setAttribute(String s, Object o) {
+            attributes.put(s, o);
+        }
+
+        @Override
+        public void putAttribute(String s, Object o) {
+            attributes.put(s, o);
+        }
+
+        @Override
+        public void removeAttribute(String s) {
+            attributes.remove(s);
+        }
+
+        @Override
+        public <T> T getAttribute(String s) {
+            return (T) attributes.get(s);
+        }
+
+        @Override
+        public <T> List<T> getAttributeAsList(String s) {
+            var value = this.attributes.get(s);
+
+            if (value == null) {
+                return null;
+            }
+            if (value instanceof List) {
+                return (List<T>) value;
+            }
+            if (value instanceof String) {
+                return (List<T>) Arrays.stream(((String) value).split(",")).toList();
+            }
+
+            return List.of((T) value);
+        }
+
+        @Override
+        public Set<String> getAttributeNames() {
+            return Set.of();
+        }
+
+        @Override
+        public <T> Map<String, T> getAttributes() {
+            return (Map<String, T>) attributes;
+        }
+
+        @Override
+        public void setInternalAttribute(String s, Object o) {
+            internalAttributes.put(s, o);
+        }
+
+        @Override
+        public void putInternalAttribute(String s, Object o) {}
+
+        @Override
+        public void removeInternalAttribute(String s) {}
+
+        @Override
+        public <T> T getInternalAttribute(String s) {
+            return (T) internalAttributes.get(s);
+        }
+
+        @Override
+        public <T> Map<String, T> getInternalAttributes() {
+            return (Map<String, T>) internalAttributes;
+        }
+
+        @Override
+        public TemplateEngine getTemplateEngine() {
+            return templateEngine;
+        }
+
+        @Override
+        public Tracer getTracer() {
+            return null;
+        }
+
+        @Override
+        public long timestamp() {
+            return 0;
+        }
+
+        @Override
+        public String remoteAddress() {
+            return "";
+        }
+
+        @Override
+        public String localAddress() {
+            return "";
+        }
+
+        @Override
+        public TlsSession tlsSession() {
+            return null;
+        }
+
+        @Override
+        public HttpPlainRequest request() {
+            return null;
+        }
+
+        @Override
+        public HttpPlainResponse response() {
+            return null;
+        }
+
+        @Override
+        public Completable interrupt() {
+            return null;
+        }
+
+        @Override
+        public Completable interruptWith(ExecutionFailure executionFailure) {
+            return Completable.defer(() -> {
+                internalAttributes.put(InternalContextAttributes.ATTR_INTERNAL_EXECUTION_FAILURE, executionFailure);
+                return Completable.error(new IllegalStateException(executionFailure.message()));
+            });
+        }
+
+        @Override
+        public Maybe<Buffer> interruptBody() {
+            return null;
+        }
+
+        @Override
+        public Maybe<Buffer> interruptBodyWith(ExecutionFailure executionFailure) {
+            return null;
+        }
     }
 }
