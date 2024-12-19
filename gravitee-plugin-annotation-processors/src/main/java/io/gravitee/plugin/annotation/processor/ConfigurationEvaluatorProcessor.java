@@ -82,10 +82,11 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             if (annotatedElement.getKind() == ElementKind.CLASS) {
                 String attributePrefix = annotatedElement.getAnnotation(ConfigurationEvaluator.class).attributePrefix();
 
-                if (attributePrefix == null || attributePrefix.isEmpty()) {
+                if (!attributePrefix.isEmpty() && !attributePrefix.startsWith("gravitee.attributes.")) {
                     messager.printMessage(
                         Diagnostic.Kind.ERROR,
-                        "@ConfigurationEvaluator attributePrefix property must not be empty",
+                        "@ConfigurationEvaluator attributePrefix property must be formed as follow: " +
+                        "gravitee.attributes.[type].[id] e.g. gravitee.attributes.endpoint.kafka",
                         annotatedElement
                     );
                     return false;

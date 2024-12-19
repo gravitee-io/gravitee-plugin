@@ -28,10 +28,14 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface ConfigurationEvaluator {
     /**
-     * A string that represent the prefix the evaluator will use to determine
+     * <p>A string that represent the prefix the evaluator will use to determine
      * if an attribute exist in the context to override a property.
-     * This prefix must follow the defined convention: gravitee.attributes.[type].[name]
-     * where type is the type of plugin (ie: "endpoint") and name is the name of the plugin (ie : “kafka”)
+     * </p>
+     * <p>
+     * If set the prefix must follow the defined convention: gravitee.attributes.[type].[id]
+     * where type is the type of plugin (ie: "endpoint") and id is the id of the plugin (ie : “kafka”).
+     * </p>
+     * By default it is "" as it is not mandatory when the evaluation context is {@link io.gravitee.gateway.reactive.api.context.DeploymentContext}
      */
-    String attributePrefix();
+    String attributePrefix() default "";
 }
