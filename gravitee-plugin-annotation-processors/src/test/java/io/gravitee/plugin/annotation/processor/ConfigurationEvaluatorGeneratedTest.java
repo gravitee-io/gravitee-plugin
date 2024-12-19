@@ -18,10 +18,7 @@ package io.gravitee.plugin.annotation.processor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
@@ -33,23 +30,13 @@ import io.gravitee.gateway.reactive.api.context.http.HttpPlainExecutionContext;
 import io.gravitee.gateway.reactive.api.context.http.HttpPlainRequest;
 import io.gravitee.gateway.reactive.api.context.http.HttpPlainResponse;
 import io.gravitee.gateway.reactive.api.tracing.Tracer;
-import io.gravitee.plugin.annotation.processor.result.KeyStore;
-import io.gravitee.plugin.annotation.processor.result.SecurityConfiguration;
-import io.gravitee.plugin.annotation.processor.result.SecurityProtocol;
-import io.gravitee.plugin.annotation.processor.result.Ssl;
-import io.gravitee.plugin.annotation.processor.result.TestConfiguration;
-import io.gravitee.plugin.annotation.processor.result.TestConfigurationEvaluator;
-import io.gravitee.plugin.annotation.processor.result.TrustStore;
+import io.gravitee.plugin.annotation.processor.result.*;
 import io.gravitee.reporter.api.v4.metric.Metrics;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -241,7 +228,7 @@ public class ConfigurationEvaluatorGeneratedTest {
 
         TemplateEngine templateEngine;
 
-        Map<String, Object> attributes = new HashMap<>();
+        Map<String, Object> attributes;
 
         Map<String, Object> internalAttributes;
 
@@ -251,10 +238,6 @@ public class ConfigurationEvaluatorGeneratedTest {
 
         DefaultExecutionContext(TemplateEngine templateEngine) {
             this(templateEngine, new HashMap<>());
-        }
-
-        DefaultExecutionContext(Map<String, Object> attributes) {
-            this(new DefaultTemplateEngine(), attributes);
         }
 
         DefaultExecutionContext(TemplateEngine templateEngine, Map<String, Object> attributes) {
