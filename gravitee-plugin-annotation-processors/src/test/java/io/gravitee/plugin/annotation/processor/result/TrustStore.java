@@ -15,7 +15,7 @@
  */
 package io.gravitee.plugin.annotation.processor.result;
 
-import io.gravitee.secrets.api.annotation.SecretKind;
+import io.gravitee.secrets.api.annotation.Secret;
 import io.gravitee.secrets.api.el.FieldKind;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TrustStore {
 
-    @SecretKind(FieldKind.PRIVATE_KEY)
+    @Secret(FieldKind.PRIVATE_KEY)
     private String key;
 
     public String getKey() {

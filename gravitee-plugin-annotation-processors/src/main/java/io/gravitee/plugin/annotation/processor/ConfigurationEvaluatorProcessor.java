@@ -20,29 +20,20 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.auto.service.AutoService;
 import io.gravitee.plugin.annotation.ConfigurationEvaluator;
-import io.gravitee.secrets.api.annotation.SecretKind;
+import io.gravitee.secrets.api.annotation.Secret;
 import io.gravitee.secrets.api.el.FieldKind;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
+import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
@@ -56,11 +47,12 @@ import lombok.Getter;
  * @author Remi Baptiste (remi.baptiste at graviteesource.com)
  * @author GraviteeSource Team
  */
-@SupportedAnnotationTypes({ "io.gravitee.plugin.annotation.ConfigurationEvaluator", "io.gravitee.secrets.api.annotation.SecretKind" })
+@SupportedAnnotationTypes({ "io.gravitee.plugin.annotation.ConfigurationEvaluator", "io.gravitee.secrets.api.annotation.Secret" })
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 @AutoService(Processor.class)
 public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
+    public static final String EVALUATED_CONFIGURATION_NAME = "evaluatedConfigurationName";
     private Messager messager;
 
     private Elements elementUtils;
@@ -76,12 +68,12 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Map<Element, FieldKind> secretFields = new HashMap<>();
 
-        for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(SecretKind.class)) {
+        for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(Secret.class)) {
             if (annotatedElement.getKind() == ElementKind.FIELD) {
-                FieldKind kind = annotatedElement.getAnnotation(SecretKind.class).value();
+                FieldKind kind = annotatedElement.getAnnotation(Secret.class).value();
                 secretFields.put(annotatedElement, kind);
             } else {
-                messager.printMessage(Diagnostic.Kind.ERROR, "@SecretKind should be use on field", annotatedElement);
+                messager.printMessage(Diagnostic.Kind.ERROR, "@Secret should be use on field", annotatedElement);
                 return false;
             }
         }
@@ -104,7 +96,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 try {
                     writeEvaluatorFileFromTemplate(className, (TypeElement) annotatedElement, attributePrefix, secretFields);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             } else {
                 messager.printMessage(Diagnostic.Kind.ERROR, "@ConfigurationEvaluator should be use on class", annotatedElement);
@@ -140,7 +132,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             scopes.put("simpleClassName", simpleClassName);
             scopes.put("evaluatorClassName", evaluatorClassName);
             scopes.put("evaluatorSimpleClassName", evaluatorSimpleClassName);
-            scopes.put("evaluatedConfigurationName", evaluatedConfigurationName);
+            scopes.put(EVALUATED_CONFIGURATION_NAME, evaluatedConfigurationName);
             scopes.put("attributePrefix", attributePrefix);
 
             MustacheFactory mf = new DefaultMustacheFactory();
@@ -154,7 +146,15 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             mHeader.execute(out, scopes);
 
             //Then eval method
-            generateEvalMethods(currentElement, mClass, mField, mClose, out, "evaluatedConfiguration", "configuration", "", secretFields);
+            generateEvalMethods(
+                currentElement,
+                new MustacheParams(mClass, mField, mClose),
+                out,
+                "evaluatedConfiguration",
+                "configuration",
+                "",
+                secretFields
+            );
 
             //Then footer
             mFooter.execute(out, scopes);
@@ -165,9 +165,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
     private void generateEvalMethods(
         TypeElement currentElement,
-        Mustache mClass,
-        Mustache mField,
-        Mustache mClose,
+        MustacheParams mustacheParams,
         Writer writer,
         String evaluatedConfigurationName,
         String originalConfigurationName,
@@ -182,7 +180,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             .filter(element ->
                 element.getKind() == ElementKind.FIELD && !element.getSimpleName().toString().contains("Builder") && !isConstant(element)
             )
-            .map(element -> (VariableElement) element)
+            .map(VariableElement.class::cast)
             .toList();
 
         Map<Boolean, List<FieldProperty>> convertedFields = fields
@@ -194,11 +192,11 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             .getAllMembers(currentElement)
             .stream()
             .filter(element -> element.getKind() == ElementKind.CLASS && !element.getSimpleName().toString().contains("Builder"))
-            .map(element -> (TypeElement) element)
+            .map(TypeElement.class::cast)
             .toList();
 
         // Process fields
-        convertedFields.get(false).forEach(field -> mField.execute(writer, field));
+        convertedFields.get(false).forEach(field -> mustacheParams.mField().execute(writer, field));
 
         // Process classes
         classes.forEach(classElement -> {
@@ -212,12 +210,20 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             Map<String, Object> scopes = new HashMap<>();
             scopes.put("className", className);
             scopes.put("attributeSuffix", attributeSuffix);
-            scopes.put("evaluatedConfigurationName", evaluatedConf);
-            mClass.execute(writer, scopes);
+            scopes.put(EVALUATED_CONFIGURATION_NAME, evaluatedConf);
+            mustacheParams.mClass().execute(writer, scopes);
 
-            generateEvalMethods(classElement, mClass, mField, mClose, writer, evaluatedConf, originalConf, attributeSuffix, secretFields);
+            generateEvalMethods(
+                classElement,
+                new MustacheParams(mustacheParams),
+                writer,
+                evaluatedConf,
+                originalConf,
+                attributeSuffix,
+                secretFields
+            );
 
-            mClose.execute(writer, scopes);
+            mustacheParams.mClose().execute(writer, scopes);
         });
 
         // Process objects
@@ -239,14 +245,14 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             Map<String, Object> scopes = new HashMap<>();
             scopes.put("className", objectName);
             scopes.put("attributeSuffix", attributeSuffix);
-            scopes.put("evaluatedConfigurationName", evaluatedConf);
-            mClass.execute(writer, scopes);
+            scopes.put(EVALUATED_CONFIGURATION_NAME, evaluatedConf);
+            mustacheParams.mClass().execute(writer, scopes);
 
             TypeElement element = elementUtils.getTypeElement(((DeclaredType) objectElement.getField().asType()).asElement().toString());
 
             //Check if element is not null and throw an exception with debug info
             if (element == null) {
-                throw new RuntimeException(
+                throw new IllegalArgumentException(
                     "Element is null for " +
                     objectElement.getFieldName() +
                     " and type " +
@@ -256,9 +262,17 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 );
             }
 
-            generateEvalMethods(element, mClass, mField, mClose, writer, evaluatedConf, originalConf, attributeSuffix, secretFields);
+            generateEvalMethods(
+                element,
+                new MustacheParams(mustacheParams),
+                writer,
+                evaluatedConf,
+                originalConf,
+                attributeSuffix,
+                secretFields
+            );
 
-            mClose.execute(writer, scopes);
+            mustacheParams.mClose().execute(writer, scopes);
         });
     }
 
@@ -400,6 +414,12 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 case "void" -> TypeKind.VOID;
                 default -> TypeKind.DECLARED;
             };
+        }
+    }
+
+    private record MustacheParams(Mustache mClass, Mustache mField, Mustache mClose) {
+        public MustacheParams(MustacheParams copy) {
+            this(copy.mClass, copy.mField, copy.mClose);
         }
     }
 }
