@@ -16,7 +16,6 @@
 package {{packageName}};
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.gravitee.gateway.reactive.api.context.DeploymentContext;
 import io.gravitee.gateway.reactive.api.context.base.BaseExecutionContext;
@@ -31,16 +30,15 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import org.hibernate.validator.HibernateValidator;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
-import org.hibernate.validator.HibernateValidator;
-import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class {{evaluatorSimpleClassName}} {
 
@@ -76,9 +74,14 @@ public class {{evaluatorSimpleClassName}} {
         return attributePrefix.concat(".").concat(name);
     }
 
+    private String buildFieldName(String attributeName) {
+        return attributeName.substring(this.attributePrefix.length()+1);
+    }
+
     private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, BaseExecutionContext ctx, String secretKind) {
         //First check attributes
-        String attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        String attributeName = buildAttributeName(attributePrefix, name);
+        String attribute = ctx.getAttribute(attributeName);
         if (attribute != null) {
             //If a value is found for this attribute, override the original value with it
             value = attribute;
@@ -90,9 +93,9 @@ public class {{evaluatorSimpleClassName}} {
 
         SecretFieldAccessControl accessControl;
         if(secretKind.isEmpty()) {
-            accessControl = new SecretFieldAccessControl(false, null, name);
+            accessControl = new SecretFieldAccessControl(false, null, null);
         } else {
-            accessControl = new SecretFieldAccessControl(true, FieldKind.valueOf(secretKind), name);
+            accessControl = new SecretFieldAccessControl(true, FieldKind.valueOf(secretKind), buildFieldName(attributeName));
         }
 
         //Then check EL
@@ -106,21 +109,26 @@ public class {{evaluatorSimpleClassName}} {
     }
 
     private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, DeploymentContext ctx, String secretKind) {
+        // If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
         SecretFieldAccessControl accessControl;
+        String property = buildFieldName(buildAttributeName(attributePrefix, name));
         if(secretKind.isEmpty()) {
-            accessControl = new SecretFieldAccessControl(false, null, name);
+            accessControl = new SecretFieldAccessControl(false, null, null);
         } else {
-            accessControl = new SecretFieldAccessControl(true, FieldKind.valueOf(secretKind), name);
+            accessControl = new SecretFieldAccessControl(true, FieldKind.valueOf(secretKind), property);
         }
 
         //Then check EL
-        String finalValue = value;
         return ctx
             .getTemplateEngine()
             .eval(value, String.class)
             .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
             .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
-            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue));
+            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", property, value));
         }
 
     private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, BaseExecutionContext ctx) {
@@ -234,6 +242,9 @@ public class {{evaluatorSimpleClassName}} {
     private Single<{{simpleClassName}}> eval(BaseExecutionContext baseExecutionContext, DeploymentContext deploymentContext) {
 
         if(baseExecutionContext != null) {
+            if (attributePrefix.isEmpty()) {
+                return Single.error(new IllegalArgumentException("@ConfigurationEvaluator(attributePrefix=\"...\") is required when using BaseExecutionContext."));
+            }
             //First check if the configuration has not been already evaluated
             {{simpleClassName}} evaluatedConf = baseExecutionContext.getInternalAttribute("{{evaluatedConfigurationName}}-"+this.internalId);
             if(evaluatedConf != null) {
