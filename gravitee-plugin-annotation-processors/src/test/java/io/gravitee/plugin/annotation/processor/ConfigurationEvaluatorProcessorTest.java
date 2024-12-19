@@ -29,7 +29,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 
@@ -45,18 +48,14 @@ public class ConfigurationEvaluatorProcessorTest {
     public void shouldGenerateTheExpectedResultFile() throws IOException {
         ConfigurationEvaluatorProcessor processor = new ConfigurationEvaluatorProcessor();
 
-        JavaFileObject test = JavaFileObjects.forSourceString(
-            "TestConfiguration",
-            readJavaCodeFromFile("src/test/java/io/gravitee/plugin/annotation/processor/result/TestConfiguration.java")
-        );
-
         // Run
-        Compilation compilation = javac().withProcessors(processor).compile(test);
+        Compilation compilation = javac()
+            .withProcessors(processor)
+            .compile(readJavaFilesFromFolder("src/test/java/io/gravitee/plugin/annotation/processor/result"));
         CompilationSubject.assertThat(compilation).succeeded();
 
         // Verify
         ImmutableList<JavaFileObject> generatedFiles = compilation.generatedFiles();
-        //assertEquals(11, generatedFiles.size());
 
         Optional<JavaFileObject> generatedSourceFile = generatedFiles
             .stream()
@@ -65,6 +64,30 @@ public class ConfigurationEvaluatorProcessorTest {
 
         assertTrue(generatedSourceFile.isPresent());
         JavaFileObjectSubject.assertThat(generatedSourceFile.get()).hasSourceEquivalentTo(RESULT);
+    }
+
+    private static List<JavaFileObject> readJavaFilesFromFolder(String folderPath) throws IOException {
+        List<JavaFileObject> javaFileObjects = new ArrayList<>();
+
+        try (Stream<Path> paths = Files.walk(Path.of(folderPath))) {
+            paths
+                .filter(Files::isRegularFile) // Only regular files
+                .filter(path -> path.toString().endsWith(".java")) // Filter for .java files
+                .forEach(path -> {
+                    // Add the file to the list as a JavaFileObject
+                    try {
+                        javaFileObjects.add(
+                            JavaFileObjects.forSourceString(
+                                path.getFileName().toString().replace(".java", ""),
+                                readJavaCodeFromFile(path.toString())
+                            )
+                        );
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        }
+        return javaFileObjects;
     }
 
     private static String readJavaCodeFromFile(String filePath) throws IOException {

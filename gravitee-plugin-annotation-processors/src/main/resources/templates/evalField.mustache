@@ -1,12 +1,21 @@
             //Field {{fieldName}}
-            {{#toEval}}
-            toEval.add(
-            {{/toEval}}
-            {{^toEval}}
-                {{evaluatedConfigurationName}}.{{fieldSetter}}(
-            {{/toEval}}
-                eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), {{#fieldClass}}{{fieldClass}}.class,{{/fieldClass}} currentAttributePrefix, ctx)
-            {{#toEval}}
-                .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
-            {{/toEval}}
-            );
+            if(baseExecutionContext != null) {
+                {{#toEval}}
+                toEval.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext, "{{secretKind}}")
+                {{/toEval}}
+                {{^toEval}}
+                    {{evaluatedConfigurationName}}.{{fieldSetter}}(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), {{#fieldClass}}{{fieldClass}}.class, {{/fieldClass}}currentAttributePrefix, baseExecutionContext)
+                {{/toEval}}
+                {{#toEval}}
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
+                {{/toEval}}
+                );
+            } else if(deploymentContext != null) {
+                {{#toEval}}
+                    toEval.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext, "{{secretKind}}")
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value)));
+                {{/toEval}}
+            }
