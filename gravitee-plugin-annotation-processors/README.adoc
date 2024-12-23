@@ -4,7 +4,8 @@
 
 === Goal
 
-This annotation is used to generate an evaluator at compile time for a specific configuration bean. This evaluator can then be used instead of the configuration bean to add the business logic needed to add dynamic evaluation of the properties contained in the configuration bean. The evaluator checks for every property if an attribute is present in the execution context to override its value and if the parameter is a string type, it also tries to evaluate its content using the template engine in case an EL was defined for this parameter.
+This annotation is used to generate an evaluator at compile time for a specific configuration bean. This evaluator can then be used instead of the configuration bean to add the business logic needed to add dynamic evaluation of the properties contained in the configuration bean. The evaluator checks for every property if an attribute is present in the execution context to override its value and if the parameter is a string type, it also tries to evaluate its content using the template engine in case an EL was defined for this parameter. It also supports `@Secret` annotation to inject automatically the specified FieldKind and attribute name of the secret in the template engine context before evaluation.
+Note that the evaluator only support two external classes annotated with `@JsonTypeInfo` Jackson annotation : "io.gravitee.definition.model.v4.ssl.TrustStore" and "io.gravitee.definition.model.v4.ssl.KeyStore". If you use this annotation in the sources parsed by the processor it will work but if you use an external dependency that contains this annotation it will not except for the classes mentioned above.
 
 === Parameters
 
@@ -85,7 +86,7 @@ Note that to avoid having a dependency on a Jakarta Expression Language implemen
 </dependency>
 ----
 [start=2]
-. Add Hibernate Validator to your dependencies with a scope `provided` (this dependency was added in the Gateway to avoid duplication in each plugin using this annotation)
+. Add Hibernate Validator and Jackson databind to your dependencies with a scope `provided` (Hibernate validator dependency was added in the Gateway to avoid duplication in each plugin using this annotation)
 
 [source, xml]
 ----
@@ -93,6 +94,11 @@ Note that to avoid having a dependency on a Jakarta Expression Language implemen
     <groupId>org.hibernate.validator</groupId>
     <artifactId>hibernate-validator</artifactId>
     <version>8.0.1.Final</version>
+    <scope>provided</scope>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
     <scope>provided</scope>
 </dependency>
 ----
@@ -158,10 +164,15 @@ Note that to avoid having a dependency on a Jakarta Expression Language implemen
 
 === Methods available in evaluator class
 
-The generated evaluator provides 3 methods that you can use :
+The generated evaluator support both BaseExecutionContext and DeploymentContext (i.e. for resource) and provides 4 methods that you can use :
 
-* public Single<ConfigurationClass> eval(ExecutionContext ctx) : default method to use which parse the original configuration using the given context and evaluate it in a reactive way then return the evaluated configuration
-* public ConfigurationClass evalNow() : equivalent to eval but *blocking*
+* public Single<ConfigurationClass> eval(BaseExecutionContext ctx) : default method to use which parse the original configuration using the given execution context and evaluate it in a reactive way then return the evaluated configuration
+* public ConfigurationClass evalNow(BaseExecutionContext ctx) : equivalent to eval but *blocking*
+
+* public Single<ConfigurationClass> eval(DeploymentContext ctx) : default method to use which parse the original configuration using the given deployment context and evaluate it in a reactive way then return the evaluated configuration
+* public ConfigurationClass evalNow(DeploymentContext ctx) : equivalent to eval but *blocking*
+
+Note that DeploymentContext do not support dynamic configuration using attribute, only field that support EL will be dynamic.
 
 === Contribute
 

@@ -1,0 +1,38 @@
+        //Json object based on {{property.fieldClass}}
+        {{property.fieldClass}} {{property.fieldName}} = {{property.originalConfigurationName}}.{{property.fieldGetter}}();
+        if(baseExecutionContext != null) {
+            {{property.fieldName}} = eval{{property.fieldType}}Property("{{property.fieldName}}", {{property.originalConfigurationName}}.{{property.fieldGetter}}(), {{#property.fieldClass}}{{property.fieldClass}}.class, {{/property.fieldClass}}currentAttributePrefix, baseExecutionContext);
+        }
+
+        switch({{property.fieldName}}) {
+            {{#jsonSubTypeElementWithEnums}}
+            case {{enumValue}} -> {
+                if({{property.fieldName}} != {{property.originalConfigurationName}}.{{property.fieldGetter}}() && {{property.fieldName}} == {{property.fieldClass}}.{{enumValue}}) {
+                    {{setter}}(new {{value}}());
+                }
+                //Field {{value}}
+                {{#fields}}
+                if(baseExecutionContext != null) {
+                {{#toEval}}
+                    toEval.add(
+                    eval{{fieldType}}Property("{{fieldName}}", (({{value}}){{originalConfigurationName}}).{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext, "{{secretKind}}")
+                {{/toEval}}
+                {{^toEval}}
+                    (({{enumValue}}){{evaluatedConfigurationName}}).{{fieldSetter}}(
+                    eval{{fieldType}}Property("{{fieldName}}", (({{value}}){{originalConfigurationName}}).{{fieldGetter}}(), {{#fieldClass}}{{fieldClass}}.class, {{/fieldClass}}currentAttributePrefix, baseExecutionContext)
+                {{/toEval}}
+                {{#toEval}}
+                    .doOnSuccess(value -> (({{value}}){{evaluatedConfigurationName}}).{{fieldSetter}}(value))
+                {{/toEval}}
+                );
+                } else if(deploymentContext != null) {
+                {{#toEval}}
+                    toEval.add(
+                    eval{{fieldType}}Property("{{fieldName}}", (({{value}}){{originalConfigurationName}}).{{fieldGetter}}(), currentAttributePrefix, deploymentContext, "{{secretKind}}")
+                    .doOnSuccess(value -> (({{value}}){{evaluatedConfigurationName}}).{{fieldSetter}}(value)));
+                {{/toEval}}
+                }
+                {{/fields}}
+            }
+            {{/jsonSubTypeElementWithEnums}}
+        }
