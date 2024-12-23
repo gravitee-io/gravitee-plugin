@@ -4,13 +4,22 @@
                 toEval.add(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext, "{{secretKind}}")
                 {{/toEval}}
+                {{#toEvalList}}
+                toEvalList.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext)
+                {{/toEvalList}}
                 {{^toEval}}
+                    {{^toEvalList}}
                     {{evaluatedConfigurationName}}.{{fieldSetter}}(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), {{#fieldClass}}{{fieldClass}}.class, {{/fieldClass}}currentAttributePrefix, baseExecutionContext)
+                    {{/toEvalList}}
                 {{/toEval}}
                 {{#toEval}}
                     .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
                 {{/toEval}}
+                {{#toEvalList}}
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
+                {{/toEvalList}}
                 );
             } else if(deploymentContext != null) {
                 {{#toEval}}
@@ -18,4 +27,9 @@
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext, "{{secretKind}}")
                     .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value)));
                 {{/toEval}}
+                {{#toEvalList}}
+                    toEvalList.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext)
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value)));
+                {{/toEvalList}}
             }

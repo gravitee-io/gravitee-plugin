@@ -15,30 +15,36 @@
  */
 package io.gravitee.plugin.annotation.processor;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.auto.service.AutoService;
 import io.gravitee.plugin.annotation.ConfigurationEvaluator;
 import io.gravitee.secrets.api.annotation.Secret;
-import io.gravitee.secrets.api.el.FieldKind;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import lombok.Getter;
@@ -47,7 +53,13 @@ import lombok.Getter;
  * @author Remi Baptiste (remi.baptiste at graviteesource.com)
  * @author GraviteeSource Team
  */
-@SupportedAnnotationTypes({ "io.gravitee.plugin.annotation.ConfigurationEvaluator", "io.gravitee.secrets.api.annotation.Secret" })
+@SupportedAnnotationTypes(
+    {
+        "io.gravitee.plugin.annotation.ConfigurationEvaluator",
+        "io.gravitee.secrets.api.annotation.Secret",
+        "com.fasterxml.jackson.annotation.JsonTypeInfo",
+    }
+)
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 @AutoService(Processor.class)
 public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
@@ -57,27 +69,38 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
     private Elements elementUtils;
 
+    private Types typeUtils;
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         messager = processingEnv.getMessager();
         elementUtils = processingEnv.getElementUtils();
+        typeUtils = processingEnv.getTypeUtils();
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        Map<Element, FieldKind> secretFields = new HashMap<>();
+        Map<Element, JsonTypeElement> jsonTypeClass = new HashMap<>();
 
-        for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(Secret.class)) {
-            if (annotatedElement.getKind() == ElementKind.FIELD) {
-                FieldKind kind = annotatedElement.getAnnotation(Secret.class).value();
-                secretFields.put(annotatedElement, kind);
-            } else {
-                messager.printMessage(Diagnostic.Kind.ERROR, "@Secret should be use on field", annotatedElement);
-                return false;
+        List<String> dependencyClasses = new ArrayList<>();
+        dependencyClasses.add("io.gravitee.definition.model.v4.ssl.TrustStore");
+        dependencyClasses.add("io.gravitee.definition.model.v4.ssl.KeyStore");
+
+        //Check external dependencies for JsonTypeInfo annotation
+        for (String dependencyClass : dependencyClasses) {
+            TypeElement dependencyClassElement = elementUtils.getTypeElement(dependencyClass);
+            if (dependencyClassElement != null && dependencyClassElement.getAnnotation(JsonTypeInfo.class) != null) {
+                jsonTypeClass.putAll(jsonAnnotationProcess(dependencyClassElement));
             }
         }
 
+        //Check current sources for JsonTypeInfo
+        for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(JsonTypeInfo.class)) {
+            jsonTypeClass.putAll(jsonAnnotationProcess(annotatedElement));
+        }
+
+        //Check current sources for ConfigurationEvaluator
         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ConfigurationEvaluator.class)) {
             if (annotatedElement.getKind() == ElementKind.CLASS) {
                 String attributePrefix = annotatedElement.getAnnotation(ConfigurationEvaluator.class).attributePrefix();
@@ -95,7 +118,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 String className = ((TypeElement) annotatedElement).getQualifiedName().toString();
 
                 try {
-                    writeEvaluatorFileFromTemplate(className, (TypeElement) annotatedElement, attributePrefix, secretFields);
+                    writeEvaluatorFileFromTemplate(className, (TypeElement) annotatedElement, attributePrefix, jsonTypeClass);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -108,11 +131,53 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         return true;
     }
 
+    private Map<Element, JsonTypeElement> jsonAnnotationProcess(Element annotatedElement) {
+        Map<Element, JsonTypeElement> jsonTypeClass = new HashMap<>();
+        if (annotatedElement.getKind() == ElementKind.CLASS) {
+            String property = annotatedElement.getAnnotation(JsonTypeInfo.class).property();
+            TypeMirror typeMirror = null;
+            //As Class object cannot be resolved during compile-time context, we need to catch the MirrorTypeException to access the TypeMirror
+            try {
+                Class<?> defaultImpl = annotatedElement.getAnnotation(JsonTypeInfo.class).defaultImpl();
+            } catch (MirroredTypeException mte) {
+                typeMirror = mte.getTypeMirror();
+            }
+
+            JsonSubTypes.Type[] types = annotatedElement.getAnnotation(JsonSubTypes.class).value();
+
+            List<JsonSubTypeElement> jsonSubTypeElements = Stream
+                .of(types)
+                .map(type -> {
+                    List<String> names = new ArrayList<>();
+                    if (type.name().isEmpty()) {
+                        names.add(type.name());
+                    }
+                    names.addAll(Arrays.stream(type.names()).toList());
+
+                    TypeMirror subTypeMirror = null;
+                    try {
+                        var clazz = type.value();
+                    } catch (MirroredTypeException mte) {
+                        subTypeMirror = mte.getTypeMirror();
+                    }
+
+                    return new JsonSubTypeElement(names, subTypeMirror);
+                })
+                .toList();
+
+            JsonTypeElement jsonTypeElement = new JsonTypeElement(property, typeMirror, jsonSubTypeElements);
+            jsonTypeClass.put(annotatedElement, jsonTypeElement);
+        } else {
+            messager.printMessage(Diagnostic.Kind.ERROR, "@JsonTypeInfo in only supported at class level", annotatedElement);
+        }
+        return jsonTypeClass;
+    }
+
     private void writeEvaluatorFileFromTemplate(
         final String className,
         final TypeElement currentElement,
         final String attributePrefix,
-        final Map<Element, FieldKind> secretFields
+        final Map<Element, JsonTypeElement> jsonTypeClass
     ) throws IOException {
         String packageName = null;
         int lastDot = className.lastIndexOf('.');
@@ -140,6 +205,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             Mustache mHeader = mf.compile("templates/evaluatorHeader.mustache");
             Mustache mFooter = mf.compile("templates/evaluatorFooter.mustache");
             Mustache mClass = mf.compile("templates/evalClass.mustache");
+            Mustache mSubType = mf.compile("templates/evalSubType.mustache");
             Mustache mField = mf.compile("templates/evalField.mustache");
             Mustache mClose = mf.compile("templates/evalClose.mustache");
 
@@ -149,12 +215,12 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             //Then eval method
             generateEvalMethods(
                 currentElement,
-                new MustacheParams(mClass, mField, mClose),
+                new MustacheParams(mClass, mSubType, mField, mClose),
                 out,
                 "evaluatedConfiguration",
                 "configuration",
                 "",
-                secretFields
+                jsonTypeClass
             );
 
             //Then footer
@@ -171,7 +237,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         String evaluatedConfigurationName,
         String originalConfigurationName,
         String currentAttributeSuffix,
-        Map<Element, FieldKind> secretFields
+        Map<Element, JsonTypeElement> jsonTypeClass
     ) {
         // 3 things to manage : fields, inner class and object
         // We need to exclude the "builder" part if present
@@ -186,7 +252,9 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
         Map<Boolean, List<FieldProperty>> convertedFields = fields
             .stream()
-            .map(field -> new FieldProperty(field, elementUtils, evaluatedConfigurationName, originalConfigurationName, secretFields))
+            .map(field ->
+                new FieldProperty(field, elementUtils, typeUtils, evaluatedConfigurationName, originalConfigurationName, jsonTypeClass)
+            )
             .collect(Collectors.partitioningBy(fieldProperty -> "Object".equals(fieldProperty.getFieldType())));
 
         List<TypeElement> classes = elementUtils
@@ -196,8 +264,24 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             .map(TypeElement.class::cast)
             .toList();
 
-        // Process fields
-        convertedFields.get(false).forEach(field -> mustacheParams.mField().execute(writer, field));
+        // Process fields (2 cases: classic field and field member of a JsonType object)
+        convertedFields
+            .get(false)
+            .forEach(field -> {
+                if (field.isJsonType()) {
+                    //Build the object that contains necessary data for mustache template
+                    var jsonObjectTemplate = buildJsonObjectTemplate(
+                        field,
+                        jsonTypeClass,
+                        evaluatedConfigurationName,
+                        originalConfigurationName
+                    );
+                    //Execute mustache specific template
+                    mustacheParams.mSubType().execute(writer, jsonObjectTemplate);
+                } else {
+                    mustacheParams.mField().execute(writer, field);
+                }
+            });
 
         // Process classes
         classes.forEach(classElement -> {
@@ -221,7 +305,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 evaluatedConf,
                 originalConf,
                 attributeSuffix,
-                secretFields
+                jsonTypeClass
             );
 
             mustacheParams.mClose().execute(writer, scopes);
@@ -270,7 +354,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 evaluatedConf,
                 originalConf,
                 attributeSuffix,
-                secretFields
+                jsonTypeClass
             );
 
             mustacheParams.mClose().execute(writer, scopes);
@@ -291,6 +375,67 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         return startLetter + className.substring(1);
     }
 
+    private JsonObjectTemplate buildJsonObjectTemplate(
+        FieldProperty field,
+        Map<Element, JsonTypeElement> jsonTypeClass,
+        String evaluatedConfigurationName,
+        String originalConfigurationName
+    ) {
+        var jsonType = jsonTypeClass.get(field.field.getEnclosingElement());
+        List<JsonSubTypeElementWithEnum> subTypeElementWithEnums = new ArrayList<>();
+        //Get Enum values
+        // Iterate over the enclosed elements of the enum
+        for (Element enclosedElement : ((DeclaredType) field.field.asType()).asElement().getEnclosedElements()) {
+            if (enclosedElement.getKind() == ElementKind.ENUM_CONSTANT) {
+                // Add the enum constant name to the list
+                var enumString = enclosedElement.getSimpleName().toString();
+                jsonType
+                    .jsonSubTypeElements()
+                    .forEach(jsonSubTypeElement -> {
+                        if (jsonSubTypeElement.names().contains(enumString)) {
+                            var element = typeUtils.asElement(jsonSubTypeElement.value());
+                            List<FieldProperty> subFields = new ArrayList<>();
+                            for (Element subEnclosedElement : element.getEnclosedElements()) {
+                                if (
+                                    subEnclosedElement.getKind() == ElementKind.FIELD &&
+                                    !subEnclosedElement.getSimpleName().toString().contains("Builder") &&
+                                    !isConstant(subEnclosedElement)
+                                ) {
+                                    subFields.add(
+                                        new FieldProperty(
+                                            (VariableElement) subEnclosedElement,
+                                            elementUtils,
+                                            typeUtils,
+                                            evaluatedConfigurationName,
+                                            originalConfigurationName,
+                                            jsonTypeClass
+                                        )
+                                    );
+                                }
+                            }
+                            subTypeElementWithEnums.add(new JsonSubTypeElementWithEnum(jsonSubTypeElement.value(), enumString, subFields));
+                        }
+                    });
+            }
+        }
+
+        //Get setter for json object
+        String setter = originalConfigurationName;
+        // Replace the last "get" with "set"
+        int lastGetIndex = setter.lastIndexOf("get");
+        if (lastGetIndex != -1) {
+            setter = setter.substring(0, lastGetIndex) + "set" + setter.substring(lastGetIndex + 3);
+        }
+
+        // Remove the last "()"
+        int lastParenthesesIndex = setter.lastIndexOf("()");
+        if (lastParenthesesIndex != -1) {
+            setter = setter.substring(0, lastParenthesesIndex) + setter.substring(lastParenthesesIndex + 2);
+        }
+
+        return new JsonObjectTemplate(jsonType, subTypeElementWithEnums, field, setter);
+    }
+
     @Getter
     public static class FieldProperty {
 
@@ -304,25 +449,30 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         private final String secretKind;
 
         private final boolean toEval;
+        private final boolean toEvalList;
+        private final boolean jsonType;
         private final String evaluatedConfigurationName;
         private final String originalConfigurationName;
 
         public FieldProperty(
             VariableElement field,
             Elements elementUtils,
+            Types typeUtils,
             String evaluatedConfigurationName,
             String originalConfigurationName,
-            Map<Element, FieldKind> secretFields
+            Map<Element, JsonTypeElement> jsonTypeClass
         ) {
             this.field = field;
             this.elementUtils = elementUtils;
-            this.fieldType = getFieldType(field);
+            this.fieldType = getFieldType(field, elementUtils, typeUtils);
             this.fieldName = field.getSimpleName().toString();
             this.fieldGetter = getGetterMethod(fieldName, fieldType);
             this.fieldSetter = getSetterMethod(fieldName);
-            this.secretKind = secretFields.get(field) != null ? secretFields.get(field).name() : "";
+            this.secretKind = getSecretKind(field); //secretFields.get(field) != null ? secretFields.get(field).name() : "";
             // Check if the type of this field is String to know if it's need to be evaluated by the template engine
             this.toEval = "String".equals(fieldType);
+            this.toEvalList = "ListString".equals(fieldType);
+            this.jsonType = isJsonTypeInfoProperty(field, jsonTypeClass);
             this.evaluatedConfigurationName = evaluatedConfigurationName;
             this.originalConfigurationName = originalConfigurationName;
             this.fieldClass = "Enum".equals(fieldType) ? field.asType().toString() : "";
@@ -342,18 +492,36 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             return "set" + startLetter + field.substring(1);
         }
 
+        private boolean isJsonTypeInfoProperty(Element element, Map<Element, JsonTypeElement> jsonTypeElementMap) {
+            if (jsonTypeElementMap.get(element.getEnclosingElement()) == null) {
+                return false;
+            }
+            JsonTypeElement jsonTypeElement = jsonTypeElementMap.get(element.getEnclosingElement());
+            return jsonTypeElement.property().equals(element.getSimpleName().toString());
+        }
+
+        private String getSecretKind(Element element) {
+            Secret secret = element.getAnnotation(Secret.class);
+            if (secret != null && secret.value() != null) {
+                return secret.value().name();
+            }
+            return "";
+        }
+
         /**
          * Compare a field to various types to find it
          * @param field the field to test
          * @return a String representing the type found (if no type matches, the default type is Object)
          */
-        private String getFieldType(VariableElement field) {
+        private String getFieldType(VariableElement field, Elements elementUtils, Types typeUtils) {
             if (is(field.asType(), String.class)) {
                 return "String";
             } else if (is(field.asType(), Boolean.class) || is(field.asType(), boolean.class)) {
                 return "Boolean";
             } else if (is(field.asType(), Set.class)) {
                 return "Set";
+            } else if (isStringList(field.asType(), elementUtils, typeUtils)) {
+                return "ListString";
             } else if (is(field.asType(), List.class)) {
                 return "List";
             } else if (is(field.asType(), Integer.class) || is(field.asType(), int.class)) {
@@ -381,6 +549,19 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             }
 
             return ((DeclaredType) type).asElement().getKind() == ElementKind.ENUM;
+        }
+
+        private static boolean isStringList(TypeMirror type, Elements elementUtils, Types typeUtils) {
+            if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().isEmpty()) {
+                return false;
+            }
+
+            TypeMirror firstType = ((DeclaredType) type).getTypeArguments().get(0);
+            if (firstType == null) {
+                return false;
+            }
+            var StringElem = elementUtils.getTypeElement("java.lang.String");
+            return typeUtils.isSameType(firstType, StringElem.asType());
         }
 
         /**
@@ -418,9 +599,22 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         }
     }
 
-    private record MustacheParams(Mustache mClass, Mustache mField, Mustache mClose) {
+    private record MustacheParams(Mustache mClass, Mustache mSubType, Mustache mField, Mustache mClose) {
         public MustacheParams(MustacheParams copy) {
-            this(copy.mClass, copy.mField, copy.mClose);
+            this(copy.mClass, copy.mSubType, copy.mField, copy.mClose);
         }
     }
+
+    private record JsonTypeElement(String property, TypeMirror defaultImpl, List<JsonSubTypeElement> jsonSubTypeElements) {}
+
+    private record JsonSubTypeElement(List<String> names, TypeMirror value) {}
+
+    private record JsonSubTypeElementWithEnum(TypeMirror value, String enumValue, List<FieldProperty> fields) {}
+
+    private record JsonObjectTemplate(
+        JsonTypeElement jsonTypeElement,
+        List<JsonSubTypeElementWithEnum> jsonSubTypeElementWithEnums,
+        FieldProperty property,
+        String setter
+    ) {}
 }
