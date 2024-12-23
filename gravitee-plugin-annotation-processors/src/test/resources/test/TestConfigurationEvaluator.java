@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -109,7 +110,7 @@ public class TestConfigurationEvaluator {
     }
 
     private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, DeploymentContext ctx, String secretKind) {
-        //If value is null, return empty
+        // If value is null, return empty
         if(value == null) {
             return Maybe.empty();
         }
@@ -189,6 +190,43 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
+    private Maybe<List<String>> evalListStringProperty(String name, List<String> value, String attributePrefix, BaseExecutionContext ctx) {
+        List<String> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            value = attribute;
+        }
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value).filter(Objects::nonNull)
+                .flatMapMaybe(v -> ctx
+                        .getTemplateEngine()
+                        .eval(v, String.class)
+                        .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v)))
+                .toList()
+                .toMaybe();
+    }
+
+    private Maybe<List<String>> evalListStringProperty(String name, List<String> value, String attributePrefix, DeploymentContext ctx) {
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value).filter(Objects::nonNull)
+                .flatMapMaybe(v -> ctx
+                        .getTemplateEngine()
+                        .eval(v, String.class)
+                        .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v)))
+                .toList()
+                .toMaybe();
+    }
+
     private <T> void validateConfiguration(T configuration) {
         Set<ConstraintViolation<T>> constraintViolations = validator.validate(configuration);
 
@@ -263,6 +301,7 @@ public class TestConfigurationEvaluator {
         String currentAttributePrefix = attributePrefix;
 
         List<Maybe<String>> toEval = new ArrayList<>();
+        List<Maybe<List<String>>> toEvalList = new ArrayList<>();
         //Field protocol
         if(baseExecutionContext != null) {
             evaluatedConfiguration.setProtocol(
@@ -284,7 +323,7 @@ public class TestConfigurationEvaluator {
             //Field autoOffsetReset
             if(baseExecutionContext != null) {
                 toEval.add(
-                    evalStringProperty("autoOffsetReset", configuration.getConsumer().getAutoOffsetReset(), currentAttributePrefix, baseExecutionContext, "")
+                        evalStringProperty("autoOffsetReset", configuration.getConsumer().getAutoOffsetReset(), currentAttributePrefix, baseExecutionContext, "")
                                 .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setAutoOffsetReset(value))
                 );
             } else if(deploymentContext != null) {
@@ -312,10 +351,14 @@ public class TestConfigurationEvaluator {
             }
             //Field attributes
             if(baseExecutionContext != null) {
-                evaluatedConfiguration.getConsumer().setAttributes(
-                        evalListProperty("attributes", configuration.getConsumer().getAttributes(), currentAttributePrefix, baseExecutionContext)
+                toEvalList.add(
+                        evalListStringProperty("attributes", configuration.getConsumer().getAttributes(), currentAttributePrefix, baseExecutionContext)
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setAttributes(value))
                 );
             } else if(deploymentContext != null) {
+                toEvalList.add(
+                        evalListStringProperty("attributes", configuration.getConsumer().getAttributes(), currentAttributePrefix, deploymentContext)
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setAttributes(value)));
             }
 
             //trustStore section begin
@@ -370,6 +413,356 @@ public class TestConfigurationEvaluator {
 
         }
         //ssl section end
+
+        //sslOptions section begin
+        if(evaluatedConfiguration.getSslOptions() != null) {
+            currentAttributePrefix = attributePrefix.concat(".sslOptions");
+            //Field trustAll
+            if(baseExecutionContext != null) {
+                evaluatedConfiguration.getSslOptions().setTrustAll(
+                        evalBooleanProperty("trustAll", configuration.getSslOptions().isTrustAll(), currentAttributePrefix, baseExecutionContext)
+                );
+            } else if(deploymentContext != null) {
+            }
+            //Field hostnameVerifier
+            if(baseExecutionContext != null) {
+                evaluatedConfiguration.getSslOptions().setHostnameVerifier(
+                        evalBooleanProperty("hostnameVerifier", configuration.getSslOptions().isHostnameVerifier(), currentAttributePrefix, baseExecutionContext)
+                );
+            } else if(deploymentContext != null) {
+            }
+
+            //trustStore section begin
+            if(evaluatedConfiguration.getSslOptions().getTrustStore() != null) {
+                currentAttributePrefix = attributePrefix.concat(".sslOptions.trustStore");
+                //Json object based on io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType
+                io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType type = configuration.getSslOptions().getTrustStore().getType();
+                if(baseExecutionContext != null) {
+                    type = evalEnumProperty("type", configuration.getSslOptions().getTrustStore().getType(), io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.class, currentAttributePrefix, baseExecutionContext);
+                }
+
+                switch(type) {
+                    case PEM -> {
+                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.PEM) {
+                            configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)configuration.getSslOptions().getTrustStore()).getPath(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPath(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)configuration.getSslOptions().getTrustStore()).getPath(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPath(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)configuration.getSslOptions().getTrustStore()).getContent(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setContent(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)configuration.getSslOptions().getTrustStore()).getContent(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setContent(value)));
+                        }
+                    }
+                    case PKCS12 -> {
+                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.PKCS12) {
+                            configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getPath(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPath(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getPath(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPath(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getContent(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setContent(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getContent(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setContent(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getPassword(), currentAttributePrefix, baseExecutionContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPassword(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getPassword(), currentAttributePrefix, deploymentContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPassword(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getAlias(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setAlias(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)configuration.getSslOptions().getTrustStore()).getAlias(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setAlias(value)));
+                        }
+                    }
+                    case JKS -> {
+                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.JKS) {
+                            configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getPath(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPath(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getPath(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPath(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getContent(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setContent(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getContent(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setContent(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getPassword(), currentAttributePrefix, baseExecutionContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPassword(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getPassword(), currentAttributePrefix, deploymentContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setPassword(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getAlias(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setAlias(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)configuration.getSslOptions().getTrustStore()).getAlias(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore)evaluatedConfiguration.getSslOptions().getTrustStore()).setAlias(value)));
+                        }
+                    }
+                    case NONE -> {
+                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.NONE) {
+                            configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.none.NoneTrustStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.none.NoneTrustStore
+                    }
+                }
+                //Field alias
+                if(baseExecutionContext != null) {
+                    toEval.add(
+                            evalStringProperty("alias", configuration.getSslOptions().getTrustStore().getAlias(), currentAttributePrefix, baseExecutionContext, "")
+                                    .doOnSuccess(value -> evaluatedConfiguration.getSslOptions().getTrustStore().setAlias(value))
+                    );
+                } else if(deploymentContext != null) {
+                    toEval.add(
+                            evalStringProperty("alias", configuration.getSslOptions().getTrustStore().getAlias(), currentAttributePrefix, deploymentContext, "")
+                                    .doOnSuccess(value -> evaluatedConfiguration.getSslOptions().getTrustStore().setAlias(value)));
+                }
+
+            }
+            //trustStore section end
+
+            //keyStore section begin
+            if(evaluatedConfiguration.getSslOptions().getKeyStore() != null) {
+                currentAttributePrefix = attributePrefix.concat(".sslOptions.keyStore");
+                //Json object based on io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType
+                io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType type = configuration.getSslOptions().getKeyStore().getType();
+                if(baseExecutionContext != null) {
+                    type = evalEnumProperty("type", configuration.getSslOptions().getKeyStore().getType(), io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.class, currentAttributePrefix, baseExecutionContext);
+                }
+
+                switch(type) {
+                    case PEM -> {
+                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.PEM) {
+                            configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyPath", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getKeyPath(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyPath(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyPath", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getKeyPath(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyPath(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyContent", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getKeyContent(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyContent(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyContent", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getKeyContent(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyContent(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("certPath", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getCertPath(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setCertPath(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("certPath", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getCertPath(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setCertPath(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("certContent", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getCertContent(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setCertContent(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("certContent", ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)configuration.getSslOptions().getKeyStore()).getCertContent(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setCertContent(value)));
+                        }
+                    }
+                    case PKCS12 -> {
+                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.PKCS12) {
+                            configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getPath(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPath(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getPath(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPath(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getContent(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setContent(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getContent(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setContent(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getPassword(), currentAttributePrefix, baseExecutionContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPassword(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getPassword(), currentAttributePrefix, deploymentContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPassword(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getAlias(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setAlias(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getAlias(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setAlias(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyPassword", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getKeyPassword(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyPassword(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyPassword", ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)configuration.getSslOptions().getKeyStore()).getKeyPassword(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyPassword(value)));
+                        }
+                    }
+                    case JKS -> {
+                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.JKS) {
+                            configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getPath(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPath(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("path", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getPath(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPath(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getContent(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setContent(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("content", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getContent(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setContent(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getPassword(), currentAttributePrefix, baseExecutionContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPassword(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getPassword(), currentAttributePrefix, deploymentContext, "PASSWORD")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setPassword(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getAlias(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setAlias(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("alias", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getAlias(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setAlias(value)));
+                        }
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyPassword", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getKeyPassword(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyPassword(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("keyPassword", ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)configuration.getSslOptions().getKeyStore()).getKeyPassword(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore)evaluatedConfiguration.getSslOptions().getKeyStore()).setKeyPassword(value)));
+                        }
+                    }
+                    case NONE -> {
+                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.NONE) {
+                            configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.none.NoneKeyStore());
+                        }
+                        //Field io.gravitee.plugin.annotation.processor.result.ssl.none.NoneKeyStore
+                    }
+                }
+
+            }
+            //keyStore section end
+
+        }
+        //sslOptions section end
 
         //security section begin
         if(evaluatedConfiguration.getSecurity() != null) {

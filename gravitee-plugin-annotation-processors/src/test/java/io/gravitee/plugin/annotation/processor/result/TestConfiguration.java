@@ -20,6 +20,7 @@
 package io.gravitee.plugin.annotation.processor.result;
 
 import io.gravitee.plugin.annotation.ConfigurationEvaluator;
+import io.gravitee.plugin.annotation.processor.result.ssl.SslOptions;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -36,6 +37,9 @@ public class TestConfiguration {
 
     //Object
     private Ssl ssl;
+
+    //With Jackson annotation
+    private SslOptions sslOptions;
 
     @Valid
     private SecurityConfiguration security;
@@ -67,6 +71,14 @@ public class TestConfiguration {
 
     public void setSsl(Ssl ssl) {
         this.ssl = ssl;
+    }
+
+    public SslOptions getSslOptions() {
+        return sslOptions;
+    }
+
+    public void setSslOptions(SslOptions sslOptions) {
+        this.sslOptions = sslOptions;
     }
 
     public TestConfiguration.Consumer getConsumer() {
