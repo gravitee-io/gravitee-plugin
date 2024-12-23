@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugin.annotation.processor.result;
+package io.gravitee.plugin.annotation.processor.result.ssl;
 
-import io.gravitee.secrets.api.annotation.Secret;
-import io.gravitee.secrets.api.el.FieldKind;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TrustStore {
+/**
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public enum KeyStoreType {
+    PEM,
+    PKCS12,
+    JKS,
+    NONE;
 
-    @Secret(FieldKind.PRIVATE_KEY)
-    private String key;
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public static KeyStoreType forValues(@JsonProperty("type") String type) {
+        if (type.isEmpty()) {
+            return NONE;
+        }
+        return KeyStoreType.valueOf(type);
     }
 }

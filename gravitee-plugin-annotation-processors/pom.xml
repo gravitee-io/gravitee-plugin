@@ -35,9 +35,15 @@
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <mustache.version>0.9.10</mustache.version>
         <compile-testing.version>0.21.0</compile-testing.version>
+        <gravitee-secret-api.version>1.0.0-alpha.5</gravitee-secret-api.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.gravitee.gateway</groupId>
+            <artifactId>gravitee-gateway-api</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
@@ -64,6 +70,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.secret</groupId>
+            <artifactId>gravitee-secret-api</artifactId>
+            <version>${gravitee-secret-api.version}</version>
         </dependency>
 
         <!-- Tests dependencies -->

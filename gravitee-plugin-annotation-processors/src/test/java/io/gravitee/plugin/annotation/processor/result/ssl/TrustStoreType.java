@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.gateway.reactive.api;
+package io.gravitee.plugin.annotation.processor.result.ssl;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @author Remi Baptiste (remi.baptiste at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExecutionFailure {
+public enum TrustStoreType {
+    PEM,
+    PKCS12,
+    JKS,
+    NONE;
 
-    private String message;
-
-    public ExecutionFailure(int statusCode) {}
-
-    public ExecutionFailure message(String message) {
-        this.message = message;
-        return this;
-    }
-
-    public String message() {
-        return message;
-    }
-
-    public ExecutionFailure key(String key) {
-        return this;
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public static TrustStoreType forValues(@JsonProperty("type") String type) {
+        if (type.isEmpty()) {
+            return NONE;
+        }
+        return TrustStoreType.valueOf(type);
     }
 }
