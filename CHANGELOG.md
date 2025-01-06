@@ -1,3 +1,17 @@
+# [4.4.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.3.1...4.4.0) (2025-01-06)
+
+
+### Bug Fixes
+
+* field naming in FieldAccessControl and null value ([85d335a](https://github.com/gravitee-io/gravitee-plugin/commit/85d335a69f2644d2735f36a169774a5fe2b4ef54))
+* rename annotation and fix sonar issues ([a4c06a5](https://github.com/gravitee-io/gravitee-plugin/commit/a4c06a56e0137374a010c7b187f9ae37ba04450c))
+
+
+### Features
+
+* add support for Secret field with new annotation SecretKind ([120aa0a](https://github.com/gravitee-io/gravitee-plugin/commit/120aa0a4a9abdc0da865a55ccbe502b0a7c920bf))
+* add support in ConfigurationEvaluatorProcessor for Jackson ([96e5b8f](https://github.com/gravitee-io/gravitee-plugin/commit/96e5b8f78187618c882e7e64c82788a8241e85cf))
+
 ## [4.3.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.3.0...4.3.1) (2024-11-27)
 
 
