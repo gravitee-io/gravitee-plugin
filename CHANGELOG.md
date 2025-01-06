@@ -1,3 +1,10 @@
+## [4.4.2](https://github.com/gravitee-io/gravitee-plugin/compare/4.4.1...4.4.2) (2025-01-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.github.spullara.mustache.java:compiler to v0.9.14 ([35779ef](https://github.com/gravitee-io/gravitee-plugin/commit/35779ef3d73777f9ac6839b7803b6d920d6b37e4))
+
 ## [4.4.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.4.0...4.4.1) (2025-01-06)
 
 
