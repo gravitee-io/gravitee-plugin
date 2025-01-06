@@ -1,3 +1,10 @@
+## [4.4.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.4.0...4.4.1) (2025-01-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.auto.service:auto-service to v1.1.1 ([988ec1c](https://github.com/gravitee-io/gravitee-plugin/commit/988ec1c52d175ae454dac14690ccb275aacf0f5b))
+
 # [4.4.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.3.1...4.4.0) (2025-01-06)
 
 
