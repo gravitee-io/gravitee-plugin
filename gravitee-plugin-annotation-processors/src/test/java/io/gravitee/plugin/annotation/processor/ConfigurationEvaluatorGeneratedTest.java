@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import io.gravitee.common.http.HttpHeader;
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.buffer.Buffer;
@@ -65,6 +66,8 @@ public class ConfigurationEvaluatorGeneratedTest {
         configuration.getConsumer().setAutoOffsetReset("none");
         configuration.getConsumer().setTrustStore(new TrustStore());
         configuration.getConsumer().getTrustStore().setKey("{#secrets.get('/vault/secret/test:password')}");
+        configuration.getConsumer().setAttributes(List.of("attribute1", "{#dictionaries['my-dictionary']['attribute2']}"));
+        configuration.setHeaders(List.of(new HttpHeader("token", "{#secrets.get('/vault/secret/test:token')}")));
         evaluator = new TestConfigurationEvaluator(configuration);
     }
 
@@ -88,7 +91,11 @@ public class ConfigurationEvaluatorGeneratedTest {
     public void should_return_evaluated_configuration() {
         var spiedTemplateEngine = spy(new DefaultTemplateEngine());
         when(spiedTemplateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
+        when(spiedTemplateEngine.eval("{#dictionaries['my-dictionary']['attribute2']}", String.class))
+            .thenReturn(Maybe.just("my_dictionary_attribute"));
         when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
+        when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:token')}", String.class))
+            .thenReturn(Maybe.just("my_secret_token"));
         Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("gravitee.attributes.endpoint.test.protocol", "SSL");
         contextMap.put("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2");
@@ -100,8 +107,12 @@ public class ConfigurationEvaluatorGeneratedTest {
             .assertComplete()
             .assertValue(testConfiguration -> {
                 assertThat(testConfiguration.getConsumer().getAutoOffsetReset()).isEqualTo("latest");
-                assertThat(testConfiguration.getProtocol()).isEqualTo(SecurityProtocol.SSL);
                 assertThat(testConfiguration.getConsumer().getTopics()).isEqualTo(Set.of("topic1", "topic2"));
+                assertThat(testConfiguration.getConsumer().getAttributes()).isNotEmpty();
+                assertThat(testConfiguration.getConsumer().getAttributes()).containsExactly("attribute1", "my_dictionary_attribute");
+                assertThat(testConfiguration.getHeaders()).isNotEmpty();
+                assertThat(testConfiguration.getHeaders().get(0).getValue()).isEqualTo("my_secret_token");
+                assertThat(testConfiguration.getProtocol()).isEqualTo(SecurityProtocol.SSL);
                 return true;
             });
     }
@@ -109,7 +120,11 @@ public class ConfigurationEvaluatorGeneratedTest {
     @Test
     public void should_cache_evaluated_configuration() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
+        when(templateEngine.eval("attribute1", String.class)).thenReturn(Maybe.just("attribute1"));
+        when(templateEngine.eval("{#dictionaries['my-dictionary']['attribute2']}", String.class))
+            .thenReturn(Maybe.just("my_dictionary_attribute"));
         when(templateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
+        when(templateEngine.eval("{#secrets.get('/vault/secret/test:token')}", String.class)).thenReturn(Maybe.just("my_secret_token"));
         when(templateEngine.getTemplateContext()).thenReturn(templateContext);
         Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("gravitee.attributes.endpoint.test.protocol", "SSL");
@@ -160,8 +175,10 @@ public class ConfigurationEvaluatorGeneratedTest {
         consumer.setTrustStore(TrustStore.builder().key("my-key").build());
         var securityConfiguration = SecurityConfiguration.builder().property("my-prop").build();
         var ssl = Ssl.builder().keyStore(KeyStore.builder().key("keystore-key").build()).timeout(10L).build();
+        var auth = TestConfiguration.Authentication.builder().username("username").password("password").build();
+        var headers = List.of(new HttpHeader("key", "value"));
 
-        var originalConfiguration = new TestConfiguration(SecurityProtocol.SASL_SSL, ssl, securityConfiguration, consumer);
+        var originalConfiguration = new TestConfiguration(SecurityProtocol.SASL_SSL, ssl, securityConfiguration, consumer, auth, headers);
         evaluator = new TestConfigurationEvaluator(originalConfiguration);
 
         TestObserver<TestConfiguration> testObserver = evaluator.eval(new DefaultExecutionContext()).test();
@@ -178,6 +195,8 @@ public class ConfigurationEvaluatorGeneratedTest {
             assertThat(testConfiguration.getSecurity().getProperty()).isEqualTo("my-prop");
             assertThat(testConfiguration.getSsl().getKeyStore().getKey()).isEqualTo("keystore-key");
             assertThat(testConfiguration.getSsl().getTimeout()).isEqualTo(10L);
+            assertThat(testConfiguration.getAuth()).isEqualTo(auth);
+            assertThat(testConfiguration.getHeaders()).isEqualTo(headers);
             return true;
         });
     }

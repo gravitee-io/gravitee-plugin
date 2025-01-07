@@ -1,8 +1,10 @@
 
         // Evaluate properties that needs EL, validate evaluatedConf and returns it
-        return Maybe
-            .concat(Flowable.fromIterable(toEval))
-            .ignoreElements()
+        Completable toEvalCompletable = Flowable.fromIterable(toEval).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalListCompletable = Flowable.fromIterable(toEvalList).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalHeaderListCompletable = Flowable.fromIterable(toEvalHeaderList).concatMapMaybe(m -> m).ignoreElements();
+
+        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable)
             .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
             .andThen(Completable.fromRunnable(() -> {
                 if(baseExecutionContext != null) {

@@ -16,6 +16,7 @@
 package io.gravitee.plugin.annotation.processor.result;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.common.http.HttpHeader;
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.gravitee.gateway.reactive.api.context.DeploymentContext;
 import io.gravitee.gateway.reactive.api.context.base.BaseExecutionContext;
@@ -227,6 +228,81 @@ public class TestConfigurationEvaluator {
                 .toMaybe();
     }
 
+    private Maybe<List<HttpHeader>> evalListHeaderProperty(
+            String name,
+            List<HttpHeader> headers,
+            String attributePrefix,
+            BaseExecutionContext ctx
+    ) {
+        //First check attributes
+        String attributeName = buildAttributeName(attributePrefix, name);
+        List<HttpHeader> attribute = ctx.getAttribute(attributeName);
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            headers = attribute;
+        }
+        //If headers is null, return empty
+        if (headers == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable
+                .fromIterable(headers)
+                .filter(Objects::nonNull)
+                .flatMapMaybe(header -> {
+                    SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.HEADER, header.getName());
+                    return ctx
+                            .getTemplateEngine()
+                            .eval(header.getValue(), String.class)
+                            .doOnSubscribe(d ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+                            )
+                            .doOnTerminate(() ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+                            )
+                            .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
+                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue())
+                            );
+                })
+                .toList()
+                .toMaybe();
+    }
+
+    private Maybe<List<HttpHeader>> evalListHeaderProperty(
+            String name,
+            List<HttpHeader> headers,
+            String attributePrefix,
+            DeploymentContext ctx
+    ) {
+        //If headers is null, return empty
+        if (headers == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable
+                .fromIterable(headers)
+                .filter(Objects::nonNull)
+                .flatMapMaybe(header -> {
+                    SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.HEADER, header.getName());
+                    return ctx
+                            .getTemplateEngine()
+                            .eval(header.getValue(), String.class)
+                            .doOnSubscribe(d ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+                            )
+                            .doOnTerminate(() ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+                            )
+                            .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
+                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue())
+                            );
+                })
+                .toList()
+                .toMaybe();
+    }
+
     private <T> void validateConfiguration(T configuration) {
         Set<ConstraintViolation<T>> constraintViolations = validator.validate(configuration);
 
@@ -252,31 +328,43 @@ public class TestConfigurationEvaluator {
     /**
      * Blocking eval method (see {@link #eval(BaseExecutionContext)} Eval})
      * <b>Caution when using this method if the evaluation involves EL expressions that trigger blocking fetches</b>
-     * @param ctx the current context
+     * @param ctx the current execution context
      * @return configuration with all dynamic configuration parameters updated
      */
     public TestConfiguration evalNow(BaseExecutionContext ctx) {
         return eval(ctx).blockingGet();
     }
 
+    /**
+     * Blocking eval method (see {@link #eval(DeploymentContext)} Eval})
+     * <b>Caution when using this method if the evaluation involves EL expressions that trigger blocking fetches</b>
+     * @param ctx the current deployment context
+     * @return configuration with all dynamic configuration parameters updated
+     */
     public TestConfiguration evalNow(DeploymentContext ctx) {
         return eval(ctx).blockingGet();
     }
 
-    public Single<TestConfiguration> eval(BaseExecutionContext ctx) {
-        return eval(ctx, null);
-    }
-
-    public Single<TestConfiguration> eval(DeploymentContext ctx) {
-        return eval(null, ctx);
-    }
-
     /**
-     * Evaluates the configuration using the context to update parameters using attributes or EL
+     * Evaluates the configuration using the execution context to update parameters using attributes or EL
      * and stores it as an internal attributes to avoid multiple evaluation
      * @param ctx the current context
      * @return configuration with all dynamic configuration parameters updated
      */
+    public Single<TestConfiguration> eval(BaseExecutionContext ctx) {
+        return eval(ctx, null);
+    }
+
+    /**
+     * Evaluates the configuration using a deployment context to update parameters using EL
+     * and stores it as an internal attributes to avoid multiple evaluation
+     * @param ctx the current deployment context
+     * @return configuration with all dynamic configuration parameters updated
+     */
+    public Single<TestConfiguration> eval(DeploymentContext ctx) {
+        return eval(null, ctx);
+    }
+
     private Single<TestConfiguration> eval(BaseExecutionContext baseExecutionContext, DeploymentContext deploymentContext) {
 
         if(baseExecutionContext != null) {
@@ -302,12 +390,24 @@ public class TestConfigurationEvaluator {
 
         List<Maybe<String>> toEval = new ArrayList<>();
         List<Maybe<List<String>>> toEvalList = new ArrayList<>();
+        List<Maybe<List<HttpHeader>>> toEvalHeaderList = new ArrayList<>();
         //Field protocol
         if(baseExecutionContext != null) {
             evaluatedConfiguration.setProtocol(
                     evalEnumProperty("protocol", configuration.getProtocol(), io.gravitee.plugin.annotation.processor.result.SecurityProtocol.class, currentAttributePrefix, baseExecutionContext)
             );
         } else if(deploymentContext != null) {
+        }
+        //Field headers
+        if(baseExecutionContext != null) {
+            toEvalHeaderList.add(
+                    evalListHeaderProperty("headers", configuration.getHeaders(), currentAttributePrefix, baseExecutionContext)
+                            .doOnSuccess(value -> evaluatedConfiguration.setHeaders(value))
+            );
+        } else if(deploymentContext != null) {
+            toEvalHeaderList.add(
+                    evalListHeaderProperty("headers", configuration.getHeaders(), currentAttributePrefix, deploymentContext)
+                            .doOnSuccess(value -> evaluatedConfiguration.setHeaders(value)));
         }
 
         //Consumer section begin
@@ -381,6 +481,35 @@ public class TestConfigurationEvaluator {
 
         }
         //Consumer section end
+
+        //auth section begin
+        if(evaluatedConfiguration.getAuth() != null) {
+            currentAttributePrefix = attributePrefix.concat(".auth");
+            //Field username
+            if(baseExecutionContext != null) {
+                toEval.add(
+                        evalStringProperty("username", configuration.getAuth().getUsername(), currentAttributePrefix, baseExecutionContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getAuth().setUsername(value))
+                );
+            } else if(deploymentContext != null) {
+                toEval.add(
+                        evalStringProperty("username", configuration.getAuth().getUsername(), currentAttributePrefix, deploymentContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getAuth().setUsername(value)));
+            }
+            //Field password
+            if(baseExecutionContext != null) {
+                toEval.add(
+                        evalStringProperty("password", configuration.getAuth().getPassword(), currentAttributePrefix, baseExecutionContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getAuth().setPassword(value))
+                );
+            } else if(deploymentContext != null) {
+                toEval.add(
+                        evalStringProperty("password", configuration.getAuth().getPassword(), currentAttributePrefix, deploymentContext, "")
+                                .doOnSuccess(value -> evaluatedConfiguration.getAuth().setPassword(value)));
+            }
+
+        }
+        //auth section end
 
         //ssl section begin
         if(evaluatedConfiguration.getSsl() != null) {
@@ -783,21 +912,23 @@ public class TestConfigurationEvaluator {
         //security section end
 
         // Evaluate properties that needs EL, validate evaluatedConf and returns it
-        return Maybe
-                .concat(Flowable.fromIterable(toEval))
-                .ignoreElements()
-                .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
-                .andThen(Completable.fromRunnable(() -> {
-                    if(baseExecutionContext != null) {
-                        baseExecutionContext.setInternalAttribute("testConfiguration-"+this.internalId, evaluatedConfiguration);
-                    }
-                }))
-                .onErrorResumeNext(t -> {
-                    if(baseExecutionContext != null) {
-                        return ((HttpPlainExecutionContext)baseExecutionContext).interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
-                    }
-                    return Completable.error(t);
-                })
-                .toSingle(() -> evaluatedConfiguration);
+        Completable toEvalCompletable = Flowable.fromIterable(toEval).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalListCompletable = Flowable.fromIterable(toEvalList).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalHeaderListCompletable = Flowable.fromIterable(toEvalHeaderList).concatMapMaybe(m -> m).ignoreElements();
+
+        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable)
+            .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
+            .andThen(Completable.fromRunnable(() -> {
+                if(baseExecutionContext != null) {
+                    baseExecutionContext.setInternalAttribute("testConfiguration-"+this.internalId, evaluatedConfiguration);
+                }
+            }))
+            .onErrorResumeNext(t -> {
+                if(baseExecutionContext != null) {
+                    return ((HttpPlainExecutionContext)baseExecutionContext).interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
+                }
+                return Completable.error(t);
+            })
+            .toSingle(() -> evaluatedConfiguration);
     }
 }
