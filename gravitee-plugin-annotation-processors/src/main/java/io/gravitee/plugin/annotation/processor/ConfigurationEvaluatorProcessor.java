@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +49,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import lombok.Getter;
+import lombok.ToString;
 
 /**
  * @author Remi Baptiste (remi.baptiste at graviteesource.com)
@@ -285,7 +287,23 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
         // Process classes
         classes.forEach(classElement -> {
+            Optional<FieldProperty> fieldProperty = convertedFields
+                .get(true)
+                .stream()
+                .filter(currentFieldProperty -> {
+                    var element = typeUtils.asElement(currentFieldProperty.getField().asType());
+                    if (element != null) {
+                        return classElement.toString().equals(element.toString());
+                    }
+                    return classElement.toString().equals(currentFieldProperty.getField().asType().toString());
+                })
+                .findFirst();
+
             String className = classElement.getSimpleName().toString();
+            if (fieldProperty.isPresent()) {
+                className = fieldProperty.get().fieldName;
+            }
+
             String classVariable = toCamelCase(className);
             String classGetter = getGetterMethod(className);
             String attributeSuffix = currentAttributeSuffix + "." + classVariable;
@@ -315,9 +333,13 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         List<FieldProperty> objects = convertedFields
             .get(true)
             .stream()
-            .filter(fieldProperty ->
-                classes.stream().noneMatch(cl -> cl.getSimpleName().toString().equalsIgnoreCase(fieldProperty.getFieldName()))
-            )
+            .filter(fieldProperty -> {
+                var element = typeUtils.asElement(fieldProperty.getField().asType());
+                if (element != null) {
+                    return classes.stream().noneMatch(cl -> cl.toString().equals(element.toString()));
+                }
+                return classes.stream().noneMatch(cl -> cl.toString().equals(fieldProperty.getField().asType().toString()));
+            })
             .toList();
 
         objects.forEach(objectElement -> {
@@ -437,6 +459,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
     }
 
     @Getter
+    @ToString
     public static class FieldProperty {
 
         private final VariableElement field;
@@ -450,6 +473,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
         private final boolean toEval;
         private final boolean toEvalList;
+        private final boolean toEvalHeaderList;
         private final boolean jsonType;
         private final String evaluatedConfigurationName;
         private final String originalConfigurationName;
@@ -472,6 +496,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             // Check if the type of this field is String to know if it's need to be evaluated by the template engine
             this.toEval = "String".equals(fieldType);
             this.toEvalList = "ListString".equals(fieldType);
+            this.toEvalHeaderList = "ListHeader".equals(fieldType);
             this.jsonType = isJsonTypeInfoProperty(field, jsonTypeClass);
             this.evaluatedConfigurationName = evaluatedConfigurationName;
             this.originalConfigurationName = originalConfigurationName;
@@ -522,6 +547,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 return "Set";
             } else if (isStringList(field.asType(), elementUtils, typeUtils)) {
                 return "ListString";
+            } else if (isHeaderList(field.asType(), elementUtils, typeUtils)) {
+                return "ListHeader";
             } else if (is(field.asType(), List.class)) {
                 return "List";
             } else if (is(field.asType(), Integer.class) || is(field.asType(), int.class)) {
@@ -561,6 +588,19 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 return false;
             }
             var StringElem = elementUtils.getTypeElement("java.lang.String");
+            return typeUtils.isSameType(firstType, StringElem.asType());
+        }
+
+        private static boolean isHeaderList(TypeMirror type, Elements elementUtils, Types typeUtils) {
+            if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().isEmpty()) {
+                return false;
+            }
+
+            TypeMirror firstType = ((DeclaredType) type).getTypeArguments().get(0);
+            if (firstType == null) {
+                return false;
+            }
+            var StringElem = elementUtils.getTypeElement("io.gravitee.common.http.HttpHeader");
             return typeUtils.isSameType(firstType, StringElem.asType());
         }
 

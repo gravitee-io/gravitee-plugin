@@ -19,11 +19,13 @@
  */
 package io.gravitee.plugin.annotation.processor.result;
 
+import io.gravitee.common.http.HttpHeader;
 import io.gravitee.plugin.annotation.ConfigurationEvaluator;
 import io.gravitee.plugin.annotation.processor.result.ssl.SslOptions;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -48,11 +50,26 @@ public class TestConfiguration {
     @Valid
     private Consumer consumer = new Consumer();
 
-    public TestConfiguration(SecurityProtocol protocol, Ssl ssl, SecurityConfiguration security, Consumer consumer) {
+    //Inner class with name different from class name
+    @Valid
+    private Authentication auth;
+
+    private List<HttpHeader> headers = new ArrayList<>();
+
+    public TestConfiguration(
+        SecurityProtocol protocol,
+        Ssl ssl,
+        SecurityConfiguration security,
+        Consumer consumer,
+        Authentication auth,
+        List<HttpHeader> headers
+    ) {
         this.protocol = protocol;
         this.ssl = ssl;
         this.security = security;
         this.consumer = consumer;
+        this.auth = auth;
+        this.headers = headers;
     }
 
     public TestConfiguration() {}
@@ -71,6 +88,22 @@ public class TestConfiguration {
 
     public void setSsl(Ssl ssl) {
         this.ssl = ssl;
+    }
+
+    public Authentication getAuth() {
+        return auth;
+    }
+
+    public void setAuth(Authentication auth) {
+        this.auth = auth;
+    }
+
+    public List<HttpHeader> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(List<HttpHeader> headers) {
+        this.headers = headers;
     }
 
     public SslOptions getSslOptions() {
@@ -107,6 +140,14 @@ public class TestConfiguration {
 
     private static Ssl $default$ssl() {
         return new Ssl();
+    }
+
+    private static Authentication $default$auth() {
+        return new Authentication();
+    }
+
+    private static List<HttpHeader> $default$headers() {
+        return new ArrayList<>();
     }
 
     public static TestConfigurationBuilder builder() {
@@ -257,6 +298,95 @@ public class TestConfiguration {
         }
     }
 
+    public static class Authentication {
+
+        private String username;
+        private String password;
+
+        public Authentication(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
+
+        public Authentication() {}
+
+        public static AuthenticationBuilder builder() {
+            return new AuthenticationBuilder();
+        }
+
+        public String getUsername() {
+            return this.username;
+        }
+
+        public String getPassword() {
+            return this.password;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public boolean equals(final Object o) {
+            if (o == this) return true;
+            if (!(o instanceof Authentication)) return false;
+            final Authentication other = (Authentication) o;
+            if (!other.canEqual((Object) this)) return false;
+            final Object this$username = this.getUsername();
+            final Object other$username = other.getUsername();
+            if (this$username == null ? other$username != null : !this$username.equals(other$username)) return false;
+            final Object this$password = this.getPassword();
+            final Object other$password = other.getPassword();
+            if (this$password == null ? other$password != null : !this$password.equals(other$password)) return false;
+            return true;
+        }
+
+        protected boolean canEqual(final Object other) {
+            return other instanceof Authentication;
+        }
+
+        public int hashCode() {
+            final int PRIME = 59;
+            int result = 1;
+            final Object $username = this.getUsername();
+            result = result * PRIME + ($username == null ? 43 : $username.hashCode());
+            final Object $password = this.getPassword();
+            result = result * PRIME + ($password == null ? 43 : $password.hashCode());
+            return result;
+        }
+
+        public static class AuthenticationBuilder {
+
+            private String username;
+            private String password;
+
+            AuthenticationBuilder() {}
+
+            public AuthenticationBuilder username(String username) {
+                this.username = username;
+                return this;
+            }
+
+            public AuthenticationBuilder password(String password) {
+                this.password = password;
+                return this;
+            }
+
+            public Authentication build() {
+                return new Authentication(this.username, this.password);
+            }
+
+            public String toString() {
+                return (
+                    "TestConfiguration.Authentication.AuthenticationBuilder(username=" + this.username + ", password=" + this.password + ")"
+                );
+            }
+        }
+    }
+
     public static class TestConfigurationBuilder {
 
         private Consumer consumer$value;
@@ -267,6 +397,12 @@ public class TestConfiguration {
         private SecurityProtocol protocol = SecurityProtocol.PLAINTEXT;
         private Ssl ssl$value;
         private boolean ssl$set;
+
+        private Authentication auth$value;
+        private boolean auth$set;
+
+        private List<HttpHeader> headers$value;
+        private boolean headers$set;
 
         TestConfigurationBuilder() {}
 
@@ -293,6 +429,18 @@ public class TestConfiguration {
             return this;
         }
 
+        public TestConfigurationBuilder auth(Authentication auth) {
+            this.auth$value = auth;
+            this.auth$set = true;
+            return this;
+        }
+
+        public TestConfigurationBuilder headers(List<HttpHeader> headers) {
+            this.headers$value = headers;
+            this.headers$set = true;
+            return this;
+        }
+
         public TestConfiguration build() {
             TestConfiguration.Consumer consumer$value = this.consumer$value;
             if (!this.consumer$set) {
@@ -307,7 +455,17 @@ public class TestConfiguration {
             if (!this.ssl$set) {
                 ssl$value = TestConfiguration.$default$ssl();
             }
-            return new TestConfiguration(protocol, ssl$value, security$value, consumer$value);
+
+            Authentication auth$value = this.auth$value;
+            if (!this.auth$set) {
+                auth$value = TestConfiguration.$default$auth();
+            }
+
+            List<HttpHeader> headers$value = this.headers$value;
+            if (!this.headers$set) {
+                headers$value = TestConfiguration.$default$headers();
+            }
+            return new TestConfiguration(protocol, ssl$value, security$value, consumer$value, auth$value, headers$value);
         }
 
         public String toString() {

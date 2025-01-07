@@ -8,10 +8,16 @@
                 toEvalList.add(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext)
                 {{/toEvalList}}
+                {{#toEvalHeaderList}}
+                    toEvalHeaderList.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext)
+                {{/toEvalHeaderList}}
                 {{^toEval}}
                     {{^toEvalList}}
+                        {{^toEvalHeaderList}}
                     {{evaluatedConfigurationName}}.{{fieldSetter}}(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), {{#fieldClass}}{{fieldClass}}.class, {{/fieldClass}}currentAttributePrefix, baseExecutionContext)
+                        {{/toEvalHeaderList}}
                     {{/toEvalList}}
                 {{/toEval}}
                 {{#toEval}}
@@ -20,6 +26,9 @@
                 {{#toEvalList}}
                     .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
                 {{/toEvalList}}
+                {{#toEvalHeaderList}}
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
+                {{/toEvalHeaderList}}
                 );
             } else if(deploymentContext != null) {
                 {{#toEval}}
@@ -32,4 +41,9 @@
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext)
                     .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value)));
                 {{/toEvalList}}
+                {{#toEvalHeaderList}}
+                    toEvalHeaderList.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext)
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value)));
+                {{/toEvalHeaderList}}
             }

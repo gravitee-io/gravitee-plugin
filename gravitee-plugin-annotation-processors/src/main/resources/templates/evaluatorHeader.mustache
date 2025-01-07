@@ -16,6 +16,7 @@
 package {{packageName}};
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.common.http.HttpHeader;
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.gravitee.gateway.reactive.api.context.DeploymentContext;
 import io.gravitee.gateway.reactive.api.context.base.BaseExecutionContext;
@@ -130,7 +131,7 @@ public class {{evaluatorSimpleClassName}} {
             .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
             .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
             .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", property, value));
-        }
+    }
 
     private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, BaseExecutionContext ctx) {
         String attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
@@ -227,6 +228,81 @@ public class {{evaluatorSimpleClassName}} {
             .toMaybe();
     }
 
+    private Maybe<List<HttpHeader>> evalListHeaderProperty(
+        String name,
+        List<HttpHeader> headers,
+        String attributePrefix,
+        BaseExecutionContext ctx
+    ) {
+        //First check attributes
+        String attributeName = buildAttributeName(attributePrefix, name);
+        List<HttpHeader> attribute = ctx.getAttribute(attributeName);
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            headers = attribute;
+        }
+        //If headers is null, return empty
+        if (headers == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable
+            .fromIterable(headers)
+            .filter(Objects::nonNull)
+            .flatMapMaybe(header -> {
+                SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.HEADER, header.getName());
+                return ctx
+                    .getTemplateEngine()
+                    .eval(header.getValue(), String.class)
+                    .doOnSubscribe(d ->
+                        ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+                    )
+                    .doOnTerminate(() ->
+                        ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+                    )
+                    .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
+                    .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue())
+                );
+            })
+            .toList()
+            .toMaybe();
+        }
+
+    private Maybe<List<HttpHeader>> evalListHeaderProperty(
+        String name,
+        List<HttpHeader> headers,
+        String attributePrefix,
+        DeploymentContext ctx
+    ) {
+        //If headers is null, return empty
+        if (headers == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable
+            .fromIterable(headers)
+            .filter(Objects::nonNull)
+            .flatMapMaybe(header -> {
+                SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.HEADER, header.getName());
+                return ctx
+                    .getTemplateEngine()
+                    .eval(header.getValue(), String.class)
+                    .doOnSubscribe(d ->
+                        ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+                    )
+                    .doOnTerminate(() ->
+                        ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+                    )
+                    .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
+                    .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue())
+                    );
+            })
+            .toList()
+            .toMaybe();
+    }
+
     private <T> void validateConfiguration(T configuration) {
         Set<ConstraintViolation<T>> constraintViolations = validator.validate(configuration);
 
@@ -314,3 +390,4 @@ public class {{evaluatorSimpleClassName}} {
 
         List<Maybe<String>> toEval = new ArrayList<>();
         List<Maybe<List<String>>> toEvalList = new ArrayList<>();
+        List<Maybe<List<HttpHeader>>> toEvalHeaderList = new ArrayList<>();
