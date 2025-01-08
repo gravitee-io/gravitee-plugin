@@ -1,3 +1,10 @@
+# [4.5.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.4.2...4.5.0) (2025-01-08)
+
+
+### Features
+
+* add EL support for io.gravitee.common.http.HttpHeader List ([c724489](https://github.com/gravitee-io/gravitee-plugin/commit/c7244895199c4edd02129f713fe6c0e4f8d611bf))
+
 ## [4.4.2](https://github.com/gravitee-io/gravitee-plugin/compare/4.4.1...4.4.2) (2025-01-06)
 
 
