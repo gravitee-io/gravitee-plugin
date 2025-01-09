@@ -1,3 +1,10 @@
+## [4.5.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.5.0...4.5.1) (2025-01-09)
+
+
+### Bug Fixes
+
+* annotation processor object mapper needs to ignore unknown properties to ([2ec778b](https://github.com/gravitee-io/gravitee-plugin/commit/2ec778b4f7825d1b7a8c21e8437813572d567d6d))
+
 # [4.5.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.4.2...4.5.0) (2025-01-08)
 
 
