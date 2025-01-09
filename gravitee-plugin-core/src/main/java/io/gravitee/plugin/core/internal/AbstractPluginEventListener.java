@@ -21,7 +21,14 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginEvent;
 import io.gravitee.plugin.core.api.PluginHandler;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,10 +47,19 @@ public abstract class AbstractPluginEventListener
     implements EventListener<PluginEvent, Plugin> {
 
     public static final String SECRET_PROVIDER = "secret-provider";
+    public static final String DATA_PLANE = "data-plane";
     /**
      * Allows to define priority between the different plugin types.
      */
-    private static final List<String> pluginPriority = Arrays.asList(SECRET_PROVIDER, "cluster", "cache", "repository", "alert", "cockpit");
+    private static final List<String> pluginPriority = Arrays.asList(
+        SECRET_PROVIDER,
+        "cluster",
+        "cache",
+        "repository",
+        DATA_PLANE,
+        "alert",
+        "cockpit"
+    );
 
     private final Collection<PluginHandler> pluginHandlers;
 
