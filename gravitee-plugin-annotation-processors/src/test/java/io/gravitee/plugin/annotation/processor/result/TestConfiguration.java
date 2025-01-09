@@ -74,6 +74,10 @@ public class TestConfiguration {
 
     public TestConfiguration() {}
 
+    public boolean isSslEnabled() {
+        return (ssl != null && ((ssl.getKeyStore() != null && ssl.getKeyStore().getKey() != null)));
+    }
+
     public SecurityProtocol getProtocol() {
         return protocol;
     }
