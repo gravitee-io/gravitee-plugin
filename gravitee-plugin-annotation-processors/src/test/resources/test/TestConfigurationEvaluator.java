@@ -15,6 +15,7 @@
  */
 package io.gravitee.plugin.annotation.processor.result;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.common.http.HttpHeader;
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
@@ -380,6 +381,7 @@ public class TestConfigurationEvaluator {
 
         TestConfiguration evaluatedConfiguration;
         try {
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             evaluatedConfiguration = objectMapper.readValue(objectMapper.writeValueAsString(configuration), TestConfiguration.class);
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             logger.error("Unable to clone configuration", e);
