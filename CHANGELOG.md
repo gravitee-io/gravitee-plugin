@@ -1,3 +1,10 @@
+# [4.6.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.5.1...4.6.0) (2025-01-10)
+
+
+### Features
+
+* declare new plugin type 'data-plane' in the priority list ([a4269ce](https://github.com/gravitee-io/gravitee-plugin/commit/a4269ce146be8c351327df1fd6c203dbc541b4a7))
+
 ## [4.5.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.5.0...4.5.1) (2025-01-09)
 
 
