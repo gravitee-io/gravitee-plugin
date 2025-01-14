@@ -1,3 +1,10 @@
+## [4.6.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.6.0...4.6.1) (2025-01-14)
+
+
+### Bug Fixes
+
+* avoid using primitive type for eval method ([97ba1ae](https://github.com/gravitee-io/gravitee-plugin/commit/97ba1ae4d8e855e3691de36618b7c65dd1b3893d))
+
 # [4.6.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.5.1...4.6.0) (2025-01-10)
 
 
