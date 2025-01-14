@@ -142,7 +142,7 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private Integer evalIntegerProperty(String name, int value, String attributePrefix, BaseExecutionContext ctx) {
+    private Integer evalIntegerProperty(String name, Integer value, String attributePrefix, BaseExecutionContext ctx) {
         Integer attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             return attribute;
@@ -150,7 +150,7 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private Long evalLongProperty(String name, long value, String attributePrefix, BaseExecutionContext ctx) {
+    private Long evalLongProperty(String name, Long value, String attributePrefix, BaseExecutionContext ctx) {
         Long attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
             return attribute;
@@ -158,10 +158,10 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
-    private boolean evalBooleanProperty(String name, boolean value, String attributePrefix, BaseExecutionContext ctx) {
-        Object attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+    private Boolean evalBooleanProperty(String name, Boolean value, String attributePrefix, BaseExecutionContext ctx) {
+        Boolean attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
-            return (boolean) attribute;
+            return attribute;
         }
         return value;
     }
@@ -450,6 +450,13 @@ public class TestConfigurationEvaluator {
                 toEval.add(
                         evalStringProperty("topicPattern", configuration.getConsumer().getTopicPattern(), currentAttributePrefix, deploymentContext, "")
                                 .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setTopicPattern(value)));
+            }
+            //Field windowSize
+            if(baseExecutionContext != null) {
+                evaluatedConfiguration.getConsumer().setWindowSize(
+                        evalIntegerProperty("windowSize", configuration.getConsumer().getWindowSize(), currentAttributePrefix, baseExecutionContext)
+                );
+            } else if(deploymentContext != null) {
             }
             //Field attributes
             if(baseExecutionContext != null) {

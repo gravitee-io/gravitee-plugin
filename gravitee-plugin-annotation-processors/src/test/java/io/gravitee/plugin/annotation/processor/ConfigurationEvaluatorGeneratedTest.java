@@ -108,6 +108,7 @@ public class ConfigurationEvaluatorGeneratedTest {
             .assertValue(testConfiguration -> {
                 assertThat(testConfiguration.getConsumer().getAutoOffsetReset()).isEqualTo("latest");
                 assertThat(testConfiguration.getConsumer().getTopics()).isEqualTo(Set.of("topic1", "topic2"));
+                assertThat(testConfiguration.getConsumer().getWindowSize()).isNull();
                 assertThat(testConfiguration.getConsumer().getAttributes()).isNotEmpty();
                 assertThat(testConfiguration.getConsumer().getAttributes()).containsExactly("attribute1", "my_dictionary_attribute");
                 assertThat(testConfiguration.getHeaders()).isNotEmpty();
