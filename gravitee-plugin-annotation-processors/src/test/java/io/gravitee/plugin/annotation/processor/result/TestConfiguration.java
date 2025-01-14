@@ -171,6 +171,8 @@ public class TestConfiguration {
         //Added to validate proper behavior when a String attribute is null
         private String topicPattern;
 
+        private Integer windowSize;
+
         private TrustStore trustStore;
 
         private List<String> attributes;
@@ -214,6 +216,14 @@ public class TestConfiguration {
 
         public void setTopicPattern(String topicPattern) {
             this.topicPattern = topicPattern;
+        }
+
+        public Integer getWindowSize() {
+            return windowSize;
+        }
+
+        public void setWindowSize(final Integer windowSize) {
+            this.windowSize = windowSize;
         }
 
         public TrustStore getTrustStore() {
