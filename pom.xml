@@ -44,7 +44,7 @@
         <gravitee-notifier-api.version>1.4.3</gravitee-notifier-api.version>
         <gravitee-service-discovery-api.version>1.1.1</gravitee-service-discovery-api.version>
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
-        <reflections.version>0.9.11</reflections.version>
+        <reflections.version>0.10.2</reflections.version>
         <gravitee-identityprovider-api.version>1.0.0</gravitee-identityprovider-api.version>
         <gravitee-cockpit-api.version>3.0.8</gravitee-cockpit-api.version>
         <gravitee-connector-api.version>1.1.5</gravitee-connector-api.version>
