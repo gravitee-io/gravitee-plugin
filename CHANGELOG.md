@@ -1,3 +1,10 @@
+## [4.6.2](https://github.com/gravitee-io/gravitee-plugin/compare/4.6.1...4.6.2) (2025-01-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency io.gravitee.gateway:gravitee-gateway-api to v3.9.1 ([e868c8b](https://github.com/gravitee-io/gravitee-plugin/commit/e868c8bfb38f6d7be42e8f7cbeb9c36ab429c10c))
+
 ## [4.6.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.6.0...4.6.1) (2025-01-14)
 
 
