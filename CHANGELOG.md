@@ -1,3 +1,10 @@
+## [4.6.3](https://github.com/gravitee-io/gravitee-plugin/compare/4.6.2...4.6.3) (2025-02-20)
+
+
+### Bug Fixes
+
+* pom.xml to reduce vulnerabilities ([0b54d7e](https://github.com/gravitee-io/gravitee-plugin/commit/0b54d7ec68656b24023c6039688acf13a59d95b1))
+
 ## [4.6.2](https://github.com/gravitee-io/gravitee-plugin/compare/4.6.1...4.6.2) (2025-01-27)
 
 
