@@ -17,6 +17,10 @@ package io.gravitee.plugin.annotation.processor;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
@@ -29,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +52,9 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
+import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -145,16 +152,76 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 typeMirror = mte.getTypeMirror();
             }
 
+            Optional<? extends Element> typeElem = annotatedElement
+                .getEnclosedElements()
+                .stream()
+                .filter(f -> f.getKind() == ElementKind.FIELD && f.getSimpleName().contentEquals(property))
+                .findFirst();
+
+            Map<String, String> enumValues = new HashMap<>();
+
+            try {
+                if (typeElem.isPresent()) {
+                    //Check if there is a field in the enum
+                    Optional<? extends Element> valueField = typeUtils
+                        .asElement(typeElem.get().asType())
+                        .getEnclosedElements()
+                        .stream()
+                        .filter(f -> f.getKind() == ElementKind.FIELD)
+                        .findFirst();
+
+                    if (valueField.isPresent()) {
+                        // Get the fully qualified name of the class
+                        Name qualifiedName = ((TypeElement) typeUtils.asElement(typeElem.get().asType())).getQualifiedName();
+
+                        // Try to get the corresponding file object
+                        try {
+                            FileObject fileObject = processingEnv
+                                .getFiler()
+                                .getResource(StandardLocation.SOURCE_PATH, "", qualifiedName.toString().replace('.', '/') + ".java");
+
+                            CompilationUnit cu = StaticJavaParser.parse(fileObject.getCharContent(true).toString());
+
+                            // Find the enum
+                            Optional<EnumDeclaration> enumOpt = cu.findFirst(
+                                EnumDeclaration.class,
+                                e -> e.getNameAsString().equals(typeUtils.asElement(typeElem.get().asType()).getSimpleName().toString())
+                            );
+                            if (enumOpt.isPresent()) {
+                                EnumDeclaration myEnum = enumOpt.get();
+
+                                // Loop through enum constants
+                                for (EnumConstantDeclaration constant : myEnum.getEntries()) {
+                                    if (!constant.getArguments().isEmpty()) {
+                                        var enumValue = constant.getArguments().get(0).toString().replaceAll("\"", "");
+                                        if (!constant.getName().toString().equals(enumValue)) {
+                                            enumValues.put(enumValue, constant.getName().toString());
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, "Error processing enum: " + e.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, "Error processing enum: " + e.getMessage());
+            }
+
             JsonSubTypes.Type[] types = annotatedElement.getAnnotation(JsonSubTypes.class).value();
 
             List<JsonSubTypeElement> jsonSubTypeElements = Stream
                 .of(types)
                 .map(type -> {
                     List<String> names = new ArrayList<>();
-                    if (type.name().isEmpty()) {
+                    if (!type.name().isEmpty()) {
                         names.add(type.name());
                     }
                     names.addAll(Arrays.stream(type.names()).toList());
+
+                    List<String> enumValue = names.stream().filter(enumValues::containsKey).map(enumValues::get).toList();
+                    names.addAll(enumValue);
 
                     TypeMirror subTypeMirror = null;
                     try {
@@ -207,9 +274,12 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             Mustache mHeader = mf.compile("templates/evaluatorHeader.mustache");
             Mustache mFooter = mf.compile("templates/evaluatorFooter.mustache");
             Mustache mClass = mf.compile("templates/evalClass.mustache");
-            Mustache mSubType = mf.compile("templates/evalSubType.mustache");
             Mustache mField = mf.compile("templates/evalField.mustache");
             Mustache mClose = mf.compile("templates/evalClose.mustache");
+            Mustache mSubTypeHeader = mf.compile("templates/evalSubTypeHeader.mustache");
+            Mustache mSubTypeFooter = mf.compile("templates/evalSubTypeFooter.mustache");
+            Mustache mSubTypeCaseHeader = mf.compile("templates/evalSubTypeCaseHeader.mustache");
+            Mustache mSubTypeCaseFooter = mf.compile("templates/evalSubTypeCaseFooter.mustache");
 
             //First header
             mHeader.execute(out, scopes);
@@ -217,12 +287,13 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             //Then eval method
             generateEvalMethods(
                 currentElement,
-                new MustacheParams(mClass, mSubType, mField, mClose),
+                new MustacheParams(mClass, mField, mClose, mSubTypeHeader, mSubTypeFooter, mSubTypeCaseHeader, mSubTypeCaseFooter),
                 out,
                 "evaluatedConfiguration",
                 "configuration",
                 "",
-                jsonTypeClass
+                jsonTypeClass,
+                Collections.emptyList()
             );
 
             //Then footer
@@ -239,7 +310,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         String evaluatedConfigurationName,
         String originalConfigurationName,
         String currentAttributeSuffix,
-        Map<Element, JsonTypeElement> jsonTypeClass
+        Map<Element, JsonTypeElement> jsonTypeClass,
+        List<String> excludedFields
     ) {
         // 3 things to manage : fields, inner class and object
         // We need to exclude the "builder" part if present
@@ -247,7 +319,10 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             .getAllMembers(currentElement)
             .stream()
             .filter(element ->
-                element.getKind() == ElementKind.FIELD && !element.getSimpleName().toString().contains("Builder") && !isConstant(element)
+                element.getKind() == ElementKind.FIELD &&
+                !element.getSimpleName().toString().contains("Builder") &&
+                !isConstant(element) &&
+                !excludedFields.contains(element.getSimpleName().toString())
             )
             .map(VariableElement.class::cast)
             .toList();
@@ -272,14 +347,41 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             .forEach(field -> {
                 if (field.isJsonType()) {
                     //Build the object that contains necessary data for mustache template
-                    var jsonObjectTemplate = buildJsonObjectTemplate(
-                        field,
-                        jsonTypeClass,
-                        evaluatedConfigurationName,
-                        originalConfigurationName
-                    );
+                    var jsonObjectTemplate = buildJsonObjectTemplate(field, jsonTypeClass, originalConfigurationName);
                     //Execute mustache specific template
-                    mustacheParams.mSubType().execute(writer, jsonObjectTemplate);
+                    mustacheParams.mSubTypeHeader().execute(writer, jsonObjectTemplate);
+
+                    jsonObjectTemplate
+                        .jsonSubTypeElementWithEnums()
+                        .forEach(jsonSubTypeElementWithEnum -> {
+                            if (!jsonSubTypeElementWithEnum.value().toString().equals(currentElement.asType().toString())) {
+                                Object[] objects = { jsonObjectTemplate, jsonSubTypeElementWithEnum };
+
+                                mustacheParams.mSubTypeCaseHeader().execute(writer, objects);
+
+                                //Change originalConfigurationName and evaluatedConfigurationName to include cast
+                                // configuration.getSslOptions().getTrustStore() -> ((PEMTrustStore)configuration.getSslOptions().getTrustStore())
+                                var origConfig =
+                                    "((" + jsonSubTypeElementWithEnum.value().toString() + ")" + originalConfigurationName + ")";
+                                var evalConfig =
+                                    "((" + jsonSubTypeElementWithEnum.value().toString() + ")" + evaluatedConfigurationName + ")";
+
+                                generateEvalMethods(
+                                    jsonSubTypeElementWithEnum.classElement(),
+                                    new MustacheParams(mustacheParams),
+                                    writer,
+                                    evalConfig,
+                                    origConfig,
+                                    currentAttributeSuffix,
+                                    jsonTypeClass,
+                                    List.of(jsonTypeClass.get(currentElement).property())
+                                );
+
+                                mustacheParams.mSubTypeCaseFooter().execute(writer, jsonSubTypeElementWithEnum);
+                            }
+                        });
+
+                    mustacheParams.mSubTypeFooter().execute(writer, jsonObjectTemplate);
                 } else {
                     mustacheParams.mField().execute(writer, field);
                 }
@@ -323,7 +425,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 evaluatedConf,
                 originalConf,
                 attributeSuffix,
-                jsonTypeClass
+                jsonTypeClass,
+                Collections.emptyList()
             );
 
             mustacheParams.mClose().execute(writer, scopes);
@@ -376,7 +479,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 evaluatedConf,
                 originalConf,
                 attributeSuffix,
-                jsonTypeClass
+                jsonTypeClass,
+                Collections.emptyList()
             );
 
             mustacheParams.mClose().execute(writer, scopes);
@@ -388,8 +492,12 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
     }
 
     private String getGetterMethod(final String field) {
+        return getGetterMethod(field, true);
+    }
+
+    private String getGetterMethod(final String field, final boolean withParenthesis) {
         String startLetter = field.substring(0, 1).toUpperCase();
-        return "get" + startLetter + field.substring(1) + "()";
+        return "get" + startLetter + field.substring(1) + (withParenthesis ? "()" : "");
     }
 
     private String toCamelCase(final String className) {
@@ -400,42 +508,24 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
     private JsonObjectTemplate buildJsonObjectTemplate(
         FieldProperty field,
         Map<Element, JsonTypeElement> jsonTypeClass,
-        String evaluatedConfigurationName,
         String originalConfigurationName
     ) {
         var jsonType = jsonTypeClass.get(field.field.getEnclosingElement());
         List<JsonSubTypeElementWithEnum> subTypeElementWithEnums = new ArrayList<>();
-        //Get Enum values
+
         // Iterate over the enclosed elements of the enum
         for (Element enclosedElement : ((DeclaredType) field.field.asType()).asElement().getEnclosedElements()) {
             if (enclosedElement.getKind() == ElementKind.ENUM_CONSTANT) {
                 // Add the enum constant name to the list
                 var enumString = enclosedElement.getSimpleName().toString();
+
                 jsonType
                     .jsonSubTypeElements()
                     .forEach(jsonSubTypeElement -> {
                         if (jsonSubTypeElement.names().contains(enumString)) {
-                            var element = typeUtils.asElement(jsonSubTypeElement.value());
-                            List<FieldProperty> subFields = new ArrayList<>();
-                            for (Element subEnclosedElement : element.getEnclosedElements()) {
-                                if (
-                                    subEnclosedElement.getKind() == ElementKind.FIELD &&
-                                    !subEnclosedElement.getSimpleName().toString().contains("Builder") &&
-                                    !isConstant(subEnclosedElement)
-                                ) {
-                                    subFields.add(
-                                        new FieldProperty(
-                                            (VariableElement) subEnclosedElement,
-                                            elementUtils,
-                                            typeUtils,
-                                            evaluatedConfigurationName,
-                                            originalConfigurationName,
-                                            jsonTypeClass
-                                        )
-                                    );
-                                }
-                            }
-                            subTypeElementWithEnums.add(new JsonSubTypeElementWithEnum(jsonSubTypeElement.value(), enumString, subFields));
+                            TypeElement element = elementUtils.getTypeElement(typeUtils.asElement(jsonSubTypeElement.value()).toString());
+
+                            subTypeElementWithEnums.add(new JsonSubTypeElementWithEnum(jsonSubTypeElement.value(), enumString, element));
                         }
                     });
             }
@@ -474,6 +564,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         private final boolean toEval;
         private final boolean toEvalList;
         private final boolean toEvalHeaderList;
+        private final boolean toEvalMap;
         private final boolean jsonType;
         private final String evaluatedConfigurationName;
         private final String originalConfigurationName;
@@ -492,11 +583,12 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             this.fieldName = field.getSimpleName().toString();
             this.fieldGetter = getGetterMethod(fieldName, fieldType);
             this.fieldSetter = getSetterMethod(fieldName);
-            this.secretKind = getSecretKind(field); //secretFields.get(field) != null ? secretFields.get(field).name() : "";
-            // Check if the type of this field is String to know if it's need to be evaluated by the template engine
+            this.secretKind = getSecretKind(field);
+            // Check if the type of this field is supported EL to know if it's need to be evaluated by the template engine
             this.toEval = "String".equals(fieldType);
             this.toEvalList = "ListString".equals(fieldType);
             this.toEvalHeaderList = "ListHeader".equals(fieldType);
+            this.toEvalMap = "MapString".equals(fieldType);
             this.jsonType = isJsonTypeInfoProperty(field, jsonTypeClass);
             this.evaluatedConfigurationName = evaluatedConfigurationName;
             this.originalConfigurationName = originalConfigurationName;
@@ -551,6 +643,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 return "ListHeader";
             } else if (is(field.asType(), List.class)) {
                 return "List";
+            } else if (isStringMap(field.asType(), elementUtils, typeUtils)) {
+                return "MapString";
             } else if (is(field.asType(), Integer.class) || is(field.asType(), int.class)) {
                 return "Integer";
             } else if (is(field.asType(), Long.class) || is(field.asType(), long.class)) {
@@ -579,7 +673,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         }
 
         private static boolean isStringList(TypeMirror type, Elements elementUtils, Types typeUtils) {
-            if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().isEmpty()) {
+            if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().size() != 1) {
                 return false;
             }
 
@@ -592,7 +686,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         }
 
         private static boolean isHeaderList(TypeMirror type, Elements elementUtils, Types typeUtils) {
-            if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().isEmpty()) {
+            if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().size() != 1) {
                 return false;
             }
 
@@ -602,6 +696,25 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             }
             var StringElem = elementUtils.getTypeElement("io.gravitee.common.http.HttpHeader");
             return typeUtils.isSameType(firstType, StringElem.asType());
+        }
+
+        private static boolean isStringMap(TypeMirror type, Elements elementUtils, Types typeUtils) {
+            if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().size() != 2) {
+                return false;
+            }
+
+            TypeMirror firstType = ((DeclaredType) type).getTypeArguments().get(0);
+            if (firstType == null) {
+                return false;
+            }
+
+            TypeMirror secondType = ((DeclaredType) type).getTypeArguments().get(1);
+            if (secondType == null) {
+                return false;
+            }
+
+            var StringElemType = elementUtils.getTypeElement("java.lang.String").asType();
+            return typeUtils.isSameType(firstType, StringElemType) && typeUtils.isSameType(secondType, StringElemType);
         }
 
         /**
@@ -639,9 +752,25 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         }
     }
 
-    private record MustacheParams(Mustache mClass, Mustache mSubType, Mustache mField, Mustache mClose) {
+    private record MustacheParams(
+        Mustache mClass,
+        Mustache mField,
+        Mustache mClose,
+        Mustache mSubTypeHeader,
+        Mustache mSubTypeFooter,
+        Mustache mSubTypeCaseHeader,
+        Mustache mSubTypeCaseFooter
+    ) {
         public MustacheParams(MustacheParams copy) {
-            this(copy.mClass, copy.mSubType, copy.mField, copy.mClose);
+            this(
+                copy.mClass,
+                copy.mField,
+                copy.mClose,
+                copy.mSubTypeHeader,
+                copy.mSubTypeFooter,
+                copy.mSubTypeCaseHeader,
+                copy.mSubTypeCaseFooter
+            );
         }
     }
 
@@ -649,7 +778,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
     private record JsonSubTypeElement(List<String> names, TypeMirror value) {}
 
-    private record JsonSubTypeElementWithEnum(TypeMirror value, String enumValue, List<FieldProperty> fields) {}
+    private record JsonSubTypeElementWithEnum(TypeMirror value, String enumValue, TypeElement classElement) {}
 
     private record JsonObjectTemplate(
         JsonTypeElement jsonTypeElement,

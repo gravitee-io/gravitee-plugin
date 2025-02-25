@@ -1,0 +1,5 @@
+        // Start Case {{enumValue}}
+        case {{enumValue}} -> {
+            if({{property.fieldName}} != {{property.originalConfigurationName}}.{{property.fieldGetter}}()) {
+            {{setter}}(new {{value}}());
+            }

@@ -1,0 +1,7 @@
+        //Json object based on {{property.fieldClass}}
+        {{property.fieldClass}} {{property.fieldName}} = {{property.originalConfigurationName}}.{{property.fieldGetter}}();
+        if(baseExecutionContext != null) {
+            {{property.fieldName}} = eval{{property.fieldType}}Property("{{property.fieldName}}", {{property.originalConfigurationName}}.{{property.fieldGetter}}(), {{#property.fieldClass}}{{property.fieldClass}}.class, {{/property.fieldClass}}currentAttributePrefix, baseExecutionContext);
+        }
+
+        switch({{property.fieldName}}) {
