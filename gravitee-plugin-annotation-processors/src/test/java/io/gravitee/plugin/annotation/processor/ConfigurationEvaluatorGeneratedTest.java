@@ -32,6 +32,9 @@ import io.gravitee.gateway.reactive.api.context.http.HttpPlainRequest;
 import io.gravitee.gateway.reactive.api.context.http.HttpPlainResponse;
 import io.gravitee.gateway.reactive.api.tracing.Tracer;
 import io.gravitee.plugin.annotation.processor.result.*;
+import io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanism;
+import io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanismType;
+import io.gravitee.plugin.annotation.processor.result.sasl.awsmskiam.AwsMskIamSaslMechanism;
 import io.gravitee.reporter.api.v4.metric.Metrics;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -176,10 +179,19 @@ public class ConfigurationEvaluatorGeneratedTest {
         consumer.setTrustStore(TrustStore.builder().key("my-key").build());
         var securityConfiguration = SecurityConfiguration.builder().property("my-prop").build();
         var ssl = Ssl.builder().keyStore(KeyStore.builder().key("keystore-key").build()).timeout(10L).build();
+        var sasl = new AwsMskIamSaslMechanism();
         var auth = TestConfiguration.Authentication.builder().username("username").password("password").build();
         var headers = List.of(new HttpHeader("key", "value"));
 
-        var originalConfiguration = new TestConfiguration(SecurityProtocol.SASL_SSL, ssl, securityConfiguration, consumer, auth, headers);
+        var originalConfiguration = new TestConfiguration(
+            SecurityProtocol.SASL_SSL,
+            ssl,
+            sasl,
+            securityConfiguration,
+            consumer,
+            auth,
+            headers
+        );
         evaluator = new TestConfigurationEvaluator(originalConfiguration);
 
         TestObserver<TestConfiguration> testObserver = evaluator.eval(new DefaultExecutionContext()).test();
