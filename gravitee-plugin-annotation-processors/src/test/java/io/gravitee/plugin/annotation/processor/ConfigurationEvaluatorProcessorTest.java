@@ -25,6 +25,8 @@ import com.google.testing.compile.CompilationSubject;
 import com.google.testing.compile.JavaFileObjectSubject;
 import com.google.testing.compile.JavaFileObjects;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -78,11 +80,11 @@ public class ConfigurationEvaluatorProcessorTest {
                     try {
                         javaFileObjects.add(
                             JavaFileObjects.forSourceString(
-                                path.getFileName().toString().replace(".java", ""),
+                                new URI("file", null, path.toRealPath().toString(), null).toString().replace(".java", ""),
                                 readJavaCodeFromFile(path.toString())
                             )
                         );
-                    } catch (IOException e) {
+                    } catch (IOException | URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
                 });

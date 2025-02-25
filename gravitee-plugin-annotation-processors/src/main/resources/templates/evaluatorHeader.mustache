@@ -38,7 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -304,6 +306,63 @@ public class {{evaluatorSimpleClassName}} {
             .toMaybe();
     }
 
+    private Maybe<Map<String, String>> evalMapStringProperty(String name, Map<String, String> value, String attributePrefix, BaseExecutionContext ctx) {
+        Map<String, String> attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            value = attribute;
+        }
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value.entrySet()).filter(Objects::nonNull)
+            .flatMapMaybe(entry -> {
+                SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.GENERIC, entry.getKey());
+                return ctx
+                .getTemplateEngine()
+                .eval(entry.getValue(), String.class)
+                .doOnSubscribe(d ->
+                ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+            )
+            .doOnTerminate(() ->
+                ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+            )
+            .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
+            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue())
+            );
+            }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
+            .toMaybe();
+    }
+
+    private Maybe<Map<String, String>> evalMapStringProperty(String name, Map<String, String> value, String attributePrefix, DeploymentContext ctx) {
+    //If value is null, return empty
+    if(value == null) {
+        return Maybe.empty();
+    }
+
+    //Then check EL
+    return Flowable.fromIterable(value.entrySet()).filter(Objects::nonNull)
+        .flatMapMaybe(entry -> {
+            SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.GENERIC, entry.getKey());
+            return ctx
+            .getTemplateEngine()
+            .eval(entry.getValue(), String.class)
+            .doOnSubscribe(d ->
+            ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+        )
+        .doOnTerminate(() ->
+            ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+        )
+        .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
+        .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue())
+        );
+        }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
+        .toMaybe();
+    }
+
     private <T> void validateConfiguration(T configuration) {
         Set<ConstraintViolation<T>> constraintViolations = validator.validate(configuration);
 
@@ -393,3 +452,4 @@ public class {{evaluatorSimpleClassName}} {
         List<Maybe<String>> toEval = new ArrayList<>();
         List<Maybe<List<String>>> toEvalList = new ArrayList<>();
         List<Maybe<List<HttpHeader>>> toEvalHeaderList = new ArrayList<>();
+        List<Maybe<Map<String, String>>> toEvalMap = new ArrayList<>();

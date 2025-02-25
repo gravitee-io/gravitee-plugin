@@ -21,6 +21,9 @@ package io.gravitee.plugin.annotation.processor.result;
 
 import io.gravitee.common.http.HttpHeader;
 import io.gravitee.plugin.annotation.ConfigurationEvaluator;
+import io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanism;
+import io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanismType;
+import io.gravitee.plugin.annotation.processor.result.sasl.none.NoneSaslMechanism;
 import io.gravitee.plugin.annotation.processor.result.ssl.SslOptions;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -43,6 +46,8 @@ public class TestConfiguration {
     //With Jackson annotation
     private SslOptions sslOptions;
 
+    private SaslMechanism saslMechanism;
+
     @Valid
     private SecurityConfiguration security;
 
@@ -59,6 +64,7 @@ public class TestConfiguration {
     public TestConfiguration(
         SecurityProtocol protocol,
         Ssl ssl,
+        SaslMechanism saslMechanism,
         SecurityConfiguration security,
         Consumer consumer,
         Authentication auth,
@@ -66,6 +72,7 @@ public class TestConfiguration {
     ) {
         this.protocol = protocol;
         this.ssl = ssl;
+        this.saslMechanism = saslMechanism;
         this.security = security;
         this.consumer = consumer;
         this.auth = auth;
@@ -92,6 +99,14 @@ public class TestConfiguration {
 
     public void setSsl(Ssl ssl) {
         this.ssl = ssl;
+    }
+
+    public SaslMechanism getSaslMechanism() {
+        return saslMechanism;
+    }
+
+    public void setSaslMechanism(SaslMechanism saslMechanism) {
+        this.saslMechanism = saslMechanism;
     }
 
     public Authentication getAuth() {
@@ -144,6 +159,10 @@ public class TestConfiguration {
 
     private static Ssl $default$ssl() {
         return new Ssl();
+    }
+
+    private static SaslMechanism $default$saslMechanism() {
+        return new NoneSaslMechanism();
     }
 
     private static Authentication $default$auth() {
@@ -412,6 +431,10 @@ public class TestConfiguration {
         private Ssl ssl$value;
         private boolean ssl$set;
 
+        private SaslMechanismType type = SaslMechanismType.NONE;
+        private SaslMechanism saslMechanism$value;
+        private boolean saslMechanism$set;
+
         private Authentication auth$value;
         private boolean auth$set;
 
@@ -429,6 +452,12 @@ public class TestConfiguration {
         public TestConfigurationBuilder ssl(Ssl ssl) {
             this.ssl$value = ssl;
             this.ssl$set = true;
+            return this;
+        }
+
+        public TestConfigurationBuilder saslMechanism(SaslMechanism saslMechanism) {
+            this.saslMechanism$value = saslMechanism;
+            this.saslMechanism$set = true;
             return this;
         }
 
@@ -470,6 +499,11 @@ public class TestConfiguration {
                 ssl$value = TestConfiguration.$default$ssl();
             }
 
+            SaslMechanism saslMechanism$value = this.saslMechanism$value;
+            if (!this.saslMechanism$set) {
+                saslMechanism$value = TestConfiguration.$default$saslMechanism();
+            }
+
             Authentication auth$value = this.auth$value;
             if (!this.auth$set) {
                 auth$value = TestConfiguration.$default$auth();
@@ -479,7 +513,15 @@ public class TestConfiguration {
             if (!this.headers$set) {
                 headers$value = TestConfiguration.$default$headers();
             }
-            return new TestConfiguration(protocol, ssl$value, security$value, consumer$value, auth$value, headers$value);
+            return new TestConfiguration(
+                protocol,
+                ssl$value,
+                saslMechanism$value,
+                security$value,
+                consumer$value,
+                auth$value,
+                headers$value
+            );
         }
 
         public String toString() {

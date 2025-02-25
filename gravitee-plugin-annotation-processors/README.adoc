@@ -45,7 +45,7 @@ So if we want for example override the `bootstrapServers` attribute of the Kafka
 You need to assign an attribute named `gravitee.attributes.endpoint.kafka.bootstrapServers`
 
 #The annotation processor supports these types: String, Integer, Boolean, Enum, Set and List.
-EL support is offered for: String, List<String> and List<HttpHeader> (from gravitee-common).#
+EL support is offered for: String, List<String>, List<HttpHeader> (from gravitee-common) and Map<String, String>.#
 
 ==== Evaluate EL on string type properties
 
