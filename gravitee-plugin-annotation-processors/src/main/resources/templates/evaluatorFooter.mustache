@@ -3,8 +3,9 @@
         Completable toEvalCompletable = Flowable.fromIterable(toEval).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalListCompletable = Flowable.fromIterable(toEvalList).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalHeaderListCompletable = Flowable.fromIterable(toEvalHeaderList).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalMapCompletable = Flowable.fromIterable(toEvalMap).concatMapMaybe(m -> m).ignoreElements();
 
-        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable)
+        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable, toEvalMapCompletable)
             .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
             .andThen(Completable.fromRunnable(() -> {
                 if(baseExecutionContext != null) {
@@ -12,8 +13,8 @@
                 }
             }))
             .onErrorResumeNext(t -> {
-                if(baseExecutionContext != null) {
-                    return ((HttpPlainExecutionContext)baseExecutionContext).interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
+                if(baseExecutionContext != null && baseExecutionContext instanceof HttpPlainExecutionContext httpPlainExecutionContext) {
+                    return httpPlainExecutionContext.interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
                 }
                 return Completable.error(t);
             })

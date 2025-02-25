@@ -78,7 +78,7 @@ public class ConfigurationEvaluatorProcessorTest {
                     try {
                         javaFileObjects.add(
                             JavaFileObjects.forSourceString(
-                                path.getFileName().toString().replace(".java", ""),
+                                path.toString().replace("src/test/java/", "").replace(".java", "").replace("/", "."),
                                 readJavaCodeFromFile(path.toString())
                             )
                         );

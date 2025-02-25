@@ -38,7 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -304,6 +306,63 @@ public class TestConfigurationEvaluator {
                 .toMaybe();
     }
 
+    private Maybe<Map<String, String>> evalMapStringProperty(String name, Map<String, String> value, String attributePrefix, BaseExecutionContext ctx) {
+        Map<String, String> attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            value = attribute;
+        }
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value.entrySet()).filter(Objects::nonNull)
+                .flatMapMaybe(entry -> {
+                    SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.GENERIC, entry.getKey());
+                    return ctx
+                            .getTemplateEngine()
+                            .eval(entry.getValue(), String.class)
+                            .doOnSubscribe(d ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+                            )
+                            .doOnTerminate(() ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+                            )
+                            .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
+                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue())
+                            );
+                }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
+                .toMaybe();
+    }
+
+    private Maybe<Map<String, String>> evalMapStringProperty(String name, Map<String, String> value, String attributePrefix, DeploymentContext ctx) {
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value.entrySet()).filter(Objects::nonNull)
+                .flatMapMaybe(entry -> {
+                    SecretFieldAccessControl accessControl = new SecretFieldAccessControl(true, FieldKind.GENERIC, entry.getKey());
+                    return ctx
+                            .getTemplateEngine()
+                            .eval(entry.getValue(), String.class)
+                            .doOnSubscribe(d ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl)
+                            )
+                            .doOnTerminate(() ->
+                                    ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
+                            )
+                            .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
+                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue())
+                            );
+                }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
+                .toMaybe();
+    }
+
     private <T> void validateConfiguration(T configuration) {
         Set<ConstraintViolation<T>> constraintViolations = validator.validate(configuration);
 
@@ -393,6 +452,7 @@ public class TestConfigurationEvaluator {
         List<Maybe<String>> toEval = new ArrayList<>();
         List<Maybe<List<String>>> toEvalList = new ArrayList<>();
         List<Maybe<List<HttpHeader>>> toEvalHeaderList = new ArrayList<>();
+        List<Maybe<Map<String, String>>> toEvalMap = new ArrayList<>();
         //Field protocol
         if(baseExecutionContext != null) {
             evaluatedConfiguration.setProtocol(
@@ -581,7 +641,7 @@ public class TestConfigurationEvaluator {
 
                 switch(type) {
                     case PEM -> {
-                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.PEM) {
+                        if(type != configuration.getSslOptions().getTrustStore().getType()) {
                             configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMTrustStore
@@ -607,7 +667,7 @@ public class TestConfigurationEvaluator {
                         }
                     }
                     case PKCS12 -> {
-                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.PKCS12) {
+                        if(type != configuration.getSslOptions().getTrustStore().getType()) {
                             configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12TrustStore
@@ -653,7 +713,7 @@ public class TestConfigurationEvaluator {
                         }
                     }
                     case JKS -> {
-                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.JKS) {
+                        if(type != configuration.getSslOptions().getTrustStore().getType()) {
                             configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSTrustStore
@@ -699,7 +759,7 @@ public class TestConfigurationEvaluator {
                         }
                     }
                     case NONE -> {
-                        if(type != configuration.getSslOptions().getTrustStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.TrustStoreType.NONE) {
+                        if(type != configuration.getSslOptions().getTrustStore().getType()) {
                             configuration.getSslOptions().setTrustStore(new io.gravitee.plugin.annotation.processor.result.ssl.none.NoneTrustStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.none.NoneTrustStore
@@ -731,7 +791,7 @@ public class TestConfigurationEvaluator {
 
                 switch(type) {
                     case PEM -> {
-                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.PEM) {
+                        if(type != configuration.getSslOptions().getKeyStore().getType()) {
                             configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.pem.PEMKeyStore
@@ -777,7 +837,7 @@ public class TestConfigurationEvaluator {
                         }
                     }
                     case PKCS12 -> {
-                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.PKCS12) {
+                        if(type != configuration.getSslOptions().getKeyStore().getType()) {
                             configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.pkcs12.PKCS12KeyStore
@@ -833,7 +893,7 @@ public class TestConfigurationEvaluator {
                         }
                     }
                     case JKS -> {
-                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.JKS) {
+                        if(type != configuration.getSslOptions().getKeyStore().getType()) {
                             configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.jks.JKSKeyStore
@@ -889,7 +949,7 @@ public class TestConfigurationEvaluator {
                         }
                     }
                     case NONE -> {
-                        if(type != configuration.getSslOptions().getKeyStore().getType() && type == io.gravitee.plugin.annotation.processor.result.ssl.KeyStoreType.NONE) {
+                        if(type != configuration.getSslOptions().getKeyStore().getType()) {
                             configuration.getSslOptions().setKeyStore(new io.gravitee.plugin.annotation.processor.result.ssl.none.NoneKeyStore());
                         }
                         //Field io.gravitee.plugin.annotation.processor.result.ssl.none.NoneKeyStore
@@ -901,6 +961,100 @@ public class TestConfigurationEvaluator {
 
         }
         //sslOptions section end
+
+        //saslMechanism section begin
+        if(evaluatedConfiguration.getSaslMechanism() != null) {
+            currentAttributePrefix = attributePrefix.concat(".saslMechanism");
+//Json object based on io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanismType
+            io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanismType type = configuration.getSaslMechanism().getType();
+            if(baseExecutionContext != null) {
+                type = evalEnumProperty("type", configuration.getSaslMechanism().getType(), io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanismType.class, currentAttributePrefix, baseExecutionContext);
+            }
+
+            switch(type) {
+                // Start Case NONE
+                case NONE -> {
+                    if(type != configuration.getSaslMechanism().getType()) {
+                        configuration.setSaslMechanism(new io.gravitee.plugin.annotation.processor.result.sasl.none.NoneSaslMechanism());
+                    }
+
+                }
+                // End Case NONE
+
+                // Start Case AWS_MSK_IAM
+                case AWS_MSK_IAM -> {
+                    if(type != configuration.getSaslMechanism().getType()) {
+                        configuration.setSaslMechanism(new io.gravitee.plugin.annotation.processor.result.sasl.awsmskiam.AwsMskIamSaslMechanism());
+                    }
+
+                    //config section begin
+                    if(((io.gravitee.plugin.annotation.processor.result.sasl.awsmskiam.AwsMskIamSaslMechanism)evaluatedConfiguration.getSaslMechanism()).getConfig() != null) {
+                        currentAttributePrefix = attributePrefix.concat(".saslMechanism.config");
+                        //Field saslJaasConfig
+                        if(baseExecutionContext != null) {
+                            toEval.add(
+                                    evalStringProperty("saslJaasConfig", ((io.gravitee.plugin.annotation.processor.result.sasl.awsmskiam.AwsMskIamSaslMechanism)configuration.getSaslMechanism()).getConfig().getSaslJaasConfig(), currentAttributePrefix, baseExecutionContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.awsmskiam.AwsMskIamSaslMechanism)evaluatedConfiguration.getSaslMechanism()).getConfig().setSaslJaasConfig(value))
+                            );
+                        } else if(deploymentContext != null) {
+                            toEval.add(
+                                    evalStringProperty("saslJaasConfig", ((io.gravitee.plugin.annotation.processor.result.sasl.awsmskiam.AwsMskIamSaslMechanism)configuration.getSaslMechanism()).getConfig().getSaslJaasConfig(), currentAttributePrefix, deploymentContext, "")
+                                            .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.awsmskiam.AwsMskIamSaslMechanism)evaluatedConfiguration.getSaslMechanism()).getConfig().setSaslJaasConfig(value)));
+                        }
+
+                    }
+                    //config section end
+
+                }
+                // End Case AWS_MSK_IAM
+
+                // Start Case SCRAM_SHA_256
+                case SCRAM_SHA_256 -> {
+                    if(type != configuration.getSaslMechanism().getType()) {
+                        configuration.setSaslMechanism(new io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism());
+                    }
+                    //Field username
+                    if(baseExecutionContext != null) {
+                        toEval.add(
+                                evalStringProperty("username", ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)configuration.getSaslMechanism()).getUsername(), currentAttributePrefix, baseExecutionContext, "GENERIC")
+                                        .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)evaluatedConfiguration.getSaslMechanism()).setUsername(value))
+                        );
+                    } else if(deploymentContext != null) {
+                        toEval.add(
+                                evalStringProperty("username", ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)configuration.getSaslMechanism()).getUsername(), currentAttributePrefix, deploymentContext, "GENERIC")
+                                        .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)evaluatedConfiguration.getSaslMechanism()).setUsername(value)));
+                    }
+                    //Field password
+                    if(baseExecutionContext != null) {
+                        toEval.add(
+                                evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)configuration.getSaslMechanism()).getPassword(), currentAttributePrefix, baseExecutionContext, "PASSWORD")
+                                        .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)evaluatedConfiguration.getSaslMechanism()).setPassword(value))
+                        );
+                    } else if(deploymentContext != null) {
+                        toEval.add(
+                                evalStringProperty("password", ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)configuration.getSaslMechanism()).getPassword(), currentAttributePrefix, deploymentContext, "PASSWORD")
+                                        .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)evaluatedConfiguration.getSaslMechanism()).setPassword(value)));
+                    }
+                    //Field customJassConfigMap
+                    if(baseExecutionContext != null) {
+                        toEvalMap.add(
+                                evalMapStringProperty("customJassConfigMap", ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)configuration.getSaslMechanism()).getCustomJassConfigMap(), currentAttributePrefix, baseExecutionContext)
+                                        .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)evaluatedConfiguration.getSaslMechanism()).setCustomJassConfigMap(value))
+                        );
+                    } else if(deploymentContext != null) {
+                        toEvalMap.add(
+                                evalMapStringProperty("customJassConfigMap", ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)configuration.getSaslMechanism()).getCustomJassConfigMap(), currentAttributePrefix, deploymentContext)
+                                        .doOnSuccess(value -> ((io.gravitee.plugin.annotation.processor.result.sasl.scramsha256.ScramSha256SaslMechanism)evaluatedConfiguration.getSaslMechanism()).setCustomJassConfigMap(value)));
+                    }
+
+                }
+                // End Case SCRAM_SHA_256
+
+            }
+// End Json object based on io.gravitee.plugin.annotation.processor.result.sasl.SaslMechanismType
+
+        }
+        //saslMechanism section end
 
         //security section begin
         if(evaluatedConfiguration.getSecurity() != null) {
@@ -924,8 +1078,9 @@ public class TestConfigurationEvaluator {
         Completable toEvalCompletable = Flowable.fromIterable(toEval).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalListCompletable = Flowable.fromIterable(toEvalList).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalHeaderListCompletable = Flowable.fromIterable(toEvalHeaderList).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalMapCompletable = Flowable.fromIterable(toEvalMap).concatMapMaybe(m -> m).ignoreElements();
 
-        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable)
+        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable, toEvalMapCompletable)
             .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
             .andThen(Completable.fromRunnable(() -> {
                 if(baseExecutionContext != null) {
@@ -933,8 +1088,8 @@ public class TestConfigurationEvaluator {
                 }
             }))
             .onErrorResumeNext(t -> {
-                if(baseExecutionContext != null) {
-                    return ((HttpPlainExecutionContext)baseExecutionContext).interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
+                if(baseExecutionContext != null && baseExecutionContext instanceof HttpPlainExecutionContext httpPlainExecutionContext) {
+                    return httpPlainExecutionContext.interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
                 }
                 return Completable.error(t);
             })

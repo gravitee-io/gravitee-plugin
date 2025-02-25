@@ -35,6 +35,7 @@
         <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
         <mustache.version>0.9.14</mustache.version>
         <compile-testing.version>0.21.0</compile-testing.version>
+        <javaparser-symbol-solver-core.version>3.26.3</javaparser-symbol-solver-core.version>
     </properties>
 
     <dependencies>
@@ -76,6 +77,13 @@
             <artifactId>gravitee-secret-api</artifactId>
             <version>${gravitee-secret-api.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-symbol-solver-core</artifactId>
+            <version>${javaparser-symbol-solver-core.version}</version>
+        </dependency>
+
 
         <!-- Tests dependencies -->
         <dependency>
