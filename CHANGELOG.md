@@ -1,3 +1,10 @@
+# [4.7.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.6.3...4.7.0) (2025-02-27)
+
+
+### Features
+
+* add support for string map in annotation processor ([a072116](https://github.com/gravitee-io/gravitee-plugin/commit/a0721161838c1207edd027f645474303d9112ac7))
+
 ## [4.6.3](https://github.com/gravitee-io/gravitee-plugin/compare/4.6.2...4.6.3) (2025-02-20)
 
 
