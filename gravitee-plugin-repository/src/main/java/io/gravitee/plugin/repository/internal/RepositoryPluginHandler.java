@@ -49,6 +49,9 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
 
     private static final String PLUGIN_TYPE = "repository";
 
+    public static final String ANALYTICS_ELASTIC = "elasticsearch";
+    public static final String ANALYTICS_NONE = "none";
+
     @Autowired
     private Environment environment;
 
@@ -178,6 +181,7 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
             if (
                 (
                     beanName.endsWith("Repository") ||
+                    beanName.endsWith("RepositoryV4") ||
                     beanName.endsWith("TransactionManager") &&
                     !repository.getClass().equals(repositoryClassInstance.getClass())
                 )
@@ -211,7 +215,17 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
     }
 
     private String getRepositoryType(Scope scope) {
-        return environment.getProperty(scope.getName() + ".type");
+        String repositoryType = environment.getProperty(scope.getName() + ".type");
+        if (scope.equals(Scope.ANALYTICS)) {
+            if (repositoryType != null) {
+                if (!repositoryType.equals(ANALYTICS_NONE) && !repositoryType.equals(ANALYTICS_ELASTIC)) {
+                    return ANALYTICS_ELASTIC;
+                } else return repositoryType;
+            }
+            return ANALYTICS_ELASTIC;
+        } else {
+            return repositoryType;
+        }
     }
 
     private <T> T createInstance(Class<T> clazz) throws Exception {
