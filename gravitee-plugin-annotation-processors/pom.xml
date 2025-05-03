@@ -30,7 +30,7 @@
     <name>Gravitee.io - Plugin - Annotation Processors</name>
 
     <properties>
-        <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
+        <jakarta.validation-api.version>3.1.1</jakarta.validation-api.version>
         <auto-service.version>1.1.1</auto-service.version>
         <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
         <mustache.version>0.9.14</mustache.version>
