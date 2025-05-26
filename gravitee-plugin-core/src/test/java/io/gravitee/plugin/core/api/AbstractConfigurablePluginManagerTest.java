@@ -46,7 +46,7 @@ class AbstractConfigurablePluginManagerTest {
     static Map<String, String> properties;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         properties = new HashMap<>();
         cut =
             new AbstractConfigurablePluginManager<>() {
@@ -125,40 +125,58 @@ class AbstractConfigurablePluginManagerTest {
 
     @Test
     void should_get_documentation_file_with_default_property() throws IOException {
-        properties.put("documentation", "doc_bis.md");
+        properties.put("documentation", "doc_bis.adoc");
 
         cut.register(new FakePlugin());
-        final String schema = cut.getDocumentation(FAKE_PLUGIN);
-        assertEquals("plugin BIS documentation", schema);
+        final String doc = cut.getDocumentation(FAKE_PLUGIN);
+        assertEquals("plugin BIS documentation", doc);
     }
 
     @Test
     void should_get_documentation_null_for_non_existing_plugin() throws IOException {
-        final String schema = cut.getDocumentation(FAKE_PLUGIN);
-        assertNull(schema);
+        final String doc = cut.getDocumentation(FAKE_PLUGIN);
+        assertNull(doc);
     }
 
     @Test
     void should_get_first_documentation_file() throws IOException {
         cut.register(new FakePlugin());
-        final String schema = cut.getDocumentation(FAKE_PLUGIN);
-        assertEquals("plugin documentation", schema);
+        final String doc = cut.getDocumentation(FAKE_PLUGIN);
+        assertEquals("plugin documentation", doc);
     }
 
     @Test
     void should_get_documentation_file_with_property_key() throws IOException {
-        properties.put("native_kafka.documentation", "doc_bis.md");
+        properties.put("native_kafka.documentation", "doc_bis.adoc");
 
         cut.register(new FakePlugin());
-        final String schema = cut.getDocumentation(FAKE_PLUGIN, "native_kafka.documentation", true, false);
-        assertEquals("plugin BIS documentation", schema);
+        var doc = cut.getDocumentation(FAKE_PLUGIN, "native_kafka.documentation", true, false);
+        assertEquals("plugin BIS documentation", doc);
+    }
+
+    @Test
+    void should_get_documentation_and_extension_with_property_key() throws IOException {
+        properties.put("native_kafka.documentation", "doc_bis.adoc");
+
+        cut.register(new FakePlugin());
+        var doc = cut.getPluginDocumentation(FAKE_PLUGIN, "native_kafka.documentation", true, false);
+        assertEquals("plugin BIS documentation", doc.content());
+        assertEquals(PluginDocumentation.Language.ASCIIDOC, doc.language());
     }
 
     @Test
     void should_get_documentation_file_with_property_key_and_fallback() throws IOException {
         cut.register(new FakePlugin());
-        final String schema = cut.getDocumentation(FAKE_PLUGIN, "http_message.documentation", true, false);
-        assertEquals("plugin documentation", schema);
+        final String doc = cut.getDocumentation(FAKE_PLUGIN, "http_message.documentation", true, false);
+        assertEquals("plugin documentation", doc);
+    }
+
+    @Test
+    void should_get_documentation_and_extension_property_key_and_fallback() throws IOException {
+        cut.register(new FakePlugin());
+        var doc = cut.getPluginDocumentation(FAKE_PLUGIN, "http_message.documentation", true, false);
+        assertEquals("plugin documentation", doc.content());
+        assertEquals(PluginDocumentation.Language.MARKDOWN, doc.language());
     }
 
     @Test

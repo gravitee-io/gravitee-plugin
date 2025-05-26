@@ -55,7 +55,7 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
         String schemaProperty = plugin.manifest().properties().get(PluginManifestProperties.SCHEMA_PROPERTY);
 
         if (schemaProperty != null) {
-            return getFile(pluginId, Paths.get(SCHEMAS_DIRECTORY, schemaProperty), includeNotDeployed);
+            return getFileContent(pluginId, Paths.get(SCHEMAS_DIRECTORY, schemaProperty), includeNotDeployed);
         }
 
         return getFirstFile(pluginId, SCHEMAS_DIRECTORY, includeNotDeployed);
@@ -80,7 +80,7 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
         String schemaProperty = plugin.manifest().properties().get(propertyKey);
         if (schemaProperty != null) {
-            return getFile(pluginId, Paths.get(SCHEMAS_DIRECTORY, schemaProperty), includeNotDeployed);
+            return getFileContent(pluginId, Paths.get(SCHEMAS_DIRECTORY, schemaProperty), includeNotDeployed);
         }
 
         if (fallbackToSchema) {
@@ -111,6 +111,18 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
     @Override
     public String getDocumentation(String pluginId, boolean includeNotDeployed) throws IOException {
+        var doc = getPluginDocumentation(pluginId, includeNotDeployed);
+        if (doc != null) {
+            return doc.content();
+        }
+        return null;
+    }
+
+    public PluginDocumentation getPluginDocumentation(String pluginId) throws IOException {
+        return getPluginDocumentation(pluginId, false);
+    }
+
+    public PluginDocumentation getPluginDocumentation(String pluginId, boolean includeNotDeployed) throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
         if (plugin == null) {
             return null;
@@ -118,15 +130,36 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
         var documentationProperty = plugin.manifest().properties().get(PluginManifestProperties.DOCUMENTATION_PROPERTY);
         if (documentationProperty != null) {
-            return getFile(pluginId, Paths.get(DOCS_DIRECTORY, documentationProperty), false);
+            var doc = getFileContentAndExtension(pluginId, Paths.get(DOCS_DIRECTORY, documentationProperty), false);
+            if (doc != null) {
+                return doc.toPluginDocumentation();
+            }
         }
 
-        return getFirstFile(pluginId, DOCS_DIRECTORY, includeNotDeployed);
+        var doc = getFirstFileContentAndExtension(pluginId, DOCS_DIRECTORY, includeNotDeployed);
+        if (doc != null) {
+            return doc.toPluginDocumentation();
+        }
+        return null;
     }
 
     @Override
     public String getDocumentation(String pluginId, String propertyKey, boolean fallbackToDocumentation, boolean includeNotDeployed)
         throws IOException {
+        var doc = getPluginDocumentation(pluginId, propertyKey, fallbackToDocumentation, includeNotDeployed);
+        if (doc != null) {
+            return doc.content();
+        }
+        return null;
+    }
+
+    @Override
+    public PluginDocumentation getPluginDocumentation(
+        String pluginId,
+        String propertyKey,
+        boolean fallbackToDocumentation,
+        boolean includeNotDeployed
+    ) throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
         if (plugin == null) {
             return null;
@@ -134,11 +167,14 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
 
         String documentationProperty = plugin.manifest().properties().get(propertyKey);
         if (documentationProperty != null) {
-            return getFile(pluginId, Paths.get(DOCS_DIRECTORY, documentationProperty), includeNotDeployed);
+            var doc = getFileContentAndExtension(pluginId, Paths.get(DOCS_DIRECTORY, documentationProperty), includeNotDeployed);
+            if (doc != null) {
+                return doc.toPluginDocumentation();
+            }
         }
 
         if (fallbackToDocumentation) {
-            return getDocumentation(pluginId, includeNotDeployed);
+            return getPluginDocumentation(pluginId, includeNotDeployed);
         }
         return null;
     }
@@ -184,6 +220,15 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
     }
 
     private String getFirstFile(String pluginId, String directory, boolean includeNotDeployed) throws IOException {
+        var file = getFirstFileContentAndExtension(pluginId, directory, includeNotDeployed);
+        if (file != null) {
+            return file.content();
+        }
+        return null;
+    }
+
+    private ContentAndExtension getFirstFileContentAndExtension(String pluginId, String directory, boolean includeNotDeployed)
+        throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
 
         if (plugin != null) {
@@ -196,7 +241,8 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
             final File[] files = dir.listFiles(File::isFile);
 
             if (files != null && files.length > 0) {
-                return new String(Files.readAllBytes(files[0].toPath()));
+                File file = files[0];
+                return newContentAndExtension(file);
             }
             return null;
         }
@@ -216,18 +262,34 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
         return null;
     }
 
-    private String getFile(String pluginId, Path filePath, boolean includeNotDeployed) throws IOException {
+    private String getFileContent(String pluginId, Path filePath, boolean includeNotDeployed) throws IOException {
+        var file = getFileContentAndExtension(pluginId, filePath, includeNotDeployed);
+        if (file != null) {
+            return file.content();
+        }
+        return null;
+    }
+
+    private ContentAndExtension getFileContentAndExtension(String pluginId, Path filePath, boolean includeNotDeployed) throws IOException {
         final T plugin = get(pluginId, includeNotDeployed);
 
         if (plugin != null) {
-            Path workspaceDir = plugin.path();
+            return newContentAndExtension(plugin.path().resolve(filePath).toFile());
+        }
+        return null;
+    }
 
-            final File file = new File(workspaceDir.toString(), filePath.toString());
+    private record ContentAndExtension(String content, String extension) {
+        PluginDocumentation toPluginDocumentation() {
+            return new PluginDocumentation(content, PluginDocumentation.Language.fromFileExtension(extension));
+        }
+    }
 
-            if (file.exists() && file.isFile()) {
-                return new String(Files.readAllBytes(file.toPath()));
-            }
-            return null;
+    private static ContentAndExtension newContentAndExtension(File file) throws IOException {
+        String extension = com.google.common.io.Files.getFileExtension(file.toString());
+
+        if (file.exists() && file.isFile()) {
+            return new ContentAndExtension(new String(Files.readAllBytes(file.toPath())), extension);
         }
         return null;
     }
