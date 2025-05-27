@@ -1,3 +1,10 @@
+# [4.8.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.7.2...4.8.0) (2025-05-27)
+
+
+### Features
+
+* allow plugin doc to return language ([868a74d](https://github.com/gravitee-io/gravitee-plugin/commit/868a74d8e4af6625e2015c2cbdaa5a40638038dd))
+
 ## [4.7.2](https://github.com/gravitee-io/gravitee-plugin/compare/4.7.1...4.7.2) (2025-04-24)
 
 
