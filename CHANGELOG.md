@@ -1,3 +1,10 @@
+# [4.9.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.8.0...4.9.0) (2025-10-07)
+
+
+### Features
+
+* allow to set Double in plugin config ([0ec8498](https://github.com/gravitee-io/gravitee-plugin/commit/0ec8498fe7e48c4a08cbd4232bdb8f6b99f36b21))
+
 # [4.8.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.7.2...4.8.0) (2025-05-27)
 
 
