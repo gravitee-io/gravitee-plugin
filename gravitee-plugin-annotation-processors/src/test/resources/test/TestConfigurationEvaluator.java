@@ -160,6 +160,14 @@ public class TestConfigurationEvaluator {
         return value;
     }
 
+    private Double evalDoubleProperty(String name, Double value, String attributePrefix, BaseExecutionContext ctx) {
+        Double attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            return attribute;
+        }
+        return value;
+    }
+
     private Boolean evalBooleanProperty(String name, Boolean value, String attributePrefix, BaseExecutionContext ctx) {
         Boolean attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
@@ -471,6 +479,13 @@ public class TestConfigurationEvaluator {
                     evalListHeaderProperty("headers", configuration.getHeaders(), currentAttributePrefix, deploymentContext)
                             .doOnSuccess(value -> evaluatedConfiguration.setHeaders(value)));
         }
+        //Field doubleValue
+        if(baseExecutionContext != null) {
+            evaluatedConfiguration.setDoubleValue(
+                    evalDoubleProperty("doubleValue", configuration.getDoubleValue(), currentAttributePrefix, baseExecutionContext)
+            );
+         } else if(deploymentContext != null) {
+         }
 
         //Consumer section begin
         if(evaluatedConfiguration.getConsumer() != null) {
