@@ -61,6 +61,8 @@ public class TestConfiguration {
 
     private List<HttpHeader> headers = new ArrayList<>();
 
+    private Double doubleValue;
+
     public TestConfiguration(
         SecurityProtocol protocol,
         Ssl ssl,
@@ -147,6 +149,14 @@ public class TestConfiguration {
 
     public void setSecurity(SecurityConfiguration security) {
         this.security = security;
+    }
+
+    public Double getDoubleValue() {
+        return doubleValue;
+    }
+
+    public void setDoubleValue(Double doubleValue) {
+        this.doubleValue = doubleValue;
     }
 
     private static TestConfiguration.Consumer $default$consumer() {

@@ -160,6 +160,14 @@ public class {{evaluatorSimpleClassName}} {
         return value;
     }
 
+    private Double evalDoubleProperty(String name, Double value, String attributePrefix, BaseExecutionContext ctx) {
+        Double attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            return attribute;
+        }
+        return value;
+    }
+
     private Boolean evalBooleanProperty(String name, Boolean value, String attributePrefix, BaseExecutionContext ctx) {
         Boolean attribute = ctx.getAttribute(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
