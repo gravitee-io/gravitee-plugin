@@ -110,7 +110,7 @@ public class {{evaluatorSimpleClassName}} {
             .eval(value, String.class)
             .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
             .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
-            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue));
+            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue, throwable));
     }
 
     private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, DeploymentContext ctx, String secretKind) {
@@ -133,7 +133,7 @@ public class {{evaluatorSimpleClassName}} {
             .eval(value, String.class)
             .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
             .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
-            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", property, value));
+            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", property, value, throwable));
     }
 
     private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, BaseExecutionContext ctx) {
@@ -218,7 +218,7 @@ public class {{evaluatorSimpleClassName}} {
             .flatMapMaybe(v -> ctx
                 .getTemplateEngine()
                 .eval(v, String.class)
-                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v)))
+                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
             .toList()
             .toMaybe();
     }
@@ -234,7 +234,7 @@ public class {{evaluatorSimpleClassName}} {
             .flatMapMaybe(v -> ctx
                 .getTemplateEngine()
                 .eval(v, String.class)
-                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v)))
+                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
             .toList()
             .toMaybe();
     }
@@ -273,7 +273,7 @@ public class {{evaluatorSimpleClassName}} {
                         ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
                     )
                     .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
-                    .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue())
+                    .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue(), throwable)
                 );
             })
             .toList()
@@ -307,7 +307,7 @@ public class {{evaluatorSimpleClassName}} {
                         ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
                     )
                     .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
-                    .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue())
+                    .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue(), throwable)
                     );
             })
             .toList()
@@ -339,7 +339,7 @@ public class {{evaluatorSimpleClassName}} {
                 ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
             )
             .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
-            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue())
+            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue(), throwable)
             );
             }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
             .toMaybe();
@@ -365,7 +365,7 @@ public class {{evaluatorSimpleClassName}} {
             ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
         )
         .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
-        .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue())
+        .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue(), throwable)
         );
         }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
         .toMaybe();
