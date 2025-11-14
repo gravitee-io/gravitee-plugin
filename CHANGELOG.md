@@ -1,3 +1,10 @@
+## [4.9.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.9.0...4.9.1) (2025-11-14)
+
+
+### Bug Fixes
+
+* add missing stacktrace in case of config eval error ([c72ec46](https://github.com/gravitee-io/gravitee-plugin/commit/c72ec467a636f5fdbe97c53026929fac17acee31))
+
 # [4.9.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.8.0...4.9.0) (2025-10-08)
 
 
