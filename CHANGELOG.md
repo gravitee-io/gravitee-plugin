@@ -1,3 +1,10 @@
+# [4.10.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.9.1...4.10.0) (2025-11-25)
+
+
+### Features
+
+* accept plugin configurations ssl classes ([ea01723](https://github.com/gravitee-io/gravitee-plugin/commit/ea0172398eac620221bfc484e1fd274136f67960))
+
 ## [4.9.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.9.0...4.9.1) (2025-11-14)
 
 
