@@ -40,7 +40,10 @@ public enum PluginType {
     COCKPIT_CONTROLLER,
     CLUSTER,
     CACHE,
-    INTEGRATION_PROVIDER;
+    INTEGRATION_PROVIDER,
+    DATA_PLANE,
+    AUTHENTICATOR,
+    AUTHORIZATION_ENGINE;
 
     public static PluginType from(String sType) {
         for (PluginType pluginType : values()) {
