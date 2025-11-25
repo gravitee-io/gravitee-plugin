@@ -95,6 +95,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         List<String> dependencyClasses = new ArrayList<>();
         dependencyClasses.add("io.gravitee.definition.model.v4.ssl.TrustStore");
         dependencyClasses.add("io.gravitee.definition.model.v4.ssl.KeyStore");
+        dependencyClasses.add("io.gravitee.plugin.configurations.ssl.TrustStore");
+        dependencyClasses.add("io.gravitee.plugin.configurations.ssl.KeyStore");
 
         //Check external dependencies for JsonTypeInfo annotation
         for (String dependencyClass : dependencyClasses) {
