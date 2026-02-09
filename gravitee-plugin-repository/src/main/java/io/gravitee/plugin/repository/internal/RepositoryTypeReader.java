@@ -24,31 +24,18 @@ import org.springframework.core.env.Environment;
 @Slf4j
 class RepositoryTypeReader {
 
-    private static final String REPOSITORIES_PREFIX = "repositories.";
-
     String getRepositoryType(Environment environment, Scope scope) {
         String oldKey = scope.getName() + ".type";
-
-        String newKey = REPOSITORIES_PREFIX + oldKey;
-
-        // 1. Check the new  key first (e.g., repositories.management.type)
+        String newKey = "repositories." + oldKey;
         String repositoryType = environment.getProperty(newKey);
         if (repositoryType != null) {
             return repositoryType;
+        } else {
+            repositoryType = environment.getProperty(oldKey);
+            if (repositoryType != null) {
+                log.warn("The repository of scope {} is loaded from discouraged section '{}'. Please use '{}'.", scope, oldKey, newKey);
+            }
+            return repositoryType;
         }
-
-        // 2. Fallback to the  legacy key (e.g., management.type)
-        repositoryType = environment.getProperty(oldKey);
-
-        if (repositoryType != null) {
-            log.warn(
-                "Repository for scope '{}' is configured using the deprecated key '{}'. Please migrate to '{}'.",
-                scope,
-                oldKey,
-                newKey
-            );
-        }
-
-        return repositoryType;
     }
 }
