@@ -15,47 +15,80 @@
  */
 package io.gravitee.plugin.repository.internal;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.when;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.gravitee.platform.repository.api.Scope;
-import org.junit.Assert;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RepositoryTypeReaderTest {
 
     @Mock
-    Environment environment;
+    private Environment environment;
 
-    RepositoryTypeReader reader = new RepositoryTypeReader();
+    private final RepositoryTypeReader reader = new RepositoryTypeReader();
 
     @Test
-    public void scope_should_been_read_from_repositories_section_first() {
-        Mockito.when(environment.getProperty("repositories.management.type")).thenReturn("mongodb");
-
+    public void scope_should_be_read_from_repositories_section_first() {
+        when(environment.getProperty("repositories.management.type")).thenReturn("mongodb");
         String type = reader.getRepositoryType(environment, Scope.MANAGEMENT);
-        Assert.assertEquals("mongodb", type);
+
+        assertEquals("mongodb", type);
     }
 
     @Test
-    public void scope_should_been_read_from_old_structure_as_fallback() {
-        Mockito.when(environment.getProperty("repositories.management.type")).thenReturn(null);
-        Mockito.when(environment.getProperty("management.type")).thenReturn("jdbc");
-
+    public void scope_should_be_read_from_old_structure_as_fallback() {
+        when(environment.getProperty("repositories.management.type")).thenReturn(null);
+        when(environment.getProperty("management.type")).thenReturn("jdbc");
         String type = reader.getRepositoryType(environment, Scope.MANAGEMENT);
-        Assert.assertEquals("jdbc", type);
+
+        assertEquals("jdbc", type);
     }
 
     @Test
     public void should_return_null_when_properties_are_missing() {
-        Mockito.when(environment.getProperty("repositories.management.type")).thenReturn(null);
-        Mockito.when(environment.getProperty("management.type")).thenReturn(null);
-
+        when(environment.getProperty("repositories.management.type")).thenReturn(null);
+        when(environment.getProperty("management.type")).thenReturn(null);
         String type = reader.getRepositoryType(environment, Scope.MANAGEMENT);
-        Assert.assertNull(type);
+        assertNull(type);
+    }
+
+    @Test
+    public void should_log_warning_when_fallback_is_triggered() {
+        Logger logger = (Logger) LoggerFactory.getLogger(RepositoryTypeReader.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+
+        try {
+            when(environment.getProperty("repositories.management.type")).thenReturn(null);
+            when(environment.getProperty("management.type")).thenReturn("jdbc");
+            String type = reader.getRepositoryType(environment, Scope.MANAGEMENT);
+            assertEquals("jdbc", type);
+            List<ILoggingEvent> logs = listAppender.list;
+            assertEquals("Should have logged exactly one warning", 1, logs.size());
+
+            ILoggingEvent logEvent = logs.get(0);
+            assertEquals("Log level should be WARN", Level.WARN, logEvent.getLevel());
+            assertEquals(
+                "Log message should match expected format",
+                "Repository for scope 'MANAGEMENT' is configured using the deprecated key 'management.type'. Please migrate to 'repositories.management.type'.",
+                logEvent.getFormattedMessage()
+            );
+        } finally {
+            logger.detachAppender(listAppender);
+        }
     }
 }
