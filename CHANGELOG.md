@@ -1,3 +1,10 @@
+## [4.10.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.0...4.10.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* introduce hierarchical 'repositories' prefix with legacy fallback support ([3408a7d](https://github.com/gravitee-io/gravitee-plugin/commit/3408a7debd28c527b8eac41d330c97af0c9f1c68))
+
 # [4.10.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.9.1...4.10.0) (2025-11-25)
 
 
