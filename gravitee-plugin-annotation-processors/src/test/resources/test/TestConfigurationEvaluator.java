@@ -22,6 +22,7 @@ import io.gravitee.gateway.reactive.api.ExecutionFailure;
 import io.gravitee.gateway.reactive.api.context.DeploymentContext;
 import io.gravitee.gateway.reactive.api.context.base.BaseExecutionContext;
 import io.gravitee.gateway.reactive.api.context.http.HttpPlainExecutionContext;
+import io.gravitee.node.logging.NodeLoggerFactory;
 import io.gravitee.secrets.api.el.FieldKind;
 import io.gravitee.secrets.api.el.SecretFieldAccessControl;
 import io.reactivex.rxjava3.core.Completable;
@@ -35,7 +36,6 @@ import jakarta.validation.ValidatorFactory;
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +49,7 @@ public class TestConfigurationEvaluator {
 
     private static final String FAILURE_CONFIGURATION_INVALID = "FAILURE_CONFIGURATION_INVALID";
 
-    private final Logger logger = LoggerFactory.getLogger(TestConfigurationEvaluator.class);
+    private final Logger log = NodeLoggerFactory.getLogger(TestConfigurationEvaluator.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -110,7 +110,7 @@ public class TestConfigurationEvaluator {
                 .eval(value, String.class)
                 .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
                 .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
-                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, finalValue, throwable));
+                .doOnError(throwable -> ctx.withLogger(log).error("Unable to evaluate property [{}] with expression [{}].", name, finalValue, throwable));
     }
 
     private Maybe<String> evalStringProperty(String name, String value, String attributePrefix, DeploymentContext ctx, String secretKind) {
@@ -133,7 +133,7 @@ public class TestConfigurationEvaluator {
                 .eval(value, String.class)
                 .doOnSubscribe(d -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, accessControl))
                 .doOnTerminate(() -> ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null))
-                .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", property, value, throwable));
+                .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", property, value, throwable));
     }
 
     private <T extends Enum<T>> T evalEnumProperty(String name, T value, Class<T> enumClass, String attributePrefix, BaseExecutionContext ctx) {
@@ -218,7 +218,7 @@ public class TestConfigurationEvaluator {
                 .flatMapMaybe(v -> ctx
                         .getTemplateEngine()
                         .eval(v, String.class)
-                        .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
+                        .doOnError(throwable -> ctx.withLogger(log).error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
                 .toList()
                 .toMaybe();
     }
@@ -234,7 +234,7 @@ public class TestConfigurationEvaluator {
                 .flatMapMaybe(v -> ctx
                         .getTemplateEngine()
                         .eval(v, String.class)
-                        .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
+                        .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
                 .toList()
                 .toMaybe();
     }
@@ -273,7 +273,7 @@ public class TestConfigurationEvaluator {
                                     ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
                             )
                             .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
-                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue(), throwable)
+                            .doOnError(throwable -> ctx.withLogger(log).error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue(), throwable)
                             );
                 })
                 .toList()
@@ -307,7 +307,7 @@ public class TestConfigurationEvaluator {
                                     ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
                             )
                             .map(evaluatedValue -> new HttpHeader(header.getName(), evaluatedValue))
-                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue(), throwable)
+                            .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", name, header.getValue(), throwable)
                             );
                 })
                 .toList()
@@ -339,7 +339,7 @@ public class TestConfigurationEvaluator {
                                     ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
                             )
                             .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
-                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue(), throwable)
+                            .doOnError(throwable -> ctx.withLogger(log).error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue(), throwable)
                             );
                 }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
                 .toMaybe();
@@ -365,7 +365,7 @@ public class TestConfigurationEvaluator {
                                     ctx.getTemplateEngine().getTemplateContext().setVariable(SecretFieldAccessControl.EL_VARIABLE, null)
                             )
                             .map(evaluatedValue -> Map.entry(entry.getKey(), evaluatedValue))
-                            .doOnError(throwable -> logger.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue(), throwable)
+                            .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", name, entry.getValue(), throwable)
                             );
                 }).collect(() -> (Map<String, String>) new HashMap<String, String>(), (map, entry) -> map.put(entry.getKey(), entry.getValue()))
                 .toMaybe();
@@ -386,7 +386,7 @@ public class TestConfigurationEvaluator {
             );
 
             //LOG
-            logger.error(exceptionMessage.toString());
+            log.error(exceptionMessage.toString());
 
             //Throw exception with info
             throw new IllegalStateException(exceptionMessage.toString());
@@ -451,7 +451,7 @@ public class TestConfigurationEvaluator {
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             evaluatedConfiguration = objectMapper.readValue(objectMapper.writeValueAsString(configuration), TestConfiguration.class);
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            logger.error("Unable to clone configuration", e);
+            baseExecutionContext.withLogger(log).error("Unable to clone configuration", e);
             return Single.error(e);
         }
 
