@@ -100,13 +100,16 @@ public class ConfigurationEvaluatorGeneratedTest {
     public void should_return_evaluated_configuration() {
         var spiedTemplateEngine = spy(new DefaultTemplateEngine());
         when(spiedTemplateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
-        when(spiedTemplateEngine.eval("{#dictionaries['my-dictionary']['attribute2']}", String.class))
-            .thenReturn(Maybe.just("my_dictionary_attribute"));
+        when(spiedTemplateEngine.eval("{#dictionaries['my-dictionary']['attribute2']}", String.class)).thenReturn(
+            Maybe.just("my_dictionary_attribute")
+        );
         when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
-        when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:token')}", String.class))
-            .thenReturn(Maybe.just("my_secret_token"));
-        when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:extension')}", String.class))
-            .thenReturn(Maybe.just("extension_value"));
+        when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:token')}", String.class)).thenReturn(
+            Maybe.just("my_secret_token")
+        );
+        when(spiedTemplateEngine.eval("{#secrets.get('/vault/secret/test:extension')}", String.class)).thenReturn(
+            Maybe.just("extension_value")
+        );
         Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("gravitee.attributes.endpoint.test.protocol", "SSL");
         contextMap.put("gravitee.attributes.endpoint.test.consumer.topics", "topic1,topic2");
@@ -126,8 +129,9 @@ public class ConfigurationEvaluatorGeneratedTest {
                 assertThat(testConfiguration.getHeaders().get(0).getValue()).isEqualTo("my_secret_token");
                 assertThat(testConfiguration.getProtocol()).isEqualTo(SecurityProtocol.SSL);
                 assertThat(testConfiguration.getSaslMechanism()).isExactlyInstanceOf(ScramSha256SaslMechanism.class);
-                assertThat(((ScramSha256SaslMechanism) testConfiguration.getSaslMechanism()).getCustomJassConfigMap())
-                    .containsExactly(Map.entry("extension_one", "extension_value"));
+                assertThat(((ScramSha256SaslMechanism) testConfiguration.getSaslMechanism()).getCustomJassConfigMap()).containsExactly(
+                    Map.entry("extension_one", "extension_value")
+                );
                 return true;
             });
     }
@@ -138,8 +142,9 @@ public class ConfigurationEvaluatorGeneratedTest {
         when(templateEngine.eval("password", String.class)).thenReturn(Maybe.just("password"));
         when(templateEngine.eval("username", String.class)).thenReturn(Maybe.just("username"));
         when(templateEngine.eval("attribute1", String.class)).thenReturn(Maybe.just("attribute1"));
-        when(templateEngine.eval("{#dictionaries['my-dictionary']['attribute2']}", String.class))
-            .thenReturn(Maybe.just("my_dictionary_attribute"));
+        when(templateEngine.eval("{#dictionaries['my-dictionary']['attribute2']}", String.class)).thenReturn(
+            Maybe.just("my_dictionary_attribute")
+        );
         when(templateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
         when(templateEngine.eval("{#secrets.get('/vault/secret/test:token')}", String.class)).thenReturn(Maybe.just("my_secret_token"));
         when(templateEngine.eval("{#secrets.get('/vault/secret/test:extension')}", String.class)).thenReturn(Maybe.just("extension_value"));
@@ -182,8 +187,7 @@ public class ConfigurationEvaluatorGeneratedTest {
 
     @Test
     public void should_return_original_configuration() {
-        var consumer = TestConfiguration.Consumer
-            .builder()
+        var consumer = TestConfiguration.Consumer.builder()
             .enabled(true)
             .autoOffsetReset("none")
             .attributes(List.of("attribute1"))

@@ -48,8 +48,9 @@ public class DefaultIntegrationProviderPluginManager
         // Create integrationProvider
         PluginClassLoader pluginClassLoader = classLoaderFactory.getOrCreateClassLoader(plugin);
         try {
-            final Class<IntegrationProviderFactory<?>> integrationProviderFactoryClass =
-                (Class<IntegrationProviderFactory<?>>) pluginClassLoader.loadClass(plugin.clazz());
+            final Class<IntegrationProviderFactory<?>> integrationProviderFactoryClass = (Class<
+                IntegrationProviderFactory<?>
+            >) pluginClassLoader.loadClass(plugin.clazz());
             final IntegrationProviderFactory<?> factory = integrationProviderFactoryClass.getDeclaredConstructor().newInstance();
             if (plugin.deployed()) {
                 factories.put(plugin.id(), factory);

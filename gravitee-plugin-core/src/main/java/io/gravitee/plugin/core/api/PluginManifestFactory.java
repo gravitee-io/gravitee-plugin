@@ -46,8 +46,9 @@ public class PluginManifestFactory {
         final String category = properties.getProperty(PluginManifestProperties.MANIFEST_CATEGORY_PROPERTY);
         final String feature = properties.getProperty(PluginManifestProperties.MANIFEST_FEATURE_PROPERTY);
         final int priority = Integer.parseInt(properties.getProperty(PluginManifestProperties.MANIFEST_PRIORITY_PROPERTY, "1000"));
-        final List<PluginDependency> dependencies = Stream
-            .of(properties.getProperty(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, "").split(","))
+        final List<PluginDependency> dependencies = Stream.of(
+            properties.getProperty(PluginManifestProperties.MANIFEST_DEPENDENCIES_PROPERTY, "").split(",")
+        )
             .filter(s -> !"".equals(s))
             .map(dependencyStr -> {
                 final String[] split = dependencyStr.split(":");

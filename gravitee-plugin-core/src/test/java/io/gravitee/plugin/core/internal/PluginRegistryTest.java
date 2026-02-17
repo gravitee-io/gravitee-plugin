@@ -199,7 +199,10 @@ class PluginRegistryTest {
 
         assertThat(pluginRegistry.plugins()).hasSize(1);
         assertThat(pluginRegistry.plugins()).first().extracting(Plugin::id).isEqualTo("custom-plugin");
-        assertThat(pluginRegistry.plugins()).first().extracting(p -> p.manifest().version()).isEqualTo("2.0.0-SNAPSHOT");
+        assertThat(pluginRegistry.plugins())
+            .first()
+            .extracting(p -> p.manifest().version())
+            .isEqualTo("2.0.0-SNAPSHOT");
     }
 
     @Test

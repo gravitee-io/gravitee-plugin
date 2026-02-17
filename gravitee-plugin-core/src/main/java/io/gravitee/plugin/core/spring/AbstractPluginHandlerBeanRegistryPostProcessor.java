@@ -59,8 +59,7 @@ abstract class AbstractPluginHandlerBeanRegistryPostProcessor<T extends PluginHa
         log.info("Loading {}s", typeName);
 
         final AnnotatedBeanDefinitionReader annotatedBeanDefinitionReader = new AnnotatedBeanDefinitionReader(registry);
-        final List<? extends Class<?>> pluginHandlers = SpringFactoriesLoader
-            .loadFactories(type, this.getClass().getClassLoader())
+        final List<? extends Class<?>> pluginHandlers = SpringFactoriesLoader.loadFactories(type, this.getClass().getClassLoader())
             .stream()
             .map(t -> t.getClass())
             .toList();
