@@ -143,24 +143,23 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
         }
 
         this.plugins.addAll(
-                Flowable
-                    .fromArray(pluginsPath)
-                    .flatMap(this::loadPluginsFromPath)
-                    // reserve sort
-                    .sorted((p1, p2) -> Math.negateExact(((Long) p1.getArchiveTimestamp()).compareTo(p2.getArchiveTimestamp())))
-                    // As plugins arrive sorted by reverse file date
-                    // we can exclude duplicates and keep the most recent one
-                    .distinct()
-                    .cast(Plugin.class)
-                    .toList()
-                    .doOnSuccess(PluginRegistryImpl::printPlugins)
-                    .doOnSuccess(allPlugins ->
-                        allPlugins.forEach(plugin ->
-                            pluginByType.computeIfAbsent(plugin.type(), k -> new ConcurrentHashMap<>()).put(plugin.id(), plugin)
-                        )
+            Flowable.fromArray(pluginsPath)
+                .flatMap(this::loadPluginsFromPath)
+                // reserve sort
+                .sorted((p1, p2) -> Math.negateExact(((Long) p1.getArchiveTimestamp()).compareTo(p2.getArchiveTimestamp())))
+                // As plugins arrive sorted by reverse file date
+                // we can exclude duplicates and keep the most recent one
+                .distinct()
+                .cast(Plugin.class)
+                .toList()
+                .doOnSuccess(PluginRegistryImpl::printPlugins)
+                .doOnSuccess(allPlugins ->
+                    allPlugins.forEach(plugin ->
+                        pluginByType.computeIfAbsent(plugin.type(), k -> new ConcurrentHashMap<>()).put(plugin.id(), plugin)
                     )
-                    .blockingGet()
-            );
+                )
+                .blockingGet()
+        );
 
         init = true;
     }
@@ -179,8 +178,7 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
         log.info("Loading plugins from {}", pluginDir);
 
         final DirectoryStream<Path> stream = FileUtils.newDirectoryStream(pluginPath, ZIP_GLOB);
-        return Flowable
-            .fromIterable(stream)
+        return Flowable.fromIterable(stream)
             .subscribeOn(Schedulers.from(executor))
             .map(path -> loadPlugin(pluginDir, path))
             .filter(PluginImpl::valid)
@@ -188,7 +186,11 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
     }
 
     private static void printPlugins(final List<Plugin> plugins) {
-        plugins.stream().map(Plugin::type).distinct().forEach(type -> printPluginByType(plugins, type));
+        plugins
+            .stream()
+            .map(Plugin::type)
+            .distinct()
+            .forEach(type -> printPluginByType(plugins, type));
     }
 
     private static void printPluginByType(final List<Plugin> plugins, final String pluginType) {
@@ -280,12 +282,11 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
         if (PLUGIN_TYPE_PROPERTY_ALIASES.containsKey(pluginManifest.type()) && environment.containsProperty(propertyFromAlias)) {
             enabled = environment.getProperty(propertyFromAlias, Boolean.class, true);
         } else {
-            enabled =
-                environment.getProperty(
-                    String.format(PROPERTY_STRING_FORMAT, pluginManifest.type(), pluginManifest.id()),
-                    Boolean.class,
-                    true
-                );
+            enabled = environment.getProperty(
+                String.format(PROPERTY_STRING_FORMAT, pluginManifest.type(), pluginManifest.id()),
+                Boolean.class,
+                true
+            );
         }
         log.debug("Plugin {} is loaded in registry: {}", pluginManifest.id(), enabled);
         return enabled;

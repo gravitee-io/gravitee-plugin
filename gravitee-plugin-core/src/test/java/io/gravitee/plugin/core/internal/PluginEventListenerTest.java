@@ -186,9 +186,9 @@ class PluginEventListenerTest {
         List<Plugin> sortedList = plugins
             .stream()
             .sorted(
-                Comparator
-                    .<Plugin>comparingInt(o -> o.manifest().priority())
-                    .thenComparing(new AbstractPluginEventListener.PluginComparator("plugin_01"))
+                Comparator.<Plugin>comparingInt(o -> o.manifest().priority()).thenComparing(
+                    new AbstractPluginEventListener.PluginComparator("plugin_01")
+                )
             )
             .toList();
 

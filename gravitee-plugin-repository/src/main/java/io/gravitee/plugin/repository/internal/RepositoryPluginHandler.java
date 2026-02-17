@@ -169,20 +169,16 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
     }
 
     private void registerRepositoryDefinitions(RepositoryProvider repository, ApplicationContext repoApplicationContext) {
-        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) (
-            (ConfigurableApplicationContext) applicationContext
-        ).getBeanFactory();
+        DefaultListableBeanFactory beanFactory =
+            (DefaultListableBeanFactory) ((ConfigurableApplicationContext) applicationContext).getBeanFactory();
 
         String[] beanNames = repoApplicationContext.getBeanDefinitionNames();
         for (String beanName : beanNames) {
             Object repositoryClassInstance = repoApplicationContext.getBean(beanName);
             Class<?> repositoryObjectClass = repositoryClassInstance.getClass();
             if (
-                (
-                    beanName.endsWith("Repository") ||
-                    beanName.endsWith("TransactionManager") &&
-                    !repository.getClass().equals(repositoryClassInstance.getClass())
-                )
+                (beanName.endsWith("Repository") ||
+                    (beanName.endsWith("TransactionManager") && !repository.getClass().equals(repositoryClassInstance.getClass())))
             ) {
                 if (repositoryObjectClass.getInterfaces().length > 0) {
                     beanFactory.registerSingleton(beanName, repositoryClassInstance);
