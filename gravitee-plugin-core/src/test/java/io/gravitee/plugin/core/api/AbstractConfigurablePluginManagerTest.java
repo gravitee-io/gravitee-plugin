@@ -48,13 +48,12 @@ class AbstractConfigurablePluginManagerTest {
     @BeforeEach
     void setUp() {
         properties = new HashMap<>();
-        cut =
-            new AbstractConfigurablePluginManager<>() {
-                @Override
-                public void register(FakePlugin plugin) {
-                    super.register(plugin);
-                }
-            };
+        cut = new AbstractConfigurablePluginManager<>() {
+            @Override
+            public void register(FakePlugin plugin) {
+                super.register(plugin);
+            }
+        };
     }
 
     @Test

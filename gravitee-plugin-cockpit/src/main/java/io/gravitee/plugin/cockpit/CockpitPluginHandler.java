@@ -61,9 +61,8 @@ public class CockpitPluginHandler extends AbstractSpringPluginHandler<CockpitCon
     }
 
     private void registerBean(CockpitConnector connector) {
-        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) (
-            (ConfigurableApplicationContext) applicationContext
-        ).getBeanFactory();
+        DefaultListableBeanFactory beanFactory =
+            (DefaultListableBeanFactory) ((ConfigurableApplicationContext) applicationContext).getBeanFactory();
 
         beanFactory.registerSingleton(CockpitConnector.class.getName(), connector);
     }

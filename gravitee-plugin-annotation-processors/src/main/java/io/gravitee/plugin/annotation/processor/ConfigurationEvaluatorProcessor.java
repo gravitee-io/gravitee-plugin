@@ -120,7 +120,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                     messager.printMessage(
                         Diagnostic.Kind.ERROR,
                         "@ConfigurationEvaluator attributePrefix property must be formed as follow: " +
-                        "gravitee.attributes.[type].[id] e.g. gravitee.attributes.endpoint.kafka",
+                            "gravitee.attributes.[type].[id] e.g. gravitee.attributes.endpoint.kafka",
                         annotatedElement
                     );
                     return false;
@@ -185,9 +185,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                             CompilationUnit cu = StaticJavaParser.parse(fileObject.getCharContent(true).toString());
 
                             // Find the enum
-                            Optional<EnumDeclaration> enumOpt = cu.findFirst(
-                                EnumDeclaration.class,
-                                e -> e.getNameAsString().equals(typeUtils.asElement(typeElem.get().asType()).getSimpleName().toString())
+                            Optional<EnumDeclaration> enumOpt = cu.findFirst(EnumDeclaration.class, e ->
+                                e.getNameAsString().equals(typeUtils.asElement(typeElem.get().asType()).getSimpleName().toString())
                             );
                             if (enumOpt.isPresent()) {
                                 EnumDeclaration myEnum = enumOpt.get();
@@ -213,8 +212,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
             JsonSubTypes.Type[] types = annotatedElement.getAnnotation(JsonSubTypes.class).value();
 
-            List<JsonSubTypeElement> jsonSubTypeElements = Stream
-                .of(types)
+            List<JsonSubTypeElement> jsonSubTypeElements = Stream.of(types)
                 .map(type -> {
                     List<String> names = new ArrayList<>();
                     if (!type.name().isEmpty()) {
@@ -320,11 +318,12 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         List<VariableElement> fields = elementUtils
             .getAllMembers(currentElement)
             .stream()
-            .filter(element ->
-                element.getKind() == ElementKind.FIELD &&
-                !element.getSimpleName().toString().contains("Builder") &&
-                !isConstant(element) &&
-                !excludedFields.contains(element.getSimpleName().toString())
+            .filter(
+                element ->
+                    element.getKind() == ElementKind.FIELD &&
+                    !element.getSimpleName().toString().contains("Builder") &&
+                    !isConstant(element) &&
+                    !excludedFields.contains(element.getSimpleName().toString())
             )
             .map(VariableElement.class::cast)
             .toList();
@@ -466,11 +465,11 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             if (element == null) {
                 throw new IllegalArgumentException(
                     "Element is null for " +
-                    objectElement.getFieldName() +
-                    " and type " +
-                    objectElement.getField().asType().toString() +
-                    " and asElement " +
-                    ((DeclaredType) objectElement.getField().asType()).asElement().toString()
+                        objectElement.getFieldName() +
+                        " and type " +
+                        objectElement.getField().asType().toString() +
+                        " and asElement " +
+                        ((DeclaredType) objectElement.getField().asType()).asElement().toString()
                 );
             }
 

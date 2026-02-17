@@ -91,15 +91,14 @@ public abstract class AbstractPluginEventListener
     protected void deployPlugins() {
         Map<String, List<Plugin>> resolvedDependencies = new HashMap<>();
 
-        final List<Plugin> sortedByPriority =
-            this.plugins.values()
-                .stream()
-                .sorted(
-                    Comparator
-                        .<Plugin>comparingInt(o -> o.manifest().priority())
-                        .thenComparing(new PluginComparator(environment.getProperty("secrets.loadFirst")))
+        final List<Plugin> sortedByPriority = this.plugins.values()
+            .stream()
+            .sorted(
+                Comparator.<Plugin>comparingInt(o -> o.manifest().priority()).thenComparing(
+                    new PluginComparator(environment.getProperty("secrets.loadFirst"))
                 )
-                .toList();
+            )
+            .toList();
 
         plugins
             .values()
@@ -107,7 +106,13 @@ public abstract class AbstractPluginEventListener
                 plugins
                     .values()
                     .forEach(other -> {
-                        if (p.manifest().dependencies().stream().anyMatch(d -> d.matches(other))) {
+                        if (
+                            p
+                                .manifest()
+                                .dependencies()
+                                .stream()
+                                .anyMatch(d -> d.matches(other))
+                        ) {
                             resolvedDependencies.computeIfAbsent(p.type() + p.id(), s -> new ArrayList<>()).add(other);
                         }
                     })
