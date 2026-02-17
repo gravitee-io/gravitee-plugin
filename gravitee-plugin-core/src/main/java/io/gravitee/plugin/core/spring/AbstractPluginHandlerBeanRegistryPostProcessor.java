@@ -16,10 +16,10 @@
 package io.gravitee.plugin.core.spring;
 
 import io.gravitee.plugin.core.api.PluginHandler;
+import jakarta.annotation.Nonnull;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
