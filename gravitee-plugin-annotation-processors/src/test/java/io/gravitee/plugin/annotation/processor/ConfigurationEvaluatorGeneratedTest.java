@@ -25,6 +25,7 @@ import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.reactive.api.ExecutionFailure;
+import io.gravitee.gateway.reactive.api.ExecutionWarn;
 import io.gravitee.gateway.reactive.api.context.InternalContextAttributes;
 import io.gravitee.gateway.reactive.api.context.TlsSession;
 import io.gravitee.gateway.reactive.api.context.http.HttpPlainExecutionContext;
@@ -403,6 +404,9 @@ public class ConfigurationEvaluatorGeneratedTest {
         public TlsSession tlsSession() {
             return null;
         }
+
+        @Override
+        public void warnWith(ExecutionWarn executionWarn) {}
 
         @Override
         public HttpPlainRequest request() {
