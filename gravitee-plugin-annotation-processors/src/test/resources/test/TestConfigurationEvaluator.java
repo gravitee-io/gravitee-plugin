@@ -1104,7 +1104,7 @@ public class TestConfigurationEvaluator {
             }))
             .onErrorResumeNext(t -> {
                 if(baseExecutionContext != null && baseExecutionContext instanceof HttpPlainExecutionContext httpPlainExecutionContext) {
-                    return httpPlainExecutionContext.interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID));
+                    return httpPlainExecutionContext.interruptWith(new ExecutionFailure(500).message("Invalid configuration").key(FAILURE_CONFIGURATION_INVALID).cause(t));
                 }
                 return Completable.error(t);
             })
