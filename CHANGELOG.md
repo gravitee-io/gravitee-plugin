@@ -1,3 +1,10 @@
+# [5.0.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/5.0.0-alpha.1...5.0.0-alpha.2) (2026-02-23)
+
+
+### Features
+
+* reduce log level because of plugin loading noise ([c405de9](https://github.com/gravitee-io/gravitee-plugin/commit/c405de97c2319bfdced3f24e1153e00c3b037aae))
+
 # [5.0.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.1...5.0.0-alpha.1) (2026-02-19)
 
 
