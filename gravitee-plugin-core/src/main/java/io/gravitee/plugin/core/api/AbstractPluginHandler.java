@@ -42,7 +42,7 @@ public abstract class AbstractPluginHandler implements PluginHandler {
     @Override
     public void handle(Plugin plugin) {
         if (isEnabled(plugin)) {
-            logger.info("Install plugin: {} [{}]", plugin.id(), plugin.clazz());
+            logger.debug("Install plugin: {} [{}]", plugin.id(), plugin.clazz());
 
             ClassLoader classloader = null;
 
@@ -57,7 +57,7 @@ public abstract class AbstractPluginHandler implements PluginHandler {
 
                 if (pluginDeploymentContext.isPluginDeployable(pluginManifest.feature())) {
                     handle(plugin, pluginClass);
-                    logger.info("Plugin '{}' installed.", plugin.id());
+                    logger.debug("Plugin '{}' installed.", plugin.id());
                 } else {
                     ((PluginImpl) plugin).setDeployed(false);
                     handle(plugin, pluginClass);
@@ -82,7 +82,13 @@ public abstract class AbstractPluginHandler implements PluginHandler {
                 throw new RuntimeException("An error occurred while installing plugin: " + plugin.id() + " [" + plugin.clazz() + " ]", t);
             }
         } else {
-            logger.info("Installation skipped for: {} [{}]", plugin.id(), plugin.clazz());
+            logger.info(
+                "Plugin disabled: {} [{}]. To install it, enable it with '{}.{}.enabled' property",
+                plugin.id(),
+                plugin.clazz(),
+                type(),
+                plugin.id()
+            );
         }
     }
 
