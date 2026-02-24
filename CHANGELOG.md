@@ -1,3 +1,10 @@
+# [5.0.0-alpha.3](https://github.com/gravitee-io/gravitee-plugin/compare/5.0.0-alpha.2...5.0.0-alpha.3) (2026-02-24)
+
+
+### Features
+
+* bump gravitee-parent ([7c706e9](https://github.com/gravitee-io/gravitee-plugin/commit/7c706e97e35440b1a988b764ae54129624139594))
+
 # [5.0.0-alpha.2](https://github.com/gravitee-io/gravitee-plugin/compare/5.0.0-alpha.1...5.0.0-alpha.2) (2026-02-23)
 
 
