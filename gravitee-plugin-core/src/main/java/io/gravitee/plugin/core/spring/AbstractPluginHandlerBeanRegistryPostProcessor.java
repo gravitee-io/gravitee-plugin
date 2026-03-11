@@ -19,7 +19,6 @@ import io.gravitee.plugin.core.api.PluginHandler;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -55,7 +54,7 @@ abstract class AbstractPluginHandlerBeanRegistryPostProcessor<T extends PluginHa
     }
 
     @Override
-    public void postProcessBeanDefinitionRegistry(@Nonnull BeanDefinitionRegistry registry) throws BeansException {
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         log.info("Loading {}s", typeName);
 
         final AnnotatedBeanDefinitionReader annotatedBeanDefinitionReader = new AnnotatedBeanDefinitionReader(registry);
@@ -74,7 +73,7 @@ abstract class AbstractPluginHandlerBeanRegistryPostProcessor<T extends PluginHa
     }
 
     @Override
-    public void postProcessBeanFactory(@Nonnull ConfigurableListableBeanFactory beanFactory) throws BeansException {}
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {}
 
     @Override
     public int getOrder() {
