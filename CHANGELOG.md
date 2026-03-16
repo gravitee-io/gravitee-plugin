@@ -1,3 +1,28 @@
+# [5.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.1...5.0.0) (2026-03-16)
+
+
+### Bug Fixes
+
+* adapt code to new gravitee-gateway-api version ([b5f584b](https://github.com/gravitee-io/gravitee-plugin/commit/b5f584bd8541bf5ce0a60472ff71f353c55f445c))
+
+
+### chore
+
+* bump gravitee-parent and update versions ([f43b16d](https://github.com/gravitee-io/gravitee-plugin/commit/f43b16dad1cb6b3dd3d183187d7ea1734cd3e975))
+
+
+### Features
+
+* bump gravitee-parent ([a97adb2](https://github.com/gravitee-io/gravitee-plugin/commit/a97adb2ae9d5b4428310938c901231551954ace8))
+* improve mustache template ExecutionFailure message to include cause ([81aa379](https://github.com/gravitee-io/gravitee-plugin/commit/81aa3797f41de6eecbc5eaec76a6910d5d1cafc5))
+* reduce log level because of plugin loading noise ([817b036](https://github.com/gravitee-io/gravitee-plugin/commit/817b0368360cc2bb5f717fce2f0b21745439d6c5))
+* use new logging for configuration evaluator ([4d49e53](https://github.com/gravitee-io/gravitee-plugin/commit/4d49e5349c0033c96a4f9596228780ff0b34a1b3))
+
+
+### BREAKING CHANGES
+
+* bump gravitee-parent
+
 ## [4.10.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.0...4.10.1) (2026-02-10)
 
 
