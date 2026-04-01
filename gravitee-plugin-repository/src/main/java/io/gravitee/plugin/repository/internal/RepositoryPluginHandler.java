@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 
@@ -69,6 +70,8 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
 
     private void initialize() {
         if (initialized.compareAndSet(false, true)) {
+            registerAliasPropertySource();
+
             RepositoryScopeProvider scopeProvider = applicationContext.getBean(RepositoryScopeProvider.class);
 
             // Get all the scope handled by the plugin and check there is an associated configuration.
@@ -78,6 +81,20 @@ public class RepositoryPluginHandler extends AbstractPluginHandler {
 
             for (Scope scope : scopeProvider.getOptionalHandledScopes()) {
                 checkRepositoryConfig(scope, false);
+            }
+        }
+    }
+
+    /**
+     * Registers a {@link RepositoryAliasPropertySource} so that legacy config keys
+     * (e.g. {@code management.mongodb.uri}) are transparently resolved from the new
+     * hierarchical format ({@code repositories.management.mongodb.uri}) when present.
+     */
+    private void registerAliasPropertySource() {
+        if (environment instanceof ConfigurableEnvironment configurableEnv) {
+            if (configurableEnv.getPropertySources().get(RepositoryAliasPropertySource.NAME) == null) {
+                configurableEnv.getPropertySources().addFirst(new RepositoryAliasPropertySource(environment));
+                LOGGER.debug("Registered RepositoryAliasPropertySource for repository configuration resolution");
             }
         }
     }
