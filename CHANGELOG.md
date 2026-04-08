@@ -1,3 +1,10 @@
+# [5.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/5.0.0...5.1.0) (2026-04-08)
+
+
+### Features
+
+* **repository:** add PropertySource to resolve repositories.* config prefix ([7bab031](https://github.com/gravitee-io/gravitee-plugin/commit/7bab031162e766089100943e87f6a678e6e2088e))
+
 # [5.0.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.1...5.0.0) (2026-03-16)
 
 
