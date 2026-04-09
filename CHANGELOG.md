@@ -1,3 +1,10 @@
+# [4.11.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.1...4.11.0) (2026-04-09)
+
+
+### Features
+
+* **repository:** add PropertySource to resolve repositories.* config prefix ([65b1223](https://github.com/gravitee-io/gravitee-plugin/commit/65b1223a3c6580b1df59823835eb64319cbf927d))
+
 ## [4.10.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.0...4.10.1) (2026-02-10)
 
 
