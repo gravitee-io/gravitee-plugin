@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.NonNull;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 
@@ -51,8 +52,30 @@ class RepositoryAliasPropertySource extends PropertySource<Object> {
     public Object getProperty(@NonNull String name) {
         for (String scopePrefix : SCOPE_PREFIXES) {
             if (name.startsWith(scopePrefix)) {
-                return environment.getProperty(REPOSITORIES_PREFIX + name);
+                return resolveRespectingSourcePriority(name);
             }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves the property by checking the short key first (explicit override)
+     * across all sources, then falling back to the long key.
+     */
+    private Object resolveRespectingSourcePriority(String name) {
+        if (environment instanceof ConfigurableEnvironment configEnv) {
+            // Check if any source defines the short key directly (e.g. env var)
+            for (PropertySource<?> ps : configEnv.getPropertySources()) {
+                if (ps == this) {
+                    continue;
+                }
+                Object value = ps.getProperty(name);
+                if (value != null) {
+                    return value;
+                }
+            }
+            // Fallback to long key
+            return environment.getProperty(REPOSITORIES_PREFIX + name);
         }
         return null;
     }
