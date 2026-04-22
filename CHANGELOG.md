@@ -1,3 +1,11 @@
+## [5.1.1](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.0...5.1.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **repository:** resolve legacy short keys first to let env vars override YAML ([69cd0a2](https://github.com/gravitee-io/gravitee-plugin/commit/69cd0a2e739f49d7a57b06194c4259665452b2cc))
+* **repository:** resolve legacy short keys first to let env vars override YAML ([81990b1](https://github.com/gravitee-io/gravitee-plugin/commit/81990b1ffe681432b8c03758099d93e561a4574c))
+
 # [5.1.0](https://github.com/gravitee-io/gravitee-plugin/compare/5.0.0...5.1.0) (2026-04-08)
 
 
