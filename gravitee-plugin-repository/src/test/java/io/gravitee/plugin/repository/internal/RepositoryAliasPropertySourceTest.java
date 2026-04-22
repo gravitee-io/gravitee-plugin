@@ -18,6 +18,7 @@ package io.gravitee.plugin.repository.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,7 +69,7 @@ public class RepositoryAliasPropertySourceTest {
     }
 
     @Test
-    public void should_prefer_new_prefix_when_both_are_set() {
+    public void should_prefer_short_key_when_both_are_set_in_same_source() {
         setProperties(
             Map.of(
                 "management.mongodb.uri",
@@ -78,7 +79,7 @@ public class RepositoryAliasPropertySourceTest {
             )
         );
 
-        assertEquals("mongodb://newhost:27017/gravitee", environment.getProperty("management.mongodb.uri"));
+        assertEquals("mongodb://oldhost:27017/gravitee", environment.getProperty("management.mongodb.uri"));
     }
 
     @Test
@@ -136,5 +137,78 @@ public class RepositoryAliasPropertySourceTest {
 
         assertEquals("http://es1:9200", environment.getProperty("analytics.elasticsearch.endpoints[0]"));
         assertEquals("http://es2:9200", environment.getProperty("analytics.elasticsearch.endpoints[1]"));
+    }
+
+    @Test
+    public void should_let_envvar_override_yaml_for_repositories_prefixed_key() {
+        Map<String, Object> yamlProps = new HashMap<>();
+        yamlProps.put("repositories.analytics.elasticsearch.endpoints[0]", "http://localhost:9200");
+
+        Map<String, Object> envvarProps = new HashMap<>();
+        envvarProps.put("repositories.analytics.elasticsearch.endpoints[0]", "http://elasticsearch:9200");
+
+        environment.getPropertySources().addFirst(new MapPropertySource("yaml", yamlProps));
+        environment.getPropertySources().addFirst(new MapPropertySource("envvars", envvarProps));
+        environment.getPropertySources().addFirst(new RepositoryAliasPropertySource(environment));
+
+        assertEquals("http://elasticsearch:9200", environment.getProperty("analytics.elasticsearch.endpoints[0]"));
+
+        assertEquals("http://elasticsearch:9200", environment.getProperty("repositories.analytics.elasticsearch.endpoints[0]"));
+    }
+
+    @Test
+    public void should_still_resolve_legacy_analytics_type_without_repositories_prefix() {
+        Map<String, Object> yamlProps = new HashMap<>();
+        yamlProps.put("analytics.type", "elasticsearch");
+
+        environment.getPropertySources().addFirst(new MapPropertySource("yaml", yamlProps));
+        environment.getPropertySources().addFirst(new RepositoryAliasPropertySource(environment));
+
+        assertEquals("elasticsearch", environment.getProperty("analytics.type"));
+    }
+
+    @Test
+    public void should_let_envvar_with_short_key_override_yaml_with_repositories_prefix() {
+        Map<String, Object> yamlProps = new HashMap<>();
+        yamlProps.put("repositories.management.mongodb.uri", "mongodb://localhost:27017/gravitee");
+
+        Map<String, Object> envvarProps = new HashMap<>();
+        envvarProps.put("management.mongodb.uri", "mongodb://mongo:27017/gravitee");
+
+        environment.getPropertySources().addFirst(new MapPropertySource("yaml", yamlProps));
+        environment.getPropertySources().addFirst(new MapPropertySource("envvars", envvarProps));
+        environment.getPropertySources().addFirst(new RepositoryAliasPropertySource(environment));
+
+        assertEquals("mongodb://mongo:27017/gravitee", environment.getProperty("management.mongodb.uri"));
+    }
+
+    @Test
+    public void should_let_envvar_with_short_key_override_yaml_for_elasticsearch_endpoint() {
+        Map<String, Object> yamlProps = new HashMap<>();
+        yamlProps.put("repositories.analytics.elasticsearch.endpoints[0]", "http://localhost:9200");
+
+        Map<String, Object> envvarProps = new HashMap<>();
+        envvarProps.put("analytics.elasticsearch.endpoints[0]", "http://elasticsearch:9200");
+
+        environment.getPropertySources().addFirst(new MapPropertySource("yaml", yamlProps));
+        environment.getPropertySources().addFirst(new MapPropertySource("envvars", envvarProps));
+        environment.getPropertySources().addFirst(new RepositoryAliasPropertySource(environment));
+
+        assertEquals("http://elasticsearch:9200", environment.getProperty("analytics.elasticsearch.endpoints[0]"));
+    }
+
+    @Test
+    public void should_let_envvar_with_short_key_win_even_when_yaml_has_higher_source_priority() {
+        Map<String, Object> yamlProps = new HashMap<>();
+        yamlProps.put("repositories.management.type", "mongodb");
+
+        Map<String, Object> envvarProps = new HashMap<>();
+        envvarProps.put("management.type", "jdbc");
+
+        environment.getPropertySources().addFirst(new MapPropertySource("envvars", envvarProps));
+        environment.getPropertySources().addFirst(new MapPropertySource("yaml", yamlProps));
+        environment.getPropertySources().addFirst(new RepositoryAliasPropertySource(environment));
+
+        assertEquals("jdbc", environment.getProperty("management.type"));
     }
 }

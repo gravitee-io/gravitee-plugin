@@ -18,7 +18,9 @@ package io.gravitee.plugin.repository.internal;
 import io.gravitee.platform.repository.api.Scope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertySource;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -28,25 +30,39 @@ class RepositoryTypeReader {
 
     String getRepositoryType(Environment environment, Scope scope) {
         String oldKey = scope.getName() + ".type";
-
         String newKey = REPOSITORIES_PREFIX + oldKey;
 
-        String repositoryType = environment.getProperty(newKey);
+        // Check old key first: it may come from an env var override (e.g. gravitee_management_type=jdbc)
+        // which must take priority over the YAML-defined repositories.management.type value.
+        String repositoryType = environment.getProperty(oldKey);
         if (repositoryType != null) {
+            if (isExplicitlyDefined(environment, oldKey)) {
+                log.warn(
+                    "Repository for scope '{}' is configured using the deprecated key '{}'. Please migrate to '{}'.",
+                    scope,
+                    oldKey,
+                    newKey
+                );
+            }
             return repositoryType;
         }
 
-        repositoryType = environment.getProperty(oldKey);
+        return environment.getProperty(newKey);
+    }
 
-        if (repositoryType != null) {
-            log.warn(
-                "Repository for scope '{}' is configured using the deprecated key '{}'. Please migrate to '{}'.",
-                scope,
-                oldKey,
-                newKey
-            );
+    /**
+     * Checks if the key is explicitly defined in a property source (not via the alias).
+     * This avoids false-positive deprecation warnings when the alias resolves the old key
+     * from the new repositories.* format.
+     */
+    private boolean isExplicitlyDefined(Environment environment, String key) {
+        if (environment instanceof ConfigurableEnvironment configEnv) {
+            return configEnv
+                .getPropertySources()
+                .stream()
+                .filter(ps -> !RepositoryAliasPropertySource.PROPERTY_SOURCE_NAME.equals(ps.getName()))
+                .anyMatch(ps -> ps.getProperty(key) != null);
         }
-
-        return repositoryType;
+        return false;
     }
 }
