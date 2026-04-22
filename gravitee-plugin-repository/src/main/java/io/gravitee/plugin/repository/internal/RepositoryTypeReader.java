@@ -29,18 +29,18 @@ class RepositoryTypeReader {
     private static final String REPOSITORIES_PREFIX = "repositories.";
 
     String getRepositoryType(Environment environment, Scope scope) {
-        String oldKey = scope.getName() + ".type";
-        String newKey = REPOSITORIES_PREFIX + oldKey;
+        String legacyKey = scope.getName() + ".type";
+        String newKey = REPOSITORIES_PREFIX + legacyKey;
 
-        // Check old key first: it may come from an env var override (e.g. gravitee_management_type=jdbc)
+        // Check legacy key first: it may come from an env var override (e.g. gravitee_management_type=jdbc)
         // which must take priority over the YAML-defined repositories.management.type value.
-        String repositoryType = environment.getProperty(oldKey);
+        String repositoryType = environment.getProperty(legacyKey);
         if (repositoryType != null) {
-            if (isExplicitlyDefined(environment, oldKey)) {
+            if (isExplicitlyDefined(environment, legacyKey)) {
                 log.warn(
                     "Repository for scope '{}' is configured using the deprecated key '{}'. Please migrate to '{}'.",
                     scope,
-                    oldKey,
+                    legacyKey,
                     newKey
                 );
             }
@@ -52,7 +52,7 @@ class RepositoryTypeReader {
 
     /**
      * Checks if the key is explicitly defined in a property source (not via the alias).
-     * This avoids false-positive deprecation warnings when the alias resolves the old key
+     * This avoids false-positive deprecation warnings when the alias resolves the legacy key
      * from the new repositories.* format.
      */
     private boolean isExplicitlyDefined(Environment environment, String key) {

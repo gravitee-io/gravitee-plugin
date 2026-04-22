@@ -43,7 +43,7 @@ public class RepositoryTypeReaderTest {
     private final RepositoryTypeReader reader = new RepositoryTypeReader();
 
     @Test
-    public void should_read_from_old_key_first() {
+    public void should_read_from_legacy_key_first() {
         when(environment.getProperty("management.type")).thenReturn("jdbc");
         String type = reader.getRepositoryType(environment, Scope.MANAGEMENT);
 
@@ -51,7 +51,7 @@ public class RepositoryTypeReaderTest {
     }
 
     @Test
-    public void should_fallback_to_new_key_when_old_key_not_set() {
+    public void should_fallback_to_new_key_when_legacy_key_not_set() {
         when(environment.getProperty("management.type")).thenReturn(null);
         when(environment.getProperty("repositories.management.type")).thenReturn("mongodb");
         String type = reader.getRepositoryType(environment, Scope.MANAGEMENT);
@@ -68,7 +68,7 @@ public class RepositoryTypeReaderTest {
     }
 
     @Test
-    public void should_log_warning_when_old_key_is_explicitly_defined() {
+    public void should_log_warning_when_legacy_key_is_explicitly_defined() {
         // Use a real environment so isExplicitlyDefined can iterate property sources
         StandardEnvironment realEnv = new StandardEnvironment();
         realEnv.getPropertySources().addFirst(new MapPropertySource("test", Map.of("management.type", "jdbc")));
@@ -95,7 +95,7 @@ public class RepositoryTypeReaderTest {
     }
 
     @Test
-    public void should_not_log_warning_when_old_key_comes_from_alias() {
+    public void should_not_log_warning_when_legacy_key_comes_from_alias() {
         StandardEnvironment realEnv = new StandardEnvironment();
         realEnv.getPropertySources().addFirst(new MapPropertySource("yaml", Map.of("repositories.management.type", "mongodb")));
         realEnv.getPropertySources().addFirst(new RepositoryAliasPropertySource(realEnv));
