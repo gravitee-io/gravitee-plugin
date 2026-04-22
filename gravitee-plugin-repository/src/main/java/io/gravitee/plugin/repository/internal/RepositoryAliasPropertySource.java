@@ -59,12 +59,12 @@ class RepositoryAliasPropertySource extends PropertySource<Object> {
     }
 
     /**
-     * Resolves the property by checking the short key first (explicit override)
-     * across all sources, then falling back to the long key.
+     * Resolves the property by checking the legacy key first (explicit override)
+     * across all sources, then falling back to the new key.
      */
     private Object resolveRespectingSourcePriority(String name) {
         if (environment instanceof ConfigurableEnvironment configEnv) {
-            // Check if any source defines the short key directly (e.g. env var)
+            // Check if any source defines the legacy key directly (e.g. env var)
             for (PropertySource<?> ps : configEnv.getPropertySources()) {
                 if (ps == this) {
                     continue;
@@ -75,7 +75,7 @@ class RepositoryAliasPropertySource extends PropertySource<Object> {
                 }
             }
         }
-        // Fallback to long key
+        // Fallback to new key
         return environment.getProperty(REPOSITORIES_PREFIX + name);
     }
 }

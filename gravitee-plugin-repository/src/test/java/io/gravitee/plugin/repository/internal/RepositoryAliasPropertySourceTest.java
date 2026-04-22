@@ -69,7 +69,7 @@ public class RepositoryAliasPropertySourceTest {
     }
 
     @Test
-    public void should_prefer_short_key_when_both_are_set_in_same_source() {
+    public void should_prefer_legacy_key_when_both_are_set_in_same_source() {
         setProperties(
             Map.of(
                 "management.mongodb.uri",
@@ -168,7 +168,7 @@ public class RepositoryAliasPropertySourceTest {
     }
 
     @Test
-    public void should_let_envvar_with_short_key_override_yaml_with_repositories_prefix() {
+    public void should_let_envvar_with_legacy_key_override_yaml_with_repositories_prefix() {
         Map<String, Object> yamlProps = new HashMap<>();
         yamlProps.put("repositories.management.mongodb.uri", "mongodb://localhost:27017/gravitee");
 
@@ -183,7 +183,7 @@ public class RepositoryAliasPropertySourceTest {
     }
 
     @Test
-    public void should_let_envvar_with_short_key_override_yaml_for_elasticsearch_endpoint() {
+    public void should_let_envvar_with_legacy_key_override_yaml_for_elasticsearch_endpoint() {
         Map<String, Object> yamlProps = new HashMap<>();
         yamlProps.put("repositories.analytics.elasticsearch.endpoints[0]", "http://localhost:9200");
 
@@ -198,7 +198,7 @@ public class RepositoryAliasPropertySourceTest {
     }
 
     @Test
-    public void should_let_envvar_with_short_key_win_even_when_yaml_has_higher_source_priority() {
+    public void should_let_envvar_with_legacy_key_win_even_when_yaml_has_higher_source_priority() {
         Map<String, Object> yamlProps = new HashMap<>();
         yamlProps.put("repositories.management.type", "mongodb");
 
