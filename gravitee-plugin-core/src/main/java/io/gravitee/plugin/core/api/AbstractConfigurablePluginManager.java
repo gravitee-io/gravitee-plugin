@@ -256,7 +256,7 @@ public abstract class AbstractConfigurablePluginManager<T extends ConfigurablePl
                 String mimeType = Files.probeContentType(file);
                 return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(file));
             } catch (NoSuchFileException ex) {
-                logger.warn("File not found {}", plugin.path().toString());
+                logger.warn("File not found {}", ex.getFile());
             }
         }
         return null;
