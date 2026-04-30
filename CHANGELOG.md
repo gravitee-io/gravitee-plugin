@@ -1,3 +1,10 @@
+## [5.1.2](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.1...5.1.2) (2026-04-30)
+
+
+### Bug Fixes
+
+* **core:** log the right file name if not found ([3f41c38](https://github.com/gravitee-io/gravitee-plugin/commit/3f41c38c2c12894be87b91b6441f6ea4d6b4863f))
+
 ## [5.1.1](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.0...5.1.1) (2026-04-22)
 
 
