@@ -19,6 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -32,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Yann TAVERNIER (yann.tavernier at graviteesource.com)
@@ -188,10 +193,30 @@ class AbstractConfigurablePluginManagerTest {
 
     @Test
     void should_get_null_if_file_not_found() throws IOException {
-        cut.register(new FakePlugin());
-        properties.put("icon", "images/fake-path.png");
-        final String icon = cut.getIcon(FAKE_PLUGIN);
-        assertNull(icon);
+        Logger logger = (Logger) LoggerFactory.getLogger(AbstractConfigurablePluginManager.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            cut.register(new FakePlugin());
+            properties.put("icon", "images/fake-path.png");
+            final String icon = cut.getIcon(FAKE_PLUGIN);
+            assertNull(icon);
+
+            assertTrue(
+                appender.list
+                    .stream()
+                    .anyMatch(
+                        event ->
+                            event.getLevel() == Level.WARN &&
+                            event.getFormattedMessage().startsWith("File not found ") &&
+                            event.getFormattedMessage().contains("fake-path.png")
+                    )
+            );
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     private static class FakePlugin implements ConfigurablePlugin<String> {
