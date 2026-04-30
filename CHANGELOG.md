@@ -1,3 +1,10 @@
+## [4.11.1](https://github.com/gravitee-io/gravitee-plugin/compare/4.11.0...4.11.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* **core:** log the right file name if not found ([844fc8c](https://github.com/gravitee-io/gravitee-plugin/commit/844fc8cc6bd5fba3efc7745d934ccd59d762599c))
+
 # [4.11.0](https://github.com/gravitee-io/gravitee-plugin/compare/4.10.1...4.11.0) (2026-04-09)
 
 
