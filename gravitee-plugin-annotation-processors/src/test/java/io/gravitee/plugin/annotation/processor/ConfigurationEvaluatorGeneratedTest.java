@@ -138,6 +138,26 @@ public class ConfigurationEvaluatorGeneratedTest {
     }
 
     @Test
+    public void should_resolve_el_in_set_topics() {
+        // Reproduces APIM-14232: EL expressions in Set<String> topics must be evaluated through the template engine
+        TestConfiguration configuration = new TestConfiguration();
+        configuration.getConsumer().setTopics(Set.of("{#api.properties['producerTopic']}", "static-topic"));
+        evaluator = new TestConfigurationEvaluator(configuration);
+
+        var spiedTemplateEngine = spy(new DefaultTemplateEngine());
+        when(spiedTemplateEngine.eval("{#api.properties['producerTopic']}", String.class)).thenReturn(Maybe.just("resolved-topic"));
+
+        evaluator
+            .eval(new DefaultExecutionContext(spiedTemplateEngine))
+            .test()
+            .assertComplete()
+            .assertValue(testConfiguration -> {
+                assertThat(testConfiguration.getConsumer().getTopics()).containsExactlyInAnyOrder("resolved-topic", "static-topic");
+                return true;
+            });
+    }
+
+    @Test
     public void should_cache_evaluated_configuration() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
         when(templateEngine.eval("password", String.class)).thenReturn(Maybe.just("password"));
@@ -149,6 +169,8 @@ public class ConfigurationEvaluatorGeneratedTest {
         when(templateEngine.eval("{#secrets.get('/vault/secret/test:password')}", String.class)).thenReturn(Maybe.just("password"));
         when(templateEngine.eval("{#secrets.get('/vault/secret/test:token')}", String.class)).thenReturn(Maybe.just("my_secret_token"));
         when(templateEngine.eval("{#secrets.get('/vault/secret/test:extension')}", String.class)).thenReturn(Maybe.just("extension_value"));
+        when(templateEngine.eval("topic1", String.class)).thenReturn(Maybe.just("topic1"));
+        when(templateEngine.eval("topic2", String.class)).thenReturn(Maybe.just("topic2"));
         when(templateEngine.getTemplateContext()).thenReturn(templateContext);
         Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("gravitee.attributes.endpoint.test.protocol", "SSL");

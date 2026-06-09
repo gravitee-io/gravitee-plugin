@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -236,6 +237,45 @@ public class {{evaluatorSimpleClassName}} {
                 .eval(v, String.class)
                 .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
             .toList()
+            .toMaybe();
+    }
+
+    private Maybe<Set<String>> evalSetStringProperty(String name, Set<String> value, String attributePrefix, BaseExecutionContext ctx) {
+        List<String> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            value = new LinkedHashSet<>(attribute);
+        }
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value).filter(Objects::nonNull)
+            .flatMapMaybe(v -> ctx
+                .getTemplateEngine()
+                .eval(v, String.class)
+                .doOnError(throwable -> ctx.withLogger(log).error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
+            .toList()
+            .map(list -> (Set<String>) new LinkedHashSet<>(list))
+            .toMaybe();
+    }
+
+    private Maybe<Set<String>> evalSetStringProperty(String name, Set<String> value, String attributePrefix, DeploymentContext ctx) {
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value).filter(Objects::nonNull)
+            .flatMapMaybe(v -> ctx
+                .getTemplateEngine()
+                .eval(v, String.class)
+                .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
+            .toList()
+            .map(list -> (Set<String>) new LinkedHashSet<>(list))
             .toMaybe();
     }
 
@@ -459,5 +499,6 @@ public class {{evaluatorSimpleClassName}} {
 
         List<Maybe<String>> toEval = new ArrayList<>();
         List<Maybe<List<String>>> toEvalList = new ArrayList<>();
+        List<Maybe<Set<String>>> toEvalSet = new ArrayList<>();
         List<Maybe<List<HttpHeader>>> toEvalHeaderList = new ArrayList<>();
         List<Maybe<Map<String, String>>> toEvalMap = new ArrayList<>();

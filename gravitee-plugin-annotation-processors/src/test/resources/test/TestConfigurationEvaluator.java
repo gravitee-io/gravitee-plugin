@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -236,6 +237,45 @@ public class TestConfigurationEvaluator {
                         .eval(v, String.class)
                         .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
                 .toList()
+                .toMaybe();
+    }
+
+    private Maybe<Set<String>> evalSetStringProperty(String name, Set<String> value, String attributePrefix, BaseExecutionContext ctx) {
+        List<String> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
+        if (attribute != null) {
+            //If a value is found for this attribute, override the original value with it
+            value = new LinkedHashSet<>(attribute);
+        }
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value).filter(Objects::nonNull)
+                .flatMapMaybe(v -> ctx
+                        .getTemplateEngine()
+                        .eval(v, String.class)
+                        .doOnError(throwable -> ctx.withLogger(log).error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
+                .toList()
+                .map(list -> (Set<String>) new LinkedHashSet<>(list))
+                .toMaybe();
+    }
+
+    private Maybe<Set<String>> evalSetStringProperty(String name, Set<String> value, String attributePrefix, DeploymentContext ctx) {
+        //If value is null, return empty
+        if(value == null) {
+            return Maybe.empty();
+        }
+
+        //Then check EL
+        return Flowable.fromIterable(value).filter(Objects::nonNull)
+                .flatMapMaybe(v -> ctx
+                        .getTemplateEngine()
+                        .eval(v, String.class)
+                        .doOnError(throwable -> log.error("Unable to evaluate property [{}] with expression [{}].", name, v, throwable)))
+                .toList()
+                .map(list -> (Set<String>) new LinkedHashSet<>(list))
                 .toMaybe();
     }
 
@@ -459,6 +499,7 @@ public class TestConfigurationEvaluator {
 
         List<Maybe<String>> toEval = new ArrayList<>();
         List<Maybe<List<String>>> toEvalList = new ArrayList<>();
+        List<Maybe<Set<String>>> toEvalSet = new ArrayList<>();
         List<Maybe<List<HttpHeader>>> toEvalHeaderList = new ArrayList<>();
         List<Maybe<Map<String, String>>> toEvalMap = new ArrayList<>();
         //Field protocol
@@ -510,10 +551,14 @@ public class TestConfigurationEvaluator {
             }
             //Field topics
             if(baseExecutionContext != null) {
-                evaluatedConfiguration.getConsumer().setTopics(
-                        evalSetProperty("topics", configuration.getConsumer().getTopics(), currentAttributePrefix, baseExecutionContext)
+                toEvalSet.add(
+                        evalSetStringProperty("topics", configuration.getConsumer().getTopics(), currentAttributePrefix, baseExecutionContext)
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setTopics(value))
                 );
             } else if(deploymentContext != null) {
+                toEvalSet.add(
+                        evalSetStringProperty("topics", configuration.getConsumer().getTopics(), currentAttributePrefix, deploymentContext)
+                                .doOnSuccess(value -> evaluatedConfiguration.getConsumer().setTopics(value)));
             }
             //Field topicPattern
             if(baseExecutionContext != null) {
@@ -1092,10 +1137,11 @@ public class TestConfigurationEvaluator {
         // Evaluate properties that needs EL, validate evaluatedConf and returns it
         Completable toEvalCompletable = Flowable.fromIterable(toEval).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalListCompletable = Flowable.fromIterable(toEvalList).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalSetCompletable = Flowable.fromIterable(toEvalSet).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalHeaderListCompletable = Flowable.fromIterable(toEvalHeaderList).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalMapCompletable = Flowable.fromIterable(toEvalMap).concatMapMaybe(m -> m).ignoreElements();
 
-        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable, toEvalMapCompletable)
+        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalSetCompletable, toEvalHeaderListCompletable, toEvalMapCompletable)
             .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
             .andThen(Completable.fromRunnable(() -> {
                 if(baseExecutionContext != null) {
