@@ -2,10 +2,11 @@
         // Evaluate properties that needs EL, validate evaluatedConf and returns it
         Completable toEvalCompletable = Flowable.fromIterable(toEval).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalListCompletable = Flowable.fromIterable(toEvalList).concatMapMaybe(m -> m).ignoreElements();
+        Completable toEvalSetCompletable = Flowable.fromIterable(toEvalSet).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalHeaderListCompletable = Flowable.fromIterable(toEvalHeaderList).concatMapMaybe(m -> m).ignoreElements();
         Completable toEvalMapCompletable = Flowable.fromIterable(toEvalMap).concatMapMaybe(m -> m).ignoreElements();
 
-        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalHeaderListCompletable, toEvalMapCompletable)
+        return Completable.concatArray(toEvalCompletable, toEvalListCompletable, toEvalSetCompletable, toEvalHeaderListCompletable, toEvalMapCompletable)
             .andThen(Completable.fromRunnable(() -> validateConfiguration(evaluatedConfiguration)))
             .andThen(Completable.fromRunnable(() -> {
                 if(baseExecutionContext != null) {

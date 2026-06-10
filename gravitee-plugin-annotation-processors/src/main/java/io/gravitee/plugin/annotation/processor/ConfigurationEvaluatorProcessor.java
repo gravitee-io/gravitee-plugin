@@ -564,6 +564,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
         private final boolean toEval;
         private final boolean toEvalList;
+        private final boolean toEvalSet;
         private final boolean toEvalHeaderList;
         private final boolean toEvalMap;
         private final boolean jsonType;
@@ -588,6 +589,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             // Check if the type of this field is supported EL to know if it's need to be evaluated by the template engine
             this.toEval = "String".equals(fieldType);
             this.toEvalList = "ListString".equals(fieldType);
+            this.toEvalSet = "SetString".equals(fieldType);
             this.toEvalHeaderList = "ListHeader".equals(fieldType);
             this.toEvalMap = "MapString".equals(fieldType);
             this.jsonType = isJsonTypeInfoProperty(field, jsonTypeClass);
@@ -636,6 +638,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 return "String";
             } else if (is(field.asType(), Boolean.class) || is(field.asType(), boolean.class)) {
                 return "Boolean";
+            } else if (isStringSet(field.asType(), elementUtils, typeUtils)) {
+                return "SetString";
             } else if (is(field.asType(), Set.class)) {
                 return "Set";
             } else if (isStringList(field.asType(), elementUtils, typeUtils)) {
@@ -675,6 +679,19 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
         private static boolean isStringList(TypeMirror type, Elements elementUtils, Types typeUtils) {
             if (!(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().size() != 1) {
+                return false;
+            }
+
+            TypeMirror firstType = ((DeclaredType) type).getTypeArguments().get(0);
+            if (firstType == null) {
+                return false;
+            }
+            var StringElem = elementUtils.getTypeElement("java.lang.String");
+            return typeUtils.isSameType(firstType, StringElem.asType());
+        }
+
+        private static boolean isStringSet(TypeMirror type, Elements elementUtils, Types typeUtils) {
+            if (!is(type, Set.class) || !(type instanceof DeclaredType) || ((DeclaredType) type).getTypeArguments().size() != 1) {
                 return false;
             }
 

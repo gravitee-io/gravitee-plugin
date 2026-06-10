@@ -8,6 +8,10 @@
                 toEvalList.add(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext)
                 {{/toEvalList}}
+                {{#toEvalSet}}
+                toEvalSet.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext)
+                {{/toEvalSet}}
                 {{#toEvalHeaderList}}
                     toEvalHeaderList.add(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, baseExecutionContext)
@@ -18,12 +22,14 @@
                 {{/toEvalMap}}
                 {{^toEval}}
                     {{^toEvalList}}
+                        {{^toEvalSet}}
                         {{^toEvalHeaderList}}
                             {{^toEvalMap}}
                     {{evaluatedConfigurationName}}.{{fieldSetter}}(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), {{#fieldClass}}{{fieldClass}}.class, {{/fieldClass}}currentAttributePrefix, baseExecutionContext)
                             {{/toEvalMap}}
                         {{/toEvalHeaderList}}
+                        {{/toEvalSet}}
                     {{/toEvalList}}
                 {{/toEval}}
                 {{#toEval}}
@@ -32,6 +38,9 @@
                 {{#toEvalList}}
                     .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
                 {{/toEvalList}}
+                {{#toEvalSet}}
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
+                {{/toEvalSet}}
                 {{#toEvalHeaderList}}
                     .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value))
                 {{/toEvalHeaderList}}
@@ -50,6 +59,11 @@
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext)
                     .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value)));
                 {{/toEvalList}}
+                {{#toEvalSet}}
+                    toEvalSet.add(
+                    eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext)
+                    .doOnSuccess(value -> {{evaluatedConfigurationName}}.{{fieldSetter}}(value)));
+                {{/toEvalSet}}
                 {{#toEvalHeaderList}}
                     toEvalHeaderList.add(
                     eval{{fieldType}}Property("{{fieldName}}", {{originalConfigurationName}}.{{fieldGetter}}(), currentAttributePrefix, deploymentContext)
