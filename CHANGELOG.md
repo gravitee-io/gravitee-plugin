@@ -1,3 +1,10 @@
+## [5.1.3](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.2...5.1.3) (2026-06-10)
+
+
+### Bug Fixes
+
+* **annotation-processor:** evaluate EL in Set<String> configuration fields ([#207](https://github.com/gravitee-io/gravitee-plugin/issues/207)) ([47930b6](https://github.com/gravitee-io/gravitee-plugin/commit/47930b66663d4863e8999bc3b839b9ce7c4ad5a4))
+
 ## [5.1.2](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.1...5.1.2) (2026-04-30)
 
 
