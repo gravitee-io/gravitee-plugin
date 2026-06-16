@@ -1,3 +1,10 @@
+## [5.1.4](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.3...5.1.4) (2026-06-16)
+
+
+### Bug Fixes
+
+* **annotation-processor:** evaluate fields inherited from a superclass ([d55edcb](https://github.com/gravitee-io/gravitee-plugin/commit/d55edcb291d1411cd7c0f5ee98d2ae080d999668))
+
 ## [5.1.3](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.2...5.1.3) (2026-06-10)
 
 
