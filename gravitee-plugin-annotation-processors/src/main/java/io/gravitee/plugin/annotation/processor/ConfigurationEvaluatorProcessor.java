@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -315,8 +316,7 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
     ) {
         // 3 things to manage : fields, inner class and object
         // We need to exclude the "builder" part if present
-        List<VariableElement> fields = elementUtils
-            .getAllMembers(currentElement)
+        List<VariableElement> fields = collectFieldsIncludingInheritedPrivate(currentElement)
             .stream()
             .filter(
                 element ->
@@ -486,6 +486,52 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
             mustacheParams.mClose().execute(writer, scopes);
         });
+    }
+
+    /**
+     * Collects the fields to evaluate for the given type, including private fields declared in superclasses.
+     * <p>
+     * {@link Elements#getAllMembers(TypeElement)} only returns members that are <em>inherited</em> in the JLS
+     * sense, which excludes private fields declared in superclasses (private members are never inherited).
+     * A configuration class that simply extends a base class — typically coming from another module/jar — would
+     * therefore expose none of the base's fields and would generate an empty evaluator. We walk the superclass
+     * hierarchy to recover those privately-declared fields.
+     * <p>
+     * Classes annotated with {@link JsonTypeInfo} are intentionally <strong>not</strong> traversed: their fields
+     * are already handled by the dedicated polymorphic ({@link JsonSubTypes}) processing and must not be flattened
+     * into the subtype here, otherwise base fields (e.g. the discriminator or a common {@code alias}) would be
+     * emitted twice.
+     */
+    private List<Element> collectFieldsIncludingInheritedPrivate(TypeElement type) {
+        List<Element> members = new ArrayList<>(elementUtils.getAllMembers(type));
+
+        Set<String> knownFieldNames = members
+            .stream()
+            .filter(element -> element.getKind() == ElementKind.FIELD)
+            .map(element -> element.getSimpleName().toString())
+            .collect(Collectors.toCollection(HashSet::new));
+
+        TypeMirror superclass = type.getSuperclass();
+        while (superclass.getKind() != TypeKind.NONE) {
+            Element superElement = typeUtils.asElement(superclass);
+            if (!(superElement instanceof TypeElement superType)) {
+                break;
+            }
+            if ("java.lang.Object".contentEquals(superType.getQualifiedName()) || superType.getAnnotation(JsonTypeInfo.class) != null) {
+                break;
+            }
+            superType
+                .getEnclosedElements()
+                .stream()
+                .filter(element -> element.getKind() == ElementKind.FIELD)
+                // Only add fields not already provided by getAllMembers() (i.e. the private ones); a field
+                // redeclared in a subclass keeps the subclass declaration.
+                .filter(element -> knownFieldNames.add(element.getSimpleName().toString()))
+                .forEach(members::add);
+            superclass = superType.getSuperclass();
+        }
+
+        return members;
     }
 
     private boolean isConstant(Element element) {
