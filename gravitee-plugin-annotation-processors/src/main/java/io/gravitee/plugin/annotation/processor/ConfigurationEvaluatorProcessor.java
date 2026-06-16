@@ -520,14 +520,13 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             if ("java.lang.Object".contentEquals(superType.getQualifiedName()) || superType.getAnnotation(JsonTypeInfo.class) != null) {
                 break;
             }
-            superType
-                .getEnclosedElements()
-                .stream()
-                .filter(element -> element.getKind() == ElementKind.FIELD)
+            for (Element element : superType.getEnclosedElements()) {
                 // Only add fields not already provided by getAllMembers() (i.e. the private ones); a field
                 // redeclared in a subclass keeps the subclass declaration.
-                .filter(element -> knownFieldNames.add(element.getSimpleName().toString()))
-                .forEach(members::add);
+                if (element.getKind() == ElementKind.FIELD && knownFieldNames.add(element.getSimpleName().toString())) {
+                    members.add(element);
+                }
+            }
             superclass = superType.getSuperclass();
         }
 

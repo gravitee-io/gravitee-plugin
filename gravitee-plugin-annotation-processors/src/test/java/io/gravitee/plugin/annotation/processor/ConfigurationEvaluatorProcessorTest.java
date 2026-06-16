@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.truth.StringSubject;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
 import com.google.testing.compile.JavaFileObjectSubject;
@@ -112,17 +113,18 @@ public class ConfigurationEvaluatorProcessorTest {
         CompilationSubject.assertThat(compilation).succeeded();
 
         // Verify the generated evaluator handles both the inherited fields and the child's own field.
-        JavaFileObjectSubject evaluator = CompilationSubject.assertThat(compilation).generatedSourceFile(
-            "io.gravitee.plugin.annotation.processor.inheritance.ChildSharedConfigurationEvaluator"
-        );
-        evaluator.contentsAsUtf8String().contains("evalStringProperty(\"target\"");
-        evaluator.contentsAsUtf8String().contains("configuration.getTarget()");
-        evaluator.contentsAsUtf8String().contains("evalBooleanProperty(\"enabled\"");
-        evaluator.contentsAsUtf8String().contains("configuration.isEnabled()");
-        evaluator.contentsAsUtf8String().contains("evalIntegerProperty(\"weight\"");
-        evaluator.contentsAsUtf8String().contains("configuration.getWeight()");
-        evaluator.contentsAsUtf8String().contains("evalStringProperty(\"childOnly\"");
-        evaluator.contentsAsUtf8String().contains("configuration.getChildOnly()");
+        // StringSubject#contains is a Truth assertion that fails the test if the content is missing.
+        StringSubject evaluator = CompilationSubject.assertThat(compilation)
+            .generatedSourceFile("io.gravitee.plugin.annotation.processor.inheritance.ChildSharedConfigurationEvaluator")
+            .contentsAsUtf8String();
+        evaluator.contains("evalStringProperty(\"target\"");
+        evaluator.contains("configuration.getTarget()");
+        evaluator.contains("evalBooleanProperty(\"enabled\"");
+        evaluator.contains("configuration.isEnabled()");
+        evaluator.contains("evalIntegerProperty(\"weight\"");
+        evaluator.contains("configuration.getWeight()");
+        evaluator.contains("evalStringProperty(\"childOnly\"");
+        evaluator.contains("configuration.getChildOnly()");
     }
 
     private static List<JavaFileObject> readJavaFilesFromFolder(String folderPath) throws IOException {
