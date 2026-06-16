@@ -66,6 +66,65 @@ public class ConfigurationEvaluatorProcessorTest {
         JavaFileObjectSubject.assertThat(generatedSourceFile.get()).hasSourceEquivalentTo(RESULT);
     }
 
+    /**
+     * Regression test: when {@code @ConfigurationEvaluator} is placed on a class that declares no field of its own
+     * but inherits all of them from a (private-field) superclass — typically a base shared-configuration class
+     * coming from another module/jar — the processor must still generate an evaluator that handles the inherited
+     * fields. Before the fix, {@code Elements.getAllMembers()} dropped the inherited private fields and the
+     * generated evaluator was empty.
+     */
+    @Test
+    public void shouldEvaluateFieldsInheritedFromSuperclass() {
+        // Base class lives in its own package to mimic a class coming from another jar. It is NOT annotated and
+        // exposes its fields only through getters/setters, the fields themselves being private.
+        JavaFileObject base = JavaFileObjects.forSourceLines(
+            "io.gravitee.plugin.annotation.processor.inheritance.base.BaseSharedConfiguration",
+            "package io.gravitee.plugin.annotation.processor.inheritance.base;",
+            "public class BaseSharedConfiguration {",
+            "    private String target;",
+            "    private boolean enabled;",
+            "    private Integer weight;",
+            "    public String getTarget() { return target; }",
+            "    public void setTarget(String target) { this.target = target; }",
+            "    public boolean isEnabled() { return enabled; }",
+            "    public void setEnabled(boolean enabled) { this.enabled = enabled; }",
+            "    public Integer getWeight() { return weight; }",
+            "    public void setWeight(Integer weight) { this.weight = weight; }",
+            "}"
+        );
+
+        // Annotated class declares a single field of its own and inherits the rest from the base class.
+        JavaFileObject child = JavaFileObjects.forSourceLines(
+            "io.gravitee.plugin.annotation.processor.inheritance.ChildSharedConfiguration",
+            "package io.gravitee.plugin.annotation.processor.inheritance;",
+            "import io.gravitee.plugin.annotation.ConfigurationEvaluator;",
+            "import io.gravitee.plugin.annotation.processor.inheritance.base.BaseSharedConfiguration;",
+            "@ConfigurationEvaluator(attributePrefix = \"gravitee.attributes.endpoint.child\")",
+            "public class ChildSharedConfiguration extends BaseSharedConfiguration {",
+            "    private String childOnly;",
+            "    public String getChildOnly() { return childOnly; }",
+            "    public void setChildOnly(String childOnly) { this.childOnly = childOnly; }",
+            "}"
+        );
+
+        // Run
+        Compilation compilation = javac().withProcessors(new ConfigurationEvaluatorProcessor()).compile(base, child);
+        CompilationSubject.assertThat(compilation).succeeded();
+
+        // Verify the generated evaluator handles both the inherited fields and the child's own field.
+        JavaFileObjectSubject evaluator = CompilationSubject.assertThat(compilation).generatedSourceFile(
+            "io.gravitee.plugin.annotation.processor.inheritance.ChildSharedConfigurationEvaluator"
+        );
+        evaluator.contentsAsUtf8String().contains("evalStringProperty(\"target\"");
+        evaluator.contentsAsUtf8String().contains("configuration.getTarget()");
+        evaluator.contentsAsUtf8String().contains("evalBooleanProperty(\"enabled\"");
+        evaluator.contentsAsUtf8String().contains("configuration.isEnabled()");
+        evaluator.contentsAsUtf8String().contains("evalIntegerProperty(\"weight\"");
+        evaluator.contentsAsUtf8String().contains("configuration.getWeight()");
+        evaluator.contentsAsUtf8String().contains("evalStringProperty(\"childOnly\"");
+        evaluator.contentsAsUtf8String().contains("configuration.getChildOnly()");
+    }
+
     private static List<JavaFileObject> readJavaFilesFromFolder(String folderPath) throws IOException {
         List<JavaFileObject> javaFileObjects = new ArrayList<>();
 
