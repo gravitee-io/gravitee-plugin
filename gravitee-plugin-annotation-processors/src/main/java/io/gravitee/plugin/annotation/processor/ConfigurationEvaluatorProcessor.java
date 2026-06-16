@@ -320,12 +320,10 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             .stream()
             .filter(
                 element ->
-                    element.getKind() == ElementKind.FIELD &&
                     !element.getSimpleName().toString().contains("Builder") &&
                     !isConstant(element) &&
                     !excludedFields.contains(element.getSimpleName().toString())
             )
-            .map(VariableElement.class::cast)
             .toList();
 
         Map<Boolean, List<FieldProperty>> convertedFields = fields
@@ -502,13 +500,17 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
      * into the subtype here, otherwise base fields (e.g. the discriminator or a common {@code alias}) would be
      * emitted twice.
      */
-    private List<Element> collectFieldsIncludingInheritedPrivate(TypeElement type) {
-        List<Element> members = new ArrayList<>(elementUtils.getAllMembers(type));
-
-        Set<String> knownFieldNames = members
+    private List<VariableElement> collectFieldsIncludingInheritedPrivate(TypeElement type) {
+        List<VariableElement> fields = elementUtils
+            .getAllMembers(type)
             .stream()
             .filter(element -> element.getKind() == ElementKind.FIELD)
-            .map(element -> element.getSimpleName().toString())
+            .map(VariableElement.class::cast)
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        Set<String> knownFieldNames = fields
+            .stream()
+            .map(field -> field.getSimpleName().toString())
             .collect(Collectors.toCollection(HashSet::new));
 
         TypeMirror superclass = type.getSuperclass();
@@ -524,13 +526,13 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 // Only add fields not already provided by getAllMembers() (i.e. the private ones); a field
                 // redeclared in a subclass keeps the subclass declaration.
                 if (element.getKind() == ElementKind.FIELD && knownFieldNames.add(element.getSimpleName().toString())) {
-                    members.add(element);
+                    fields.add((VariableElement) element);
                 }
             }
             superclass = superType.getSuperclass();
         }
 
-        return members;
+        return fields;
     }
 
     private boolean isConstant(Element element) {
