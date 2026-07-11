@@ -158,6 +158,30 @@ public class ConfigurationEvaluatorGeneratedTest {
     }
 
     @Test
+    public void should_resolve_el_in_list_of_objects() {
+        // Reproduces APIM-14590: EL expressions in String fields nested inside a List<CustomObject> field
+        // must be evaluated through the template engine
+        TestConfiguration configuration = new TestConfiguration();
+        configuration.setNodes(
+            List.of(new HostAndPort("{#dictionaries['redisDict']['hostVal']}", 12345), new HostAndPort("static-host", 26379))
+        );
+        evaluator = new TestConfigurationEvaluator(configuration);
+
+        var spiedTemplateEngine = spy(new DefaultTemplateEngine());
+        when(spiedTemplateEngine.eval("{#dictionaries['redisDict']['hostVal']}", String.class)).thenReturn(Maybe.just("redis-host"));
+
+        evaluator
+            .eval(new DefaultExecutionContext(spiedTemplateEngine))
+            .test()
+            .assertComplete()
+            .assertValue(testConfiguration -> {
+                assertThat(testConfiguration.getNodes()).extracting(HostAndPort::getHost).containsExactly("redis-host", "static-host");
+                assertThat(testConfiguration.getNodes()).extracting(HostAndPort::getPort).containsExactly(12345, 26379);
+                return true;
+            });
+    }
+
+    @Test
     public void should_cache_evaluated_configuration() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
         when(templateEngine.eval("password", String.class)).thenReturn(Maybe.just("password"));

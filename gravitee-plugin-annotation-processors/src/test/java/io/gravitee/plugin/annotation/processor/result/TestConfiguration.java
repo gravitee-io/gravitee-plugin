@@ -63,6 +63,9 @@ public class TestConfiguration {
 
     private Double doubleValue;
 
+    //List of complex objects (APIM-14590)
+    private List<HostAndPort> nodes;
+
     public TestConfiguration(
         SecurityProtocol protocol,
         Ssl ssl,
@@ -157,6 +160,14 @@ public class TestConfiguration {
 
     public void setDoubleValue(Double doubleValue) {
         this.doubleValue = doubleValue;
+    }
+
+    public List<HostAndPort> getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(List<HostAndPort> nodes) {
+        this.nodes = nodes;
     }
 
     private static TestConfiguration.Consumer $default$consumer() {

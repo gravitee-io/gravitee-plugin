@@ -527,6 +527,13 @@ public class TestConfigurationEvaluator {
             );
          } else if(deploymentContext != null) {
          }
+        //Field nodes
+        if(baseExecutionContext != null) {
+            evaluatedConfiguration.setNodes(
+                    evalListProperty("nodes", configuration.getNodes(), currentAttributePrefix, baseExecutionContext)
+            );
+         } else if(deploymentContext != null) {
+         }
 
         //Consumer section begin
         if(evaluatedConfiguration.getConsumer() != null) {
@@ -1133,6 +1140,35 @@ public class TestConfigurationEvaluator {
 
         }
         //security section end
+
+        //nodes list section begin
+        if(evaluatedConfiguration.getNodes() != null) {
+            currentAttributePrefix = attributePrefix.concat(".nodes");
+            for (io.gravitee.plugin.annotation.processor.result.HostAndPort nodesItem : evaluatedConfiguration.getNodes()) {
+                if (nodesItem == null) {
+                    continue;
+                }
+                //Field host
+                if(baseExecutionContext != null) {
+                    toEval.add(
+                            evalStringProperty("host", nodesItem.getHost(), currentAttributePrefix, baseExecutionContext, "")
+                                    .doOnSuccess(value -> nodesItem.setHost(value))
+                    );
+                } else if(deploymentContext != null) {
+                    toEval.add(
+                            evalStringProperty("host", nodesItem.getHost(), currentAttributePrefix, deploymentContext, "")
+                                    .doOnSuccess(value -> nodesItem.setHost(value)));
+                }
+                //Field port
+                if(baseExecutionContext != null) {
+                    nodesItem.setPort(
+                            evalIntegerProperty("port", nodesItem.getPort(), currentAttributePrefix, baseExecutionContext)
+                    );
+                 } else if(deploymentContext != null) {
+                 }
+            }
+        }
+        //nodes list section end
 
         // Evaluate properties that needs EL, validate evaluatedConf and returns it
         Completable toEvalCompletable = Flowable.fromIterable(toEval).concatMapMaybe(m -> m).ignoreElements();
