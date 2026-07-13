@@ -1143,11 +1143,11 @@ public class TestConfigurationEvaluator {
 
         //nodes list section begin
         if(evaluatedConfiguration.getNodes() != null) {
-            currentAttributePrefix = attributePrefix.concat(".nodes");
             for (io.gravitee.plugin.annotation.processor.result.HostAndPort nodesItem : evaluatedConfiguration.getNodes()) {
                 if (nodesItem == null) {
                     continue;
                 }
+                currentAttributePrefix = attributePrefix.concat(".nodes");
                 //Field host
                 if(baseExecutionContext != null) {
                     toEval.add(
