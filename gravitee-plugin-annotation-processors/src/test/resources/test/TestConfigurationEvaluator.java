@@ -530,7 +530,7 @@ public class TestConfigurationEvaluator {
         //Field nodes
         if(baseExecutionContext != null) {
             evaluatedConfiguration.setNodes(
-                    evalListProperty("nodes", configuration.getNodes(), currentAttributePrefix, baseExecutionContext)
+                    evalListProperty("nodes", evaluatedConfiguration.getNodes(), currentAttributePrefix, baseExecutionContext)
             );
          } else if(deploymentContext != null) {
          }

@@ -179,6 +179,11 @@ public class ConfigurationEvaluatorGeneratedTest {
                 assertThat(testConfiguration.getNodes()).extracting(HostAndPort::getPort).containsExactly(12345, 26379);
                 return true;
             });
+
+        // The per-element loop must mutate only the evaluated deep-clone, never the original configuration
+        assertThat(configuration.getNodes())
+            .extracting(HostAndPort::getHost)
+            .containsExactly("{#dictionaries['redisDict']['hostVal']}", "static-host");
     }
 
     @Test

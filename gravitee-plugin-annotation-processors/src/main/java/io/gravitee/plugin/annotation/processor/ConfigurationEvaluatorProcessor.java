@@ -340,9 +340,30 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
         Map<Boolean, List<FieldProperty>> convertedFields = fields
             .stream()
-            .map(field ->
-                new FieldProperty(field, elementUtils, typeUtils, evaluatedConfigurationName, originalConfigurationName, jsonTypeClass)
-            )
+            .map(field -> {
+                FieldProperty fieldProperty = new FieldProperty(
+                    field,
+                    elementUtils,
+                    typeUtils,
+                    evaluatedConfigurationName,
+                    originalConfigurationName,
+                    jsonTypeClass
+                );
+                // Lists of complex objects are mutated element by element below, so the whole-list
+                // fallback must read from the evaluated clone: reading from the original configuration
+                // would alias the clone's list to the original one and mutate the original elements
+                if ("List".equals(fieldProperty.getFieldType()) && getComplexListElementType(field) != null) {
+                    return new FieldProperty(
+                        field,
+                        elementUtils,
+                        typeUtils,
+                        evaluatedConfigurationName,
+                        evaluatedConfigurationName,
+                        jsonTypeClass
+                    );
+                }
+                return fieldProperty;
+            })
             .collect(Collectors.partitioningBy(fieldProperty -> "Object".equals(fieldProperty.getFieldType())));
 
         List<TypeElement> classes = elementUtils
