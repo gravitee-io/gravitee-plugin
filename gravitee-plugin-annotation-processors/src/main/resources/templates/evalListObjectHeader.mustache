@@ -1,0 +1,8 @@
+
+        //{{fieldName}} list section begin
+        if({{evaluatedList}} != null) {
+            for ({{elementType}} {{itemName}} : {{evaluatedList}}) {
+                if ({{itemName}} == null) {
+                    continue;
+                }
+                currentAttributePrefix = attributePrefix.concat("{{attributeSuffix}}");

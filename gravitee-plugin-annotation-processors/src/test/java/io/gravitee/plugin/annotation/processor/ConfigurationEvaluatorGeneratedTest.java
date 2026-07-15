@@ -158,6 +158,66 @@ public class ConfigurationEvaluatorGeneratedTest {
     }
 
     @Test
+    public void should_resolve_el_in_list_of_objects() {
+        // Reproduces APIM-14590: EL expressions in String fields nested inside a List<CustomObject> field
+        // must be evaluated through the template engine
+        TestConfiguration configuration = new TestConfiguration();
+        configuration.setNodes(
+            List.of(new HostAndPort("{#dictionaries['redisDict']['hostVal']}", 12345), new HostAndPort("static-host", 26379))
+        );
+        evaluator = new TestConfigurationEvaluator(configuration);
+
+        var spiedTemplateEngine = spy(new DefaultTemplateEngine());
+        when(spiedTemplateEngine.eval("{#dictionaries['redisDict']['hostVal']}", String.class)).thenReturn(Maybe.just("redis-host"));
+
+        evaluator
+            .eval(new DefaultExecutionContext(spiedTemplateEngine))
+            .test()
+            .assertComplete()
+            .assertValue(testConfiguration -> {
+                assertThat(testConfiguration.getNodes()).extracting(HostAndPort::getHost).containsExactly("redis-host", "static-host");
+                assertThat(testConfiguration.getNodes()).extracting(HostAndPort::getPort).containsExactly(12345, 26379);
+                return true;
+            });
+
+        // The per-element loop must mutate only the evaluated deep-clone, never the original configuration
+        assertThat(configuration.getNodes())
+            .extracting(HostAndPort::getHost)
+            .containsExactly("{#dictionaries['redisDict']['hostVal']}", "static-host");
+    }
+
+    @Test
+    public void should_not_mutate_list_of_objects_provided_as_attribute() {
+        // The per-element EL evaluation must not mutate objects owned by the execution-context attribute
+        TestConfiguration configuration = new TestConfiguration();
+        evaluator = new TestConfigurationEvaluator(configuration);
+
+        var spiedTemplateEngine = spy(new DefaultTemplateEngine());
+        when(spiedTemplateEngine.eval("{#dictionaries['redisDict']['hostVal']}", String.class)).thenReturn(Maybe.just("redis-host"));
+
+        List<HostAndPort> attributeNodes = List.of(
+            new HostAndPort("{#dictionaries['redisDict']['hostVal']}", 12345),
+            new HostAndPort("static-host", 26379)
+        );
+        Map<String, Object> contextMap = new HashMap<>();
+        contextMap.put("gravitee.attributes.endpoint.test.nodes", attributeNodes);
+
+        evaluator
+            .eval(new DefaultExecutionContext(spiedTemplateEngine, contextMap))
+            .test()
+            .assertComplete()
+            .assertValue(testConfiguration -> {
+                assertThat(testConfiguration.getNodes()).extracting(HostAndPort::getHost).containsExactly("redis-host", "static-host");
+                assertThat(testConfiguration.getNodes()).extracting(HostAndPort::getPort).containsExactly(12345, 26379);
+                return true;
+            });
+
+        assertThat(attributeNodes)
+            .extracting(HostAndPort::getHost)
+            .containsExactly("{#dictionaries['redisDict']['hostVal']}", "static-host");
+    }
+
+    @Test
     public void should_cache_evaluated_configuration() {
         when(templateEngine.eval("none", String.class)).thenReturn(Maybe.just("latest"));
         when(templateEngine.eval("password", String.class)).thenReturn(Maybe.just("password"));

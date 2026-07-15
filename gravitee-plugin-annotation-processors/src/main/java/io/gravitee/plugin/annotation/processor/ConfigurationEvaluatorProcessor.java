@@ -281,6 +281,8 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             Mustache mSubTypeFooter = mf.compile("templates/evalSubTypeFooter.mustache");
             Mustache mSubTypeCaseHeader = mf.compile("templates/evalSubTypeCaseHeader.mustache");
             Mustache mSubTypeCaseFooter = mf.compile("templates/evalSubTypeCaseFooter.mustache");
+            Mustache mListObjectHeader = mf.compile("templates/evalListObjectHeader.mustache");
+            Mustache mListObjectFooter = mf.compile("templates/evalListObjectFooter.mustache");
 
             //First header
             mHeader.execute(out, scopes);
@@ -288,7 +290,17 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
             //Then eval method
             generateEvalMethods(
                 currentElement,
-                new MustacheParams(mClass, mField, mClose, mSubTypeHeader, mSubTypeFooter, mSubTypeCaseHeader, mSubTypeCaseFooter),
+                new MustacheParams(
+                    mClass,
+                    mField,
+                    mClose,
+                    mSubTypeHeader,
+                    mSubTypeFooter,
+                    mSubTypeCaseHeader,
+                    mSubTypeCaseFooter,
+                    mListObjectHeader,
+                    mListObjectFooter
+                ),
                 out,
                 "evaluatedConfiguration",
                 "configuration",
@@ -328,9 +340,30 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
         Map<Boolean, List<FieldProperty>> convertedFields = fields
             .stream()
-            .map(field ->
-                new FieldProperty(field, elementUtils, typeUtils, evaluatedConfigurationName, originalConfigurationName, jsonTypeClass)
-            )
+            .map(field -> {
+                FieldProperty fieldProperty = new FieldProperty(
+                    field,
+                    elementUtils,
+                    typeUtils,
+                    evaluatedConfigurationName,
+                    originalConfigurationName,
+                    jsonTypeClass
+                );
+                // Lists of complex objects are mutated element by element below, so the whole-list
+                // fallback must read from the evaluated clone: reading from the original configuration
+                // would alias the clone's list to the original one and mutate the original elements
+                if ("List".equals(fieldProperty.getFieldType()) && getComplexListElementType(field) != null) {
+                    return new FieldProperty(
+                        field,
+                        elementUtils,
+                        typeUtils,
+                        evaluatedConfigurationName,
+                        evaluatedConfigurationName,
+                        jsonTypeClass
+                    );
+                }
+                return fieldProperty;
+            })
             .collect(Collectors.partitioningBy(fieldProperty -> "Object".equals(fieldProperty.getFieldType())));
 
         List<TypeElement> classes = elementUtils
@@ -484,6 +517,65 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
 
             mustacheParams.mClose().execute(writer, scopes);
         });
+
+        // Process lists of complex objects: iterate over the elements to evaluate their own fields
+        // (e.g. EL in String fields nested inside a List<CustomObject>)
+        convertedFields
+            .get(false)
+            .stream()
+            .filter(fieldProperty -> "List".equals(fieldProperty.getFieldType()))
+            .forEach(fieldProperty -> {
+                TypeElement elementType = getComplexListElementType(fieldProperty.getField());
+                if (elementType == null) {
+                    return;
+                }
+
+                String fieldName = fieldProperty.fieldName;
+                String itemName = fieldName + "Item";
+                String attributeSuffix = currentAttributeSuffix + "." + fieldName;
+
+                Map<String, Object> scopes = new HashMap<>();
+                scopes.put("fieldName", fieldName);
+                scopes.put("itemName", itemName);
+                scopes.put("attributeSuffix", attributeSuffix);
+                scopes.put("elementType", elementType.getQualifiedName().toString());
+                scopes.put("evaluatedList", evaluatedConfigurationName + "." + getGetterMethod(fieldName));
+                mustacheParams.mListObjectHeader().execute(writer, scopes);
+
+                generateEvalMethods(
+                    elementType,
+                    new MustacheParams(mustacheParams),
+                    writer,
+                    itemName,
+                    itemName,
+                    attributeSuffix,
+                    jsonTypeClass,
+                    Collections.emptyList()
+                );
+
+                mustacheParams.mListObjectFooter().execute(writer, scopes);
+            });
+    }
+
+    /**
+     * Returns the element type of a {@code List} field when it is a complex object whose fields must be
+     * evaluated individually (i.e. not a JDK type and not an enum), or {@code null} otherwise.
+     */
+    private TypeElement getComplexListElementType(VariableElement field) {
+        if (!(field.asType() instanceof DeclaredType declaredType) || declaredType.getTypeArguments().size() != 1) {
+            return null;
+        }
+
+        Element element = typeUtils.asElement(declaredType.getTypeArguments().get(0));
+        if (element == null || element.getKind() != ElementKind.CLASS) {
+            return null;
+        }
+
+        TypeElement typeElement = (TypeElement) element;
+        if (typeElement.getQualifiedName().toString().startsWith("java.")) {
+            return null;
+        }
+        return typeElement;
     }
 
     /**
@@ -824,7 +916,9 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
         Mustache mSubTypeHeader,
         Mustache mSubTypeFooter,
         Mustache mSubTypeCaseHeader,
-        Mustache mSubTypeCaseFooter
+        Mustache mSubTypeCaseFooter,
+        Mustache mListObjectHeader,
+        Mustache mListObjectFooter
     ) {
         public MustacheParams(MustacheParams copy) {
             this(
@@ -834,7 +928,9 @@ public class ConfigurationEvaluatorProcessor extends AbstractProcessor {
                 copy.mSubTypeHeader,
                 copy.mSubTypeFooter,
                 copy.mSubTypeCaseHeader,
-                copy.mSubTypeCaseFooter
+                copy.mSubTypeCaseFooter,
+                copy.mListObjectHeader,
+                copy.mListObjectFooter
             );
         }
     }
