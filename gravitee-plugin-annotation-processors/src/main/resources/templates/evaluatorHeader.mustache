@@ -194,10 +194,17 @@ public class {{evaluatorSimpleClassName}} {
         return value;
     }
 
+    @SuppressWarnings("unchecked")
     private <T> List<T> evalListProperty(String name, List<T> value, String attributePrefix, BaseExecutionContext ctx) {
         List<T> attribute = ctx.getAttributeAsList(buildAttributeName(attributePrefix, name));
         if (attribute != null) {
-            return attribute;
+            // Complex list elements are mutated in place by the per-element EL evaluation, so return a
+            // deep copy to avoid mutating objects owned by the execution-context attribute
+            List<T> copy = new ArrayList<>(attribute.size());
+            for (T element : attribute) {
+                copy.add(element == null ? null : (T) objectMapper.convertValue(element, element.getClass()));
+            }
+            return copy;
         }
 
         return value;
