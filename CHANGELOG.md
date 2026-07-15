@@ -1,3 +1,10 @@
+## [5.1.5](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.4...5.1.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **annotation-processor:** evaluate EL in fields of List<CustomObject> elements ([#209](https://github.com/gravitee-io/gravitee-plugin/issues/209)) ([5f916b7](https://github.com/gravitee-io/gravitee-plugin/commit/5f916b7a113d87223ade1cac60de252e728041a4))
+
 ## [5.1.4](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.3...5.1.4) (2026-06-16)
 
 
