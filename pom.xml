@@ -46,6 +46,7 @@
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
         <reflections.version>0.9.11</reflections.version>
         <gravitee-identityprovider-api.version>1.0.0</gravitee-identityprovider-api.version>
+        <gravitee-agentprovider-api.version>1.0.0-alpha.4</gravitee-agentprovider-api.version>
         <gravitee-cockpit-api.version>3.11.0</gravitee-cockpit-api.version>
         <gravitee-connector-api.version>1.1.5</gravitee-connector-api.version>
         <gravitee-integration-api.version>5.1.0</gravitee-integration-api.version>
@@ -70,6 +71,7 @@
         <module>gravitee-plugin-connector</module>
         <module>gravitee-plugin-annotation-processors</module>
         <module>gravitee-plugin-integrationprovider</module>
+        <module>gravitee-plugin-agentprovider</module>
     </modules>
 
     <dependencyManagement>
@@ -83,6 +85,11 @@
                 <type>pom</type>
             </dependency>
             <!-- Self import modules -->
+            <dependency>
+                <groupId>io.gravitee.plugin</groupId>
+                <artifactId>gravitee-plugin-agentprovider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>io.gravitee.plugin</groupId>
                 <artifactId>gravitee-plugin-alert</artifactId>
@@ -231,6 +238,12 @@
                 <groupId>io.gravitee.integration</groupId>
                 <artifactId>gravitee-integration-api</artifactId>
                 <version>${gravitee-integration-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.agentprovider</groupId>
+                <artifactId>gravitee-agent-provider-api</artifactId>
+                <version>${gravitee-agentprovider-api.version}</version>
             </dependency>
 
             <!-- Reflection utils -->
