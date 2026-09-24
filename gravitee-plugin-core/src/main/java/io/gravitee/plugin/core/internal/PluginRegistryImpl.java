@@ -73,6 +73,7 @@ public class PluginRegistryImpl extends AbstractService<PluginRegistry> implemen
         PLUGIN_TYPE_PROPERTY_ALIASES.put("notifier", "notifiers");
         PLUGIN_TYPE_PROPERTY_ALIASES.put("service_discovery", "service-discoveries");
         PLUGIN_TYPE_PROPERTY_ALIASES.put("integration_provider", "integration-providers");
+        PLUGIN_TYPE_PROPERTY_ALIASES.put("agent_provider", "agent-providers");
     }
 
     private final PluginRegistryConfiguration configuration;
