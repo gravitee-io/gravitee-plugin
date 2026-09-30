@@ -16,11 +16,19 @@ The Gravitee.io plugin project contains a set of classes that are used in Gravit
 * Identity Providers
 * Notifiers
 * Reporters
+* Integration Providers
+* Agent Providers
 * ...
 
 Additionally, the plugin project offer handy annotation processors that are helpful when developing policies.
 
 == Modules
+
+=== Agent Provider
+
+The Gravitee Plugin Agent Provider module provides a plugin handler that loads agent provider plugins. An agent provider connects to an external platform (Bedrock, Vertex AI, LangGraph, ...) to discover the AI agents it hosts so they can be added to the Gravitee catalog.
+The contract implemented by the plugins (`AgentProviderApi`, `AgentProviderFactory`, models) lives in the `gravitee-agent-provider-api` repository.
+Like identity providers, each deployed agent provider gets its own Spring context, child of the host one: its `AgentProviderFactory` is a bean of that context, so it can inject host beans (such as Vert.x) and the plugin can declare its own `@Configuration` classes.
 
 === Alert
 
@@ -78,6 +86,10 @@ NOTE: A concrete example on how fetchers are used in Gravitee API Management is 
 === Identity Provider
 
 The Gravitee Plugin Identity Provider module brings the ability to load identity provider plugins that can be used to implement authentication.
+
+=== Integration Provider
+
+The Gravitee Plugin Integration Provider module provides a plugin handler that loads integration provider plugins, used by the Gravitee API Management federation feature.
 
 === Notifier
 
