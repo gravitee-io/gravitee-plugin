@@ -1,3 +1,10 @@
+# [5.2.0-alpha.1](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.5...5.2.0-alpha.1) (2026-10-05)
+
+
+### Features
+
+* support the new plugin type agent-provider ([b228c0b](https://github.com/gravitee-io/gravitee-plugin/commit/b228c0bb25529c05de565d69e9614fb0ee45b97b))
+
 ## [5.1.5](https://github.com/gravitee-io/gravitee-plugin/compare/5.1.4...5.1.5) (2026-07-15)
 
 
