@@ -35,7 +35,7 @@
         <hibernate-validator.version>8.0.3.Final</hibernate-validator.version>
         <mustache.version>0.9.14</mustache.version>
         <compile-testing.version>0.21.0</compile-testing.version>
-        <javaparser-symbol-solver-core.version>3.26.3</javaparser-symbol-solver-core.version>
+        <javaparser-symbol-solver-core.version>3.28.2</javaparser-symbol-solver-core.version>
     </properties>
 
     <dependencies>
