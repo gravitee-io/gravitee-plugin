@@ -16,7 +16,9 @@
 package io.gravitee.plugin.agentprovider.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
+import io.gravitee.node.api.cache.CacheManager;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,7 @@ class DefaultAgentProviderPluginManagerTest {
 
     @Test
     void should_expose_the_factory_registered_with_a_plugin() {
-        FakeAgentProviderFactory factory = new FakeAgentProviderFactory();
+        FakeAgentProviderFactory factory = new FakeAgentProviderFactory(mock(CacheManager.class));
 
         cut.register(new FakeAgentProviderPlugin("fake", FakeAgentProviderFactory.class, true), factory);
 

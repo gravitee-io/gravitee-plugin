@@ -15,38 +15,49 @@
  */
 package io.gravitee.plugin.agentprovider.internal;
 
-import io.gravitee.agentprovider.api.AgentProviderApi;
+import io.gravitee.agentprovider.api.AgentProvider;
 import io.gravitee.agentprovider.api.AgentProviderConfiguration;
 import io.gravitee.agentprovider.api.AgentProviderFactory;
-import io.gravitee.agentprovider.api.model.AgentRef;
 import io.gravitee.agentprovider.api.model.AgentSnapshot;
+import io.gravitee.agentprovider.api.model.DiscoveryPage;
 import io.gravitee.agentprovider.api.model.Probe;
+import io.gravitee.node.api.cache.CacheManager;
 import java.util.List;
 
 /**
  * @author GraviteeSource Team
  */
-public class FakeAgentProviderFactory implements AgentProviderFactory {
+public class FakeAgentProviderFactory extends AgentProviderFactory<FakeAgentProviderFactory.FakeAgentProvider> {
 
     public static class FakeConfiguration implements AgentProviderConfiguration {}
 
+    public FakeAgentProviderFactory(CacheManager cacheManager) {
+        super(cacheManager);
+    }
+
     @Override
-    public AgentProviderApi create(String configuration) {
-        return new AgentProviderApi() {
-            @Override
-            public Probe test() {
-                return Probe.ok();
-            }
+    protected FakeAgentProvider instantiateProvider(String configuration) {
+        return new FakeAgentProvider();
+    }
 
-            @Override
-            public List<AgentRef> discover() {
-                return List.of();
-            }
+    public static class FakeAgentProvider implements AgentProvider, AutoCloseable {
 
-            @Override
-            public List<AgentSnapshot> fetch(String... ids) {
-                return List.of();
-            }
-        };
+        @Override
+        public Probe test() {
+            return Probe.ok();
+        }
+
+        @Override
+        public DiscoveryPage discover(String cursor, int pageSize) {
+            return new DiscoveryPage(List.of(), null);
+        }
+
+        @Override
+        public List<AgentSnapshot> fetch(String... ids) {
+            return List.of();
+        }
+
+        @Override
+        public void close() {}
     }
 }

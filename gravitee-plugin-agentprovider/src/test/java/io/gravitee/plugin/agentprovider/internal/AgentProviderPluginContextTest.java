@@ -18,8 +18,8 @@ package io.gravitee.plugin.agentprovider.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import io.gravitee.agentprovider.api.AgentProviderApi;
 import io.gravitee.agentprovider.api.AgentProviderFactory;
+import io.gravitee.node.api.cache.CacheManager;
 import io.gravitee.plugin.agentprovider.spring.AgentProviderPluginConfiguration;
 import io.gravitee.plugin.api.PluginDeploymentContextFactory;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
@@ -50,6 +50,7 @@ class AgentProviderPluginContextTest {
     void setUp() {
         host = new AnnotationConfigApplicationContext();
         host.registerBean(HostService.class);
+        host.registerBean(CacheManager.class, () -> mock(CacheManager.class));
         host.registerBean("pluginClassLoaderFactory", PluginClassLoaderFactory.class, CachedPluginClassLoaderFactory::new);
         host.registerBean(PluginConfigurationResolver.class, ReflectionBasedPluginConfigurationResolver::new);
         host.registerBean(PluginContextFactory.class, PluginContextFactoryImpl::new);
@@ -72,21 +73,25 @@ class AgentProviderPluginContextTest {
                 HostAwareAgentProviderFactory.class
             );
 
-        AgentProviderFactory factory = host.getBean(DefaultAgentProviderPluginManager.class).getAgentProviderFactory("host-aware");
+        AgentProviderFactory<?> factory = host.getBean(DefaultAgentProviderPluginManager.class).getAgentProviderFactory("host-aware");
         assertThat(factory).isInstanceOf(HostAwareAgentProviderFactory.class);
         assertThat(((HostAwareAgentProviderFactory) factory).hostService).isSameAs(host.getBean(HostService.class));
     }
 
     public static class HostService {}
 
-    public static class HostAwareAgentProviderFactory implements AgentProviderFactory {
+    public static class HostAwareAgentProviderFactory extends AgentProviderFactory<FakeAgentProviderFactory.FakeAgentProvider> {
 
         @Autowired
         HostService hostService;
 
+        public HostAwareAgentProviderFactory(CacheManager cacheManager) {
+            super(cacheManager);
+        }
+
         @Override
-        public AgentProviderApi create(String configuration) {
-            return null;
+        protected FakeAgentProviderFactory.FakeAgentProvider instantiateProvider(String configuration) {
+            return new FakeAgentProviderFactory.FakeAgentProvider();
         }
     }
 }
