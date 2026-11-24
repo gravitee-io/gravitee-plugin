@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import io.gravitee.node.api.cache.CacheManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextConfigurer;
 import io.gravitee.plugin.core.api.PluginContextFactory;
@@ -88,7 +89,7 @@ class AgentProviderPluginHandlerTest {
 
         @Test
         void should_register_the_factory_bean_of_a_deployed_plugin() {
-            FakeAgentProviderFactory factory = new FakeAgentProviderFactory();
+            FakeAgentProviderFactory factory = new FakeAgentProviderFactory(mock(CacheManager.class));
             when(pluginContextFactory.create(any(PluginContextConfigurer.class))).thenReturn(pluginContext);
             when(pluginContext.getBean(FakeAgentProviderFactory.class)).thenReturn(factory);
 

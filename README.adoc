@@ -27,7 +27,7 @@ Additionally, the plugin project offer handy annotation processors that are help
 === Agent Provider
 
 The Gravitee Plugin Agent Provider module provides a plugin handler that loads agent provider plugins. An agent provider connects to an external platform (Bedrock, Vertex AI, LangGraph, ...) to discover the AI agents it hosts so they can be added to the Gravitee catalog.
-The contract implemented by the plugins (`AgentProviderApi`, `AgentProviderFactory`, models) lives in the `gravitee-agent-provider-api` repository.
+The contract implemented by the plugins (`AgentProvider`, `AgentProviderFactory`, models) lives in the `gravitee-agent-provider-api` repository.
 Like identity providers, each deployed agent provider gets its own Spring context, child of the host one: its `AgentProviderFactory` is a bean of that context, so it can inject host beans (such as Vert.x) and the plugin can declare its own `@Configuration` classes.
 
 === Alert

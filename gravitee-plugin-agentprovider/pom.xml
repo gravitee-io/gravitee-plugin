@@ -67,5 +67,12 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- The factories of agent-provider-api receive the host CacheManager -->
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-api</artifactId>
+            <version>${gravitee-node.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
